@@ -3,11 +3,11 @@ from django.http import HttpResponse
 from django.contrib.auth.models import User
 
 # Create your views here.
-def is_authenticated():
-    return False
+def is_authenticated(user):
+    return user.is_authenticated
 
 def index(request):
-    if is_authenticated() == True:
+    if is_authenticated(request.user) == True:
         return redirect('home')
     else:
         return redirect('welcome')
