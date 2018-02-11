@@ -3,10 +3,10 @@
 <title>Welcome</title>
 </head>
 <body>
-<form id="registration-form">
-<input id="email-input">
-<input id="password-input">
-<input id="password-check-input">
+<form id="registration-form" action="/register" method="post">{% csrf_token %}
+<input id="email-input" name="email">
+<input id="password-input" name="password">
+<input id="password-check-input" name="password_check">
 <input id="submit-button" type="submit">
 </form>
 

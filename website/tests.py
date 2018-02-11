@@ -1,6 +1,7 @@
 from unittest.mock import patch
 from django.test import TestCase
 from django.urls import resolve
+from django.contrib.auth.models import User
 
 # Create your tests here.
 class TestIndex(TestCase):
@@ -41,3 +42,12 @@ class TestHome(TestCase):
         response = self.client.get('/home')
         self.assertTemplateUsed(response, 'website/home.html')
 
+class TestRegistration(TestCase):
+
+    def test_url_resolution(self):
+        resolver = resolve('/register')
+        self.assertEqual(resolver.view_name, 'register')
+    
+    def test_register_new_user(self):
+        self.client.post('/register', {'email': 'voong.david@gmail.com', 'password': 'password'})
+        user = User.objects.get(username='voong.david@gmail.com')
