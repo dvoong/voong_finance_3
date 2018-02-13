@@ -5,12 +5,20 @@
 <body>
 <div id="menu"></div>
 <div id="balance-chart"></div>
-<form id="transaction-form">
-<input id="date-input" type="date">
-<input id="transaction-size-input" type="float">
-<input id="description-input">
+<form id="transaction-form" action="/create-transaction" method="post">{% csrf_token %}
+<input id="date-input" type="date" name="date">
+<input id="transaction-size-input" type="number" step="0.01" name="size">
+<input id="description-input" name="description">
 <input id="submit-button" type="submit" value="submit">
 </form>
-<table id="transaction-list"></table>
+<table id="transaction-list">
+{% for t in transactions %}
+    <tr class="transaction">
+      <td>{{t.date}}</td>
+      <td>{{t.size}}</td>
+      <td>{{t.description}}</td>
+    </tr>
+{% endfor %}
+</table>
 </body>
 </html>

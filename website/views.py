@@ -16,7 +16,8 @@ def index(request):
         return redirect('welcome')
 
 def home(request):
-    return render(request, 'website/home.html')
+    user = request.user
+    return render(request, 'website/home.html', {'transactions': Transaction.objects.filter(user=user)})
 
 def welcome(request):
     return render(request, 'website/welcome.html')
@@ -45,6 +46,7 @@ def create_transaction(request):
     Transaction.objects.create(
         date=datetime.datetime.strptime(date, '%Y-%m-%d').date(),
         size=size,
-        description=description
+        description=description,
+        user=request.user
         )
     return redirect('home')

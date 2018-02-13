@@ -53,7 +53,7 @@ class TransactionList:
         self.element = driver.find_element_by_id('transaction-list')
 
     def get_transactions(self):
-        return self.element.find_element_by_css_selector('.transaction')
+        return self.element.find_elements_by_css_selector('.transaction')
 
 class TestRegistration(StaticLiveServerTestCase):
 

@@ -71,12 +71,6 @@ class TestLogin(TestCase):
         response = self.client.post('/login', {'email': 'voong.david@gmail.com', 'password': 'asdf'})
         self.assertRedirects(response, '/welcome')
 
-class TestCreateTransaction(TestCase):
-    
-    def setUp(self):
-        user = User.objects.create_user(username='voong.david@gmail.com', email='voong.david@gmail.com', password='password')
-        self.client.login(username='voong.david@gmail.com', password='password')
-
 # Create your tests here.
 class TestIndex(TestCase):
 
@@ -84,15 +78,13 @@ class TestIndex(TestCase):
         resolver = resolve('/')
         self.assertEqual(resolver.view_name, 'website.views.index')
 
-    @patch('website.views.is_authenticated')
-    def test_if_signed_in_redirect_to_home_page(self, is_authenticated):
-        is_authenticated.return_value = True
+    def test_if_signed_in_redirect_to_home_page(self):
+        user = User.objects.create_user(username='voong.david@gmail.com', email='voong.david@gmail.com', password='password')
+        self.client.login(username='voong.david@gmail.com', password='password')
         response = self.client.get('/')
         self.assertRedirects(response, '/home')
 
-    @patch('website.views.is_authenticated')
-    def test_if_not_signed_in_redirect_to_welcome_page(self, is_authenticated):
-        is_authenticated.return_value = False
+    def test_if_not_signed_in_redirect_to_welcome_page(self):
         response = self.client.get('/')
         self.assertRedirects(response, '/welcome')
 
@@ -113,8 +105,19 @@ class TestHome(TestCase):
         self.assertEqual(resolver.view_name, 'home')
     
     def test_template_used(self):
+        user = User.objects.create_user(username='voong.david@gmail.com', email='voong.david@gmail.com', password='password')
+        self.client.login(username='voong.david@gmail.com', password='password')
         response = self.client.get('/home')
         self.assertTemplateUsed(response, 'website/home.html')
+
+    def test_populates_transactions_list(self):
+        user1 = User.objects.create_user(username='voong.david@gmail.com', password='password')
+        user2 = User.objects.create_user(username='voong.hannah@gmail.com', password='password')
+        Transaction.objects.create(user=user1, date=datetime.date(2018, 1, 1), size=10, description='description')
+        Transaction.objects.create(user=user2, date=datetime.date(2018, 1, 2), size=100, description='description2')
+        self.client.login(username='voong.david@gmail.com', password='password')
+        response = self.client.get('/home')
+        self.assertEqual(list(response.context['transactions']), list(Transaction.objects.filter(user=user1)))
 
 class TestRegistration(TestCase):
 
