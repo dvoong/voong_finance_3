@@ -10,9 +10,9 @@
 <input id="submit-button" type="submit">
 </form>
 
-<form id="login-form">
-<input id="email-input">
-<input id="password-input">
+<form id="login-form" action="/login" method="post">{% csrf_token %}
+<input id="email-input" name="email">
+<input id="password-input" name="password">
 <input id="submit-button" type="submit">
 </form>
 
