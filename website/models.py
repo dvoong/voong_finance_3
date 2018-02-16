@@ -8,3 +8,4 @@ class Transaction(models.Model):
     size = models.FloatField()
     description = models.TextField()
     user = models.ForeignKey(User, on_delete=models.CASCADE)
+    closing_balance = models.FloatField()

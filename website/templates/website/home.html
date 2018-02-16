@@ -26,9 +26,23 @@
       <td>{{t.date|date:'Y-m-d'}}</td>
       <td>{{t.size|to_currency}}</td>
       <td>{{t.description}}</td>
+      <td>{{t.closing_balance|to_currency}}</td>
     </tr>
 {% endfor %}
 </table>
+
+<script>
+  transactions = [
+{% for t in transactions %}
+    {
+      date: "{{t.date|date:'Y-m-d'}}",
+      size: {{t.size}},
+      description: "{{t.description}}",
+      closing_balance: {{t.closing_balance}}
+    },
+{% endfor %}
+  ]
+</script>
 
 <script src="{% static "website/home.js" %}" type="text/javascript"></script>
 

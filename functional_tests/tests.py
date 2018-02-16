@@ -1,4 +1,4 @@
-import time
+import time, datetime
 from selenium.webdriver import Chrome
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 from django.contrib.auth.models import User
@@ -106,8 +106,10 @@ class TestTransactionCreation(TestLogin):
 
     def test(self):
         homepage = HomePage(self.driver)
+        today = datetime.date.today()
+
         f = homepage.transaction_form
-        f.date_input.send_keys('01012018')
+        f.date_input.send_keys('{:02d}{:02d}{}'.format(today.day, today.month, today.year))
         f.transaction_size_input.send_keys('1000')
         f.description_input.send_keys('pay day')
         f.submit_button.click()
@@ -119,11 +121,20 @@ class TestTransactionCreation(TestLogin):
         
         t = transactions[0]
         cols = t.find_elements_by_css_selector('td')
-        self.assertEqual(cols[0].text, '2018-01-01')
+        self.assertEqual(cols[0].text, today.isoformat())
         self.assertEqual(cols[1].text, '£1,000.00')
         self.assertEqual(cols[2].text, 'pay day')
+        self.assertEqual(cols[3].text, '£1,000.00')
 
         balance_chart = homepage.balance_chart
         bars = balance_chart.plot_area.find_elements_by_css_selector('.bar')
-        self.assertEqual(len(bars), 1)
+        self.assertEqual(len(bars), 29)
         
+        bar_today = bars[14]
+        self.assertEqual(bar_today.get_attribute('date') today.isoformat())
+        self.assertEqual(bars[0].get_attribute('date'), (today - datetime.timedelta(days=14)).isoformat())
+        self.assertEqual(bars[-1].get_attribute('date'), (today + datetime.timedelta(days=14)).isoformat())
+        
+        self.assertEqual(float(bar_today.get_attribute('balance')), 1000)
+        self.assertEqual(float(bars[0].get_attribute('balance')), 0)
+        self.assertEqual(float(bars[-1].get_attribute('balance')), 1000)

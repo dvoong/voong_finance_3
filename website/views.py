@@ -41,12 +41,18 @@ def login_view(request):
 
 def create_transaction(request):
     date = request.POST['date']
-    size = request.POST['size']
+    size = float(request.POST['size'])
     description = request.POST['description']
+    try:
+        last_transaction = Transaction.objects.latest('date')
+        closing_balance = last_transaction.closing_balance + size
+    except Transaction.DoesNotExist:
+        closing_balance = size
     Transaction.objects.create(
         date=datetime.datetime.strptime(date, '%Y-%m-%d').date(),
         size=size,
         description=description,
-        user=request.user
+        user=request.user,
+        closing_balance=closing_balance
         )
     return redirect('home')
