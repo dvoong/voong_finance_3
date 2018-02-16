@@ -1,6 +1,7 @@
 <html>
 <head>
 <title></title>
+{% load custom_template_tags %}
 {% load static %}
 <link rel="stylesheet" href="{% static "website/styles.css" %}">
 </head>
@@ -23,7 +24,7 @@
 {% for t in transactions %}
     <tr class="transaction">
       <td>{{t.date|date:'Y-m-d'}}</td>
-      <td>{{t.size|stringformat:".2f"}}</td>
+      <td>{{t.size|to_currency}}</td>
       <td>{{t.description}}</td>
     </tr>
 {% endfor %}

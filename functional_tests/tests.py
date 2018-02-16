@@ -120,7 +120,7 @@ class TestTransactionCreation(TestLogin):
         t = transactions[0]
         cols = t.find_elements_by_css_selector('td')
         self.assertEqual(cols[0].text, '2018-01-01')
-        self.assertEqual(cols[1].text, '1000.00')
+        self.assertEqual(cols[1].text, '£1,000.00')
         self.assertEqual(cols[2].text, 'pay day')
 
         balance_chart = homepage.balance_chart
