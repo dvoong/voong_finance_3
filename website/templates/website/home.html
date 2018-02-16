@@ -22,8 +22,8 @@
 <table id="transaction-list">
 {% for t in transactions %}
     <tr class="transaction">
-      <td>{{t.date}}</td>
-      <td>{{t.size}}</td>
+      <td>{{t.date|date:'Y-m-d'}}</td>
+      <td>{{t.size|stringformat:".2f"}}</td>
       <td>{{t.description}}</td>
     </tr>
 {% endfor %}

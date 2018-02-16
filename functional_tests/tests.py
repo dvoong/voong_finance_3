@@ -26,7 +26,7 @@ class HomePage:
 
     def __init__(self, driver):
 
-        self.balance_chart = driver.find_element_by_id('balance-chart')
+        self.balance_chart = BalanceChart(driver)
         self.transaction_form = TransactionForm(driver)
         self.menu = Menu(driver)
         self.transaction_list = TransactionList(driver)
@@ -54,6 +54,15 @@ class TransactionList:
 
     def get_transactions(self):
         return self.element.find_elements_by_css_selector('.transaction')
+
+class BalanceChart:
+
+    def __init__(self, driver):
+        self.element = driver.find_element_by_id('balance-chart')
+        self.canvas = self.element.find_element_by_id('canvas')
+        self.x_axis = self.canvas.find_element_by_id('x-axis')
+        self.y_axis = self.canvas.find_element_by_id('y-axis')
+        self.plot_area = self.canvas.find_element_by_id('plot-area')
 
 class TestRegistration(StaticLiveServerTestCase):
 
@@ -104,6 +113,17 @@ class TestTransactionCreation(TestLogin):
         f.submit_button.click()
 
         homepage = HomePage(self.driver)
-        t = homepage.transaction_list
-        transactions = t.get_transactions()
+        transaction_list = homepage.transaction_list
+        transactions = transaction_list.get_transactions()
         self.assertEqual(len(transactions), 1)
+        
+        t = transactions[0]
+        cols = t.find_elements_by_css_selector('td')
+        self.assertEqual(cols[0].text, '2018-01-01')
+        self.assertEqual(cols[1].text, '1000.00')
+        self.assertEqual(cols[2].text, 'pay day')
+
+        balance_chart = homepage.balance_chart
+        bars = balance_chart.plot_area.find_elements_by_css_selector('.bar')
+        self.assertEqual(len(bars), 1)
+        
