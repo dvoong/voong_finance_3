@@ -8,6 +8,9 @@
 <div id="menu"></div>
 <div id="balance-chart">
 <svg id="canvas">
+<g id="x-axis"></g>
+<g id="y-axis"></g>
+<g id="plot-area"></g>
 </svg>
 </div>
 <form id="transaction-form" action="/create-transaction" method="post">{% csrf_token %}
