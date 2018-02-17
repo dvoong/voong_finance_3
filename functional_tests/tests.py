@@ -138,3 +138,32 @@ class TestTransactionCreation(TestLogin):
         self.assertEqual(float(bar_today.get_attribute('balance')), 1000)
         self.assertEqual(float(bars[0].get_attribute('balance')), 0)
         self.assertEqual(float(bars[-1].get_attribute('balance')), 1000)
+
+        ## creates another transaction before the first transaction - check balances calculted properly
+
+        f = homepage.transaction_form
+        yesterday = today - datetime.timedelta(days=1)
+        f.date_input.send_keys('{:02d}{:02d}{}'.format(yesterday.day, yesterday.month, yesterday.year))
+        f.transaction_size_input.send_keys('500')
+        f.description_input.send_keys('dividends received')
+        f.submit_button.click()
+
+        homepage = HomePage(self.driver)
+        transaction_list = homepage.transaction_list
+        transactions = transaction_list.get_transactions()
+        self.assertEqual(len(transactions), 2)
+        
+        t = transactions[0]
+        cols = t.find_elements_by_css_selector('td')
+        self.assertEqual(cols[0].text, yesterday.isoformat())
+        self.assertEqual(cols[1].text, '£500.00')
+        self.assertEqual(cols[2].text, 'dividends received')
+        self.assertEqual(cols[3].text, '£500.00')
+        
+        t = transactions[1]
+        cols = t.find_elements_by_css_selector('td')
+        self.assertEqual(cols[0].text, yesterday.isoformat())
+        self.assertEqual(cols[1].text, '£1000.00')
+        self.assertEqual(cols[2].text, 'pay day')
+        self.assertEqual(cols[3].text, '£1,500.00')
+        
