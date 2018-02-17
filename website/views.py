@@ -69,15 +69,22 @@ def create_transaction(request):
     size = float(request.POST['size'])
     description = request.POST['description']
     try:
-        last_transaction = Transaction.objects.latest('date')
+        last_transaction = Transaction.objects.filter(user=request.user, date__lt=date).latest('date')
         closing_balance = last_transaction.closing_balance + size
     except Transaction.DoesNotExist:
         closing_balance = size
+
     Transaction.objects.create(
         date=datetime.datetime.strptime(date, '%Y-%m-%d').date(),
         size=size,
         description=description,
         user=request.user,
         closing_balance=closing_balance
-        )
+    )
+
+    # update future transactions
+    transactions = Transaction.objects.filter(date__gt=datetime.datetime.strptime(date, '%Y-%m-%d').date(), user=request.user)
+    for t in transactions:
+        t.closing_balance += size
+        t.save()
     return redirect('home')

@@ -162,8 +162,8 @@ class TestTransactionCreation(TestLogin):
         
         t = transactions[1]
         cols = t.find_elements_by_css_selector('td')
-        self.assertEqual(cols[0].text, yesterday.isoformat())
-        self.assertEqual(cols[1].text, '£1000.00')
+        self.assertEqual(cols[0].text, today.isoformat())
+        self.assertEqual(cols[1].text, '£1,000.00')
         self.assertEqual(cols[2].text, 'pay day')
         self.assertEqual(cols[3].text, '£1,500.00')
         
