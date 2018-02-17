@@ -49,8 +49,6 @@ function draw_y_axis(y_axis, canvas_width, canvas_height, padding){
     var y_scale = d3.scaleLinear()
 	.domain([y_min, y_max])
 	.range([canvas_height - padding.top - padding.bottom, 0]);
-	// .domain([y_max, y_min])
-	// .range([0, canvas_height - padding.top - padding.bottom]);
 
     y_axis.call(d3.axisLeft(y_scale))
     return y_scale;
