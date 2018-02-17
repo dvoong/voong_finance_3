@@ -88,3 +88,6 @@ def create_transaction(request):
         t.closing_balance += size
         t.save()
     return redirect('home')
+
+def update_transaction(request):
+    return redirect('home')

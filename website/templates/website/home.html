@@ -29,10 +29,13 @@
     <table id="transaction-list">
       {% for t in transactions %}
       <tr class="transaction">
-	<td>{{t.date|date:'Y-m-d'}}</td>
-	<td>{{t.size|to_currency}}</td>
-	<td>{{t.description}}</td>
-	<td>{{t.closing_balance|to_currency}}</td>
+	<form id="transaction-update-form" action="/update-transaction" method="post">{% csrf_token %}
+	  <td class="transaction-date"><input type="date" name="date" value="{{t.date|date:'Y-m-d'}}"></td>
+	  <td class="transaction-size"><input type="number" step="0.01" name="size" value="{{t.size}}"></td>
+	  <td class="transaction-description"><input name="description" value="{{t.description}}"></td>
+	  <td class="transaction-closing-balance">{{t.closing_balance|to_currency}}</td>
+	  <td><input class="save-transaction-button" type="submit" value="save"></td>
+	</form>
       </tr>
       {% endfor %}
     </table>

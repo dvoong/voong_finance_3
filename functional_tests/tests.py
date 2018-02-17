@@ -121,9 +121,12 @@ class TestTransactionCreation(TestLogin):
         
         t = transactions[0]
         cols = t.find_elements_by_css_selector('td')
-        self.assertEqual(cols[0].text, today.isoformat())
-        self.assertEqual(cols[1].text, '£1,000.00')
-        self.assertEqual(cols[2].text, 'pay day')
+        date_cell = cols[0].find_element_by_css_selector('input')
+        size_cell = cols[1].find_element_by_css_selector('input')
+        description_cell = cols[2].find_element_by_css_selector('input')
+        self.assertEqual(date_cell.get_attribute('value'), today.isoformat())
+        self.assertEqual(float(size_cell.get_attribute('value')), 1000)
+        self.assertEqual(description_cell.get_attribute('value'), 'pay day')
         self.assertEqual(cols[3].text, '£1,000.00')
 
         balance_chart = homepage.balance_chart
@@ -152,25 +155,31 @@ class TestTransactionCreation(TestLogin):
         transaction_list = homepage.transaction_list
         transactions = transaction_list.get_transactions()
         self.assertEqual(len(transactions), 2)
-        
+
         t = transactions[0]
         cols = t.find_elements_by_css_selector('td')
-        self.assertEqual(cols[0].text, yesterday.isoformat())
-        self.assertEqual(cols[1].text, '£500.00')
-        self.assertEqual(cols[2].text, 'dividends received')
+        date_cell = cols[0].find_element_by_css_selector('input')
+        size_cell = cols[1].find_element_by_css_selector('input')
+        description_cell = cols[2].find_element_by_css_selector('input')
+        self.assertEqual(date_cell.get_attribute('value'), yesterday.isoformat())
+        self.assertEqual(float(size_cell.get_attribute('value')), 500)
+        self.assertEqual(description_cell.get_attribute('value'), 'dividends received')
         self.assertEqual(cols[3].text, '£500.00')
         
         t = transactions[1]
         cols = t.find_elements_by_css_selector('td')
-        self.assertEqual(cols[0].text, today.isoformat())
-        self.assertEqual(cols[1].text, '£1,000.00')
-        self.assertEqual(cols[2].text, 'pay day')
+        date_cell = cols[0].find_element_by_css_selector('input')
+        size_cell = cols[1].find_element_by_css_selector('input')
+        description_cell = cols[2].find_element_by_css_selector('input')
+        self.assertEqual(date_cell.get_attribute('value'), today.isoformat())
+        self.assertEqual(float(size_cell.get_attribute('value')), 1000)
+        self.assertEqual(description_cell.get_attribute('value'), 'pay day')
         self.assertEqual(cols[3].text, '£1,500.00')
         
         # test modifying existing transactions
         t = transactions[1]
         tomorrow = today + datetime.timedelta(days=1)
-        date_cell = t.find_element_by_css_selector('td.date')
+        date_cell = t.find_element_by_css_selector('td.transaction-date input')
         date_cell.send_keys('{:02d}{:02d}{}'.format(tomorrow.day, tomorrow.month, tomorrow.year))
         save_transaction_button = t.find_element_by_css_selector('.save-transaction-button')
         save_transaction_button.click()
@@ -179,11 +188,21 @@ class TestTransactionCreation(TestLogin):
         transaction_list = homepage.transaction_list
         transactions = transaction_list.get_transactions()
         self.assertEqual(len(transactions), 2)
-
+        
         t = transactions[1]
         cols = t.find_elements_by_css_selector('td')
-        self.assertEqual(cols[0].text, tomorrow.isoformat())
-        self.assertEqual(cols[1].text, '£1,000.00')
-        self.assertEqual(cols[2].text, 'pay day')
+        date_cell = cols[0].find_element_by_css_selector('input')
+        size_cell = cols[1].find_element_by_css_selector('input')
+        description_cell = cols[2].find_element_by_css_selector('input')
+        self.assertEqual(date_cell.get_attribute('value'), tomorrow.isoformat())
+        self.assertEqual(float(size_cell.get_attribute('value')), 1000)
+        self.assertEqual(description_cell.get_attribute('value'), 'pay day')
         self.assertEqual(cols[3].text, '£1,500.00')
+
+        # t = transactions[1]
+        # cols = t.find_elements_by_css_selector('td')
+        # self.assertEqual(cols[0].text, tomorrow.isoformat())
+        # self.assertEqual(cols[1].text, '£1,000.00')
+        # self.assertEqual(cols[2].text, 'pay day')
+        # self.assertEqual(cols[3].text, '£1,500.00')
         
