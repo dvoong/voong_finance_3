@@ -168,3 +168,28 @@ class TestCreateTransaction(TestCase):
         self.assertEqual(t.description, 'dividends received')
         self.assertEqual(t.closing_balance, 1100)
                 
+
+class TestTransactionUpdate(TestCase):
+
+    def setUp(self):
+        self.user = User.objects.create_user(username='voong.david@gmail.com', email='voong.david@gmail.com', password='password')
+        self.client.login(username='voong.david@gmail.com', password='password')
+    
+    def test_url_resolution(self):
+        resolver = resolve('/create-transaction')
+        self.assertEqual(resolver.view_name, 'create_transaction')
+
+    def test(self):
+        self.client.post('/create-transaction', {'date': '2018-01-01', 'size': '1000.00', 'description': 'pay day'})
+        transactions = Transaction.objects.all()
+        self.assertEqual(len(transactions), 1)
+        t = transactions[0]
+        transaction_id = t.id
+        self.client.post('/update-transaction', {'date': '2018-01-02', 'size': '1000.00', 'description': 'pay day', 'id': str(transaction_id)})
+        transactions = Transaction.objects.all()
+        self.assertEqual(len(transactions), 1)
+        t = transactions[0]
+        self.assertEqual(t.date, datetime.date(2018, 1, 2))
+        self.assertEqual(t.size, 1000)
+        self.assertEqual(t.description, 'pay day')
+        self.assertEqual(t.id, transaction_id)

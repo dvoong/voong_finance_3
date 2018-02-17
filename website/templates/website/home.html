@@ -35,6 +35,7 @@
 	  <td class="transaction-description"><input name="description" value="{{t.description}}"></td>
 	  <td class="transaction-closing-balance">{{t.closing_balance|to_currency}}</td>
 	  <td><input class="save-transaction-button" type="submit" value="save"></td>
+	  <input name="id" type="hidden" value="{{t.id}}">
 	</form>
       </tr>
       {% endfor %}

@@ -90,4 +90,16 @@ def create_transaction(request):
     return redirect('home')
 
 def update_transaction(request):
+    user = request.user
+    transaction_id = request.POST['id']
+    date = request.POST['date']
+    size = request.POST['size']
+    description = request.POST['description']
+
+    t = Transaction.objects.get(user=user, id=transaction_id)
+    t.date = date
+    t.size = size
+    t.description = description
+    t.save()
+    
     return redirect('home')

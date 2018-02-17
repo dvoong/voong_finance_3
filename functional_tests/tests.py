@@ -198,11 +198,5 @@ class TestTransactionCreation(TestLogin):
         self.assertEqual(float(size_cell.get_attribute('value')), 1000)
         self.assertEqual(description_cell.get_attribute('value'), 'pay day')
         self.assertEqual(cols[3].text, '£1,500.00')
-
-        # t = transactions[1]
-        # cols = t.find_elements_by_css_selector('td')
-        # self.assertEqual(cols[0].text, tomorrow.isoformat())
-        # self.assertEqual(cols[1].text, '£1,000.00')
-        # self.assertEqual(cols[2].text, 'pay day')
-        # self.assertEqual(cols[3].text, '£1,500.00')
         
+        # add test for when transaction gets updated to after a previous transaction, will need to recalculate the closing balance
