@@ -167,3 +167,23 @@ class TestTransactionCreation(TestLogin):
         self.assertEqual(cols[2].text, 'pay day')
         self.assertEqual(cols[3].text, '£1,500.00')
         
+        # test modifying existing transactions
+        t = transactions[1]
+        tomorrow = today + datetime.timedelta(days=1)
+        date_cell = t.find_element_by_css_selector('td.date')
+        date_cell.send_keys('{:02d}{:02d}{}'.format(tomorrow.day, tomorrow.month, tomorrow.year))
+        save_transaction_button = t.find_element_by_css_selector('.save-transaction-button')
+        save_transaction_button.click()
+
+        homepage = HomePage(self.driver)
+        transaction_list = homepage.transaction_list
+        transactions = transaction_list.get_transactions()
+        self.assertEqual(len(transactions), 2)
+
+        t = transactions[1]
+        cols = t.find_elements_by_css_selector('td')
+        self.assertEqual(cols[0].text, tomorrow.isoformat())
+        self.assertEqual(cols[1].text, '£1,000.00')
+        self.assertEqual(cols[2].text, 'pay day')
+        self.assertEqual(cols[3].text, '£1,500.00')
+        
