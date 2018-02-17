@@ -1,8 +1,12 @@
 #balance-chart svg {
-width: 100%;
-height: 100%;
+    width: 100%;
+    height: 100%;
 }
 
 #balance-chart {
-height: 250px;
+    height: 250px;
+}
+
+#plot-area .bar {
+    fill: indianred;
 }

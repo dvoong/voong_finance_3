@@ -15,8 +15,9 @@ function draw_chart(){
     var canvas_height = parseInt(canvas.style('height'));
     var canvas_width = parseInt(canvas.style('width'));
 
-    draw_x_axis(x_axis, canvas_width, canvas_height, padding);
-    draw_y_axis(y_axis, canvas_width, canvas_height, padding);
+    var x_scale = draw_x_axis(x_axis, canvas_width, canvas_height, padding);
+    var y_scale = draw_y_axis(y_axis, canvas_width, canvas_height, padding);
+    var bars = draw_bars(plot_area, x_scale, y_scale, canvas_width, canvas_height, padding);
 }
 
 function draw_x_axis(x_axis, canvas_width, canvas_height, padding){
@@ -35,16 +36,47 @@ function draw_x_axis(x_axis, canvas_width, canvas_height, padding){
 	.range([0, canvas_width - padding.left - padding.right]);
 
     x_axis.call(d3.axisBottom(x_scale))
+    return x_scale;
 }
 
 function draw_y_axis(y_axis, canvas_width, canvas_height, padding){
     y_axis.attr('transform', 'translate(' + padding.left + ', ' + padding.top + ')');
 
-    var y_min = 0;
-    var y_max = 1;
+    var balance_min = d3.min(balances, function(d){return d.balance});
+    var balance_max = d3.max(balances, function(d){return d.balance});
+    var y_min = 1.1 * balance_min;
+    var y_max = 1.1 * balance_max;
     var y_scale = d3.scaleLinear()
 	.domain([y_max, y_min])
 	.range([0, canvas_height - padding.top - padding.bottom]);
 
     y_axis.call(d3.axisLeft(y_scale))
+    return y_scale;
+}
+
+function draw_bars(plot_area, x_scale, y_scale, canvas_width, canvas_height, padding){
+    plot_area.selectAll('.bar')
+	.data(balances)
+	.enter()
+	.append('rect')
+	.attr('class', 'bar')
+	.attr('transform', function(d){
+	    var date = new Date(d.date);
+	    var x_lower = new Date(date);
+	    x_lower.setDate(x_lower.getDate() - 0.45);
+	    x_lower = x_scale(x_lower);
+	    var y_lower = y_scale(d.balance);
+	    return 'translate(' + (padding.left + x_lower) + ', ' + (padding.top + y_lower)  + ')';
+	    
+	})
+	.attr('width', 0.9 * (canvas_width - padding.left - padding.right) / balances.length)
+	.attr('date', function(d){return d.date})
+	.attr('balance', function(d){return d.balance})
+    	.transition()
+	.attr('height', function(d){
+	    var y_lower = y_scale(d.balance);
+	    var y_upper = canvas_height - padding.bottom;
+	    return y_upper - y_lower - padding.top;
+	});
+
 }

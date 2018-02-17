@@ -21,7 +21,7 @@ def home(request):
     today = datetime.date.today()
     start = request.GET.get('start', today - datetime.timedelta(days=14))
     end = request.GET.get('end', today + datetime.timedelta(days=15))
-    dates = pd.DataFrame(pd.date_range(start, end), columns=['date'])
+    dates = pd.DataFrame(pd.date_range(start, end - datetime.timedelta(days=1)), columns=['date'])
     balances = dates
 
     try:
