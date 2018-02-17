@@ -111,10 +111,11 @@ class TestHome(TestCase):
         self.assertTemplateUsed(response, 'website/home.html')
 
     def test_populates_transactions_list(self):
+        today = datetime.date.today()
         user1 = User.objects.create_user(username='voong.david@gmail.com', password='password')
         user2 = User.objects.create_user(username='voong.hannah@gmail.com', password='password')
-        Transaction.objects.create(user=user1, date=datetime.date(2018, 1, 1), size=10, description='description', closing_balance=10)
-        Transaction.objects.create(user=user2, date=datetime.date(2018, 1, 2), size=100, description='description2', closing_balance=100)
+        Transaction.objects.create(user=user1, date=today, size=10, description='description', closing_balance=10)
+        Transaction.objects.create(user=user2, date=today, size=100, description='description2', closing_balance=100)
         self.client.login(username='voong.david@gmail.com', password='password')
         response = self.client.get('/home')
         self.assertEqual(list(response.context['transactions']), list(Transaction.objects.filter(user=user1)))

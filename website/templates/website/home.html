@@ -44,6 +44,17 @@
   ]
 </script>
 
+<script>
+  balances = [
+{% for b in balances %}
+    {
+      date: "{{b.date}}",
+      size: {{b.balance}},
+    },
+{% endfor %}
+  ]
+</script>
+
 <script src="{% static "website/home.js" %}" type="text/javascript"></script>
 
 </body>

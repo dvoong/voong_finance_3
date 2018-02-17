@@ -131,7 +131,7 @@ class TestTransactionCreation(TestLogin):
         self.assertEqual(len(bars), 29)
         
         bar_today = bars[14]
-        self.assertEqual(bar_today.get_attribute('date') today.isoformat())
+        self.assertEqual(bar_today.get_attribute('date'), today.isoformat())
         self.assertEqual(bars[0].get_attribute('date'), (today - datetime.timedelta(days=14)).isoformat())
         self.assertEqual(bars[-1].get_attribute('date'), (today + datetime.timedelta(days=14)).isoformat())
         
