@@ -98,21 +98,34 @@ def update_transaction(request):
 
     t = Transaction.objects.get(user=user, id=transaction_id)
     old_date = t.date
+    old_size = t.size
+
+    # update transaction
     t.date = date
     t.size = size
     t.description = description
 
+    # update transactions between old and new dates (assuming transaction size has not changed)
     transactions_to_update = Transaction.objects.filter(user=user, date__gt=min(old_date, t.date), date__lt=max(old_date, t.date))
     if t.date < old_date:
         for t_ in transactions_to_update:
-            t_.closing_balance += t.size
+            t_.closing_balance += old_size
             t.closing_balance -= t_.size
             t_.save()
     else:
         for t_ in transactions_to_update:
-            t_.closing_balance -= t.size
+            t_.closing_balance -= old_size
             t.closing_balance += t_.size
             t_.save()
+
+    # if transaction size has changed as well
+    if t.size != old_size:
+        t.closing_balance += t.size - old_size
+        transactions_to_update = Transaction.objects.filter(user=user, date__gt=t.date)
+        for t_ in transactions_to_update:
+            t_.closing_balance += t.size - old_size
+            t_.save()
+            
     t.save()
     
     return redirect('home')

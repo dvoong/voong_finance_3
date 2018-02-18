@@ -235,3 +235,36 @@ class TestTransactionCreation(TestLogin):
         self.assertEqual(description_cell.get_attribute('value'), 'dividends received')
         self.assertEqual(cols[3].text, '£1,500.00')
         
+        # change transaction size
+        t = transactions[0]
+        cols = t.find_elements_by_css_selector('td')
+        size_cell = cols[1].find_element_by_css_selector('input')
+        size_cell.clear()
+        size_cell.send_keys(2000)
+        save_transaction_button = t.find_element_by_css_selector('.save-transaction-button')
+        save_transaction_button.click()
+        
+        homepage = HomePage(self.driver)
+        transaction_list = homepage.transaction_list
+        transactions = transaction_list.get_transactions()
+        self.assertEqual(len(transactions), 2)
+        
+        t = transactions[0]
+        cols = t.find_elements_by_css_selector('td')
+        date_cell = cols[0].find_element_by_css_selector('input')
+        size_cell = cols[1].find_element_by_css_selector('input')
+        description_cell = cols[2].find_element_by_css_selector('input')
+        self.assertEqual(date_cell.get_attribute('value'), day_before_yesterday.isoformat())
+        self.assertEqual(float(size_cell.get_attribute('value')), 2000)
+        self.assertEqual(description_cell.get_attribute('value'), 'pay day')
+        self.assertEqual(cols[3].text, '£2,000.00')
+        
+        t = transactions[1]
+        cols = t.find_elements_by_css_selector('td')
+        date_cell = cols[0].find_element_by_css_selector('input')
+        size_cell = cols[1].find_element_by_css_selector('input')
+        description_cell = cols[2].find_element_by_css_selector('input')
+        self.assertEqual(date_cell.get_attribute('value'), yesterday.isoformat())
+        self.assertEqual(float(size_cell.get_attribute('value')), 500)
+        self.assertEqual(description_cell.get_attribute('value'), 'dividends received')
+        self.assertEqual(cols[3].text, '£2,500.00')
