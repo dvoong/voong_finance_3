@@ -193,3 +193,18 @@ class TestTransactionUpdate(TestCase):
         self.assertEqual(t.size, 1000)
         self.assertEqual(t.description, 'pay day')
         self.assertEqual(t.id, transaction_id)
+
+    def test_recalculates_closing_balance(self):
+        a = Transaction.objects.create(user=self.user, date='2018-01-01', size=1, description='a', id=1, closing_balance=1)
+        b = Transaction.objects.create(user=self.user, date='2018-01-02', size=10, description='b', id=2, closing_balance=11)
+        c = Transaction.objects.create(user=self.user, date='2018-01-03', size=100, description='c', id=3, closing_balance=111)
+        self.client.post('/update-transaction', {'date': '2017-12-31', 'size': '10.00', 'description': 'b', 'id': str(2)})
+        a = Transaction.objects.get(pk=1)
+        b = Transaction.objects.get(pk=2)
+        c = Transaction.objects.get(pk=3)
+        self.assertEqual(b.date, datetime.date(2017, 12, 31))
+        self.assertEqual(b.closing_balance, 10)
+        self.assertEqual(a.closing_balance, 11)
+        self.assertEqual(c.closing_balance, 111)
+
+        

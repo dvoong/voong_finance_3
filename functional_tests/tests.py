@@ -200,3 +200,38 @@ class TestTransactionCreation(TestLogin):
         self.assertEqual(cols[3].text, '£1,500.00')
         
         # add test for when transaction gets updated to after a previous transaction, will need to recalculate the closing balance
+        # set the latter transaction to happening before the first
+        t = transactions[1]
+        day_before_yesterday = yesterday - datetime.timedelta(days=1)
+        date_cell = t.find_element_by_css_selector('td.transaction-date input')
+        date_cell.send_keys('{:02d}{:02d}{}'.format(day_before_yesterday.day,
+                                                    day_before_yesterday.month,
+                                                    day_before_yesterday.year))
+        save_transaction_button = t.find_element_by_css_selector('.save-transaction-button')
+        save_transaction_button.click()
+        
+        homepage = HomePage(self.driver)
+        transaction_list = homepage.transaction_list
+        transactions = transaction_list.get_transactions()
+        self.assertEqual(len(transactions), 2)
+        
+        t = transactions[0]
+        cols = t.find_elements_by_css_selector('td')
+        date_cell = cols[0].find_element_by_css_selector('input')
+        size_cell = cols[1].find_element_by_css_selector('input')
+        description_cell = cols[2].find_element_by_css_selector('input')
+        self.assertEqual(date_cell.get_attribute('value'), day_before_yesterday.isoformat())
+        self.assertEqual(float(size_cell.get_attribute('value')), 1000)
+        self.assertEqual(description_cell.get_attribute('value'), 'pay day')
+        self.assertEqual(cols[3].text, '£1,000.00')
+        
+        t = transactions[1]
+        cols = t.find_elements_by_css_selector('td')
+        date_cell = cols[0].find_element_by_css_selector('input')
+        size_cell = cols[1].find_element_by_css_selector('input')
+        description_cell = cols[2].find_element_by_css_selector('input')
+        self.assertEqual(date_cell.get_attribute('value'), yesterday.isoformat())
+        self.assertEqual(float(size_cell.get_attribute('value')), 500)
+        self.assertEqual(description_cell.get_attribute('value'), 'dividends received')
+        self.assertEqual(cols[3].text, '£1,500.00')
+        

@@ -91,15 +91,28 @@ def create_transaction(request):
 
 def update_transaction(request):
     user = request.user
-    transaction_id = request.POST['id']
-    date = request.POST['date']
-    size = request.POST['size']
+    transaction_id = int(request.POST['id'])
+    date = datetime.datetime.strptime(request.POST['date'], '%Y-%m-%d').date()
+    size = float(request.POST['size'])
     description = request.POST['description']
 
     t = Transaction.objects.get(user=user, id=transaction_id)
+    old_date = t.date
     t.date = date
     t.size = size
     t.description = description
+
+    transactions_to_update = Transaction.objects.filter(user=user, date__gt=min(old_date, t.date), date__lt=max(old_date, t.date))
+    if t.date < old_date:
+        for t_ in transactions_to_update:
+            t_.closing_balance += t.size
+            t.closing_balance -= t_.size
+            t_.save()
+    else:
+        for t_ in transactions_to_update:
+            t_.closing_balance -= t.size
+            t.closing_balance += t_.size
+            t_.save()
     t.save()
     
     return redirect('home')
