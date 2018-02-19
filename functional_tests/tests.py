@@ -278,3 +278,27 @@ class TestTransactionCreation(TestLogin):
         self.assertEqual(t.size, 500)
         self.assertEqual(t.description, 'dividends received')
         self.assertEqual(t.balance, '£2,500.00')
+
+
+class TestTransactionModification(TestLogin):
+
+    def create_transaction(self, date, size, description):
+        homepage = HomePage(self.driver)        
+        f = homepage.transaction_form
+        f.date_input.send_keys('{:02d}{:02d}{}'.format(date.day, date.month, date.year))
+        f.transaction_size_input.send_keys(size)
+        f.description_input.send_keys(description)
+        f.submit_button.click()
+
+    def test(self):
+
+        today = datetime.date.today()
+        yesterday = today - datetime.timedelta(days=1)
+        tomorrow = today + datetime.timedelta(days=1)
+
+        self.create_transaction(yesterday, 1, 'a')
+        self.create_transaction(today, 2, 'b')
+        self.create_transaction(tomorrow, 3, 'c')
+
+        transactions = TransactionList(self.driver).get_transactions()
+        print(transactions)
