@@ -57,7 +57,10 @@ class TransactionList:
         self.closing_balance_header = self.element.find_element_by_id('closing-balance-header')
 
     def get_transactions(self):
-        return self.element.find_elements_by_css_selector('.transaction')
+        transactions = []
+        for e in self.element.find_elements_by_css_selector('.transaction'):
+            transactions.append(Transaction(e))
+        return transactions
 
 class BalanceChart:
 
@@ -68,6 +71,51 @@ class BalanceChart:
         self.y_axis = self.canvas.find_element_by_id('y-axis')
         self.plot_area = self.canvas.find_element_by_id('plot-area')
 
+class Transaction:
+
+    def __init__(self, element):
+        self.element = element
+        self.date_input = self.element.find_element_by_css_selector('.date-input')
+        self.size_input = self.element.find_element_by_css_selector('.transaction-size-input')
+        self.description_input = self.element.find_element_by_css_selector('.description-input')
+        self.balance_element = self.element.find_element_by_css_selector('.transaction-balance')
+        self.id = self.element.find_element_by_css_selector('.id')
+        self.save_button = self.element.find_element_by_css_selector('.save-transaction-button')
+        
+    @property
+    def date(self):
+        return datetime.datetime.strptime(self.date_input.get_attribute('value'), '%Y-%m-%d').date()
+
+    @date.setter
+    def date(self, date):
+        keys = '{:02d}{:02d}{}'.format(date.day, date.month, date.year)        
+        self.date_input.send_keys(keys)
+
+    @property
+    def size(self):
+        return float(self.size_input.get_attribute('value'))
+
+    @size.setter
+    def size(self, size):
+        self.size_input.clear()
+        self.size_input.send_keys(size)
+
+    @property
+    def description(self):
+        return self.description_input.get_attribute('value')
+
+    @description.setter
+    def description(self, description):
+        self.description_input.clear()
+        self.description_input.send_keys(description)
+
+    @property
+    def balance(self):
+        return self.balance_element.text
+
+    def save(self):
+        self.save_button.click()
+        
 class TestRegistration(StaticLiveServerTestCase):
 
     def setUp(self):
@@ -124,14 +172,10 @@ class TestTransactionCreation(TestLogin):
         self.assertEqual(len(transactions), 1)
         
         t = transactions[0]
-        cols = t.find_elements_by_css_selector('td')
-        date_cell = cols[0].find_element_by_css_selector('input')
-        size_cell = cols[1].find_element_by_css_selector('input')
-        description_cell = cols[2].find_element_by_css_selector('input')
-        self.assertEqual(date_cell.get_attribute('value'), today.isoformat())
-        self.assertEqual(float(size_cell.get_attribute('value')), 1000)
-        self.assertEqual(description_cell.get_attribute('value'), 'pay day')
-        self.assertEqual(cols[3].text, '£1,000.00')
+        self.assertEqual(t.date, today)
+        self.assertEqual(t.size, 1000)
+        self.assertEqual(t.description, 'pay day')
+        self.assertEqual(t.balance, '£1,000.00')
 
         balance_chart = homepage.balance_chart
         bars = balance_chart.plot_area.find_elements_by_css_selector('.bar')
@@ -161,32 +205,22 @@ class TestTransactionCreation(TestLogin):
         self.assertEqual(len(transactions), 2)
 
         t = transactions[0]
-        cols = t.find_elements_by_css_selector('td')
-        date_cell = cols[0].find_element_by_css_selector('input')
-        size_cell = cols[1].find_element_by_css_selector('input')
-        description_cell = cols[2].find_element_by_css_selector('input')
-        self.assertEqual(date_cell.get_attribute('value'), yesterday.isoformat())
-        self.assertEqual(float(size_cell.get_attribute('value')), 500)
-        self.assertEqual(description_cell.get_attribute('value'), 'dividends received')
-        self.assertEqual(cols[3].text, '£500.00')
+        self.assertEqual(t.date, yesterday)
+        self.assertEqual(t.size, 500)
+        self.assertEqual(t.description, 'dividends received')
+        self.assertEqual(t.balance, '£500.00')
         
         t = transactions[1]
-        cols = t.find_elements_by_css_selector('td')
-        date_cell = cols[0].find_element_by_css_selector('input')
-        size_cell = cols[1].find_element_by_css_selector('input')
-        description_cell = cols[2].find_element_by_css_selector('input')
-        self.assertEqual(date_cell.get_attribute('value'), today.isoformat())
-        self.assertEqual(float(size_cell.get_attribute('value')), 1000)
-        self.assertEqual(description_cell.get_attribute('value'), 'pay day')
-        self.assertEqual(cols[3].text, '£1,500.00')
+        self.assertEqual(t.date, today)
+        self.assertEqual(t.size, 1000)
+        self.assertEqual(t.description, 'pay day')
+        self.assertEqual(t.balance, '£1,500.00')
         
         # test modifying existing transactions
         t = transactions[1]
         tomorrow = today + datetime.timedelta(days=1)
-        date_cell = t.find_element_by_css_selector('td.transaction-date input')
-        date_cell.send_keys('{:02d}{:02d}{}'.format(tomorrow.day, tomorrow.month, tomorrow.year))
-        save_transaction_button = t.find_element_by_css_selector('.save-transaction-button')
-        save_transaction_button.click()
+        t.date = tomorrow
+        t.save()
 
         homepage = HomePage(self.driver)
         transaction_list = homepage.transaction_list
@@ -194,25 +228,17 @@ class TestTransactionCreation(TestLogin):
         self.assertEqual(len(transactions), 2)
         
         t = transactions[1]
-        cols = t.find_elements_by_css_selector('td')
-        date_cell = cols[0].find_element_by_css_selector('input')
-        size_cell = cols[1].find_element_by_css_selector('input')
-        description_cell = cols[2].find_element_by_css_selector('input')
-        self.assertEqual(date_cell.get_attribute('value'), tomorrow.isoformat())
-        self.assertEqual(float(size_cell.get_attribute('value')), 1000)
-        self.assertEqual(description_cell.get_attribute('value'), 'pay day')
-        self.assertEqual(cols[3].text, '£1,500.00')
+        self.assertEqual(t.date, tomorrow)
+        self.assertEqual(t.size, 1000)
+        self.assertEqual(t.description, 'pay day')
+        self.assertEqual(t.balance, '£1,500.00')
         
-        # add test for when transaction gets updated to after a previous transaction, will need to recalculate the closing balance
+        # add test for when transaction gets updated to before a previous transaction, will need to recalculate the closing balance
         # set the latter transaction to happening before the first
         t = transactions[1]
         day_before_yesterday = yesterday - datetime.timedelta(days=1)
-        date_cell = t.find_element_by_css_selector('td.transaction-date input')
-        date_cell.send_keys('{:02d}{:02d}{}'.format(day_before_yesterday.day,
-                                                    day_before_yesterday.month,
-                                                    day_before_yesterday.year))
-        save_transaction_button = t.find_element_by_css_selector('.save-transaction-button')
-        save_transaction_button.click()
+        t.date = day_before_yesterday
+        t.save()
         
         homepage = HomePage(self.driver)
         transaction_list = homepage.transaction_list
@@ -220,33 +246,21 @@ class TestTransactionCreation(TestLogin):
         self.assertEqual(len(transactions), 2)
         
         t = transactions[0]
-        cols = t.find_elements_by_css_selector('td')
-        date_cell = cols[0].find_element_by_css_selector('input')
-        size_cell = cols[1].find_element_by_css_selector('input')
-        description_cell = cols[2].find_element_by_css_selector('input')
-        self.assertEqual(date_cell.get_attribute('value'), day_before_yesterday.isoformat())
-        self.assertEqual(float(size_cell.get_attribute('value')), 1000)
-        self.assertEqual(description_cell.get_attribute('value'), 'pay day')
-        self.assertEqual(cols[3].text, '£1,000.00')
+        self.assertEqual(t.date, day_before_yesterday)
+        self.assertEqual(t.size, 1000)
+        self.assertEqual(t.description, 'pay day')
+        self.assertEqual(t.balance, '£1,000.00')
         
         t = transactions[1]
-        cols = t.find_elements_by_css_selector('td')
-        date_cell = cols[0].find_element_by_css_selector('input')
-        size_cell = cols[1].find_element_by_css_selector('input')
-        description_cell = cols[2].find_element_by_css_selector('input')
-        self.assertEqual(date_cell.get_attribute('value'), yesterday.isoformat())
-        self.assertEqual(float(size_cell.get_attribute('value')), 500)
-        self.assertEqual(description_cell.get_attribute('value'), 'dividends received')
-        self.assertEqual(cols[3].text, '£1,500.00')
+        self.assertEqual(t.date, yesterday)
+        self.assertEqual(t.size, 500)
+        self.assertEqual(t.description, 'dividends received')
+        self.assertEqual(t.balance, '£1,500.00')
         
         # change transaction size
         t = transactions[0]
-        cols = t.find_elements_by_css_selector('td')
-        size_cell = cols[1].find_element_by_css_selector('input')
-        size_cell.clear()
-        size_cell.send_keys(2000)
-        save_transaction_button = t.find_element_by_css_selector('.save-transaction-button')
-        save_transaction_button.click()
+        t.size = 2000
+        t.save()
         
         homepage = HomePage(self.driver)
         transaction_list = homepage.transaction_list
@@ -254,21 +268,13 @@ class TestTransactionCreation(TestLogin):
         self.assertEqual(len(transactions), 2)
         
         t = transactions[0]
-        cols = t.find_elements_by_css_selector('td')
-        date_cell = cols[0].find_element_by_css_selector('input')
-        size_cell = cols[1].find_element_by_css_selector('input')
-        description_cell = cols[2].find_element_by_css_selector('input')
-        self.assertEqual(date_cell.get_attribute('value'), day_before_yesterday.isoformat())
-        self.assertEqual(float(size_cell.get_attribute('value')), 2000)
-        self.assertEqual(description_cell.get_attribute('value'), 'pay day')
-        self.assertEqual(cols[3].text, '£2,000.00')
+        self.assertEqual(t.date, day_before_yesterday)
+        self.assertEqual(t.size, 2000)
+        self.assertEqual(t.description, 'pay day')
+        self.assertEqual(t.balance, '£2,000.00')
         
         t = transactions[1]
-        cols = t.find_elements_by_css_selector('td')
-        date_cell = cols[0].find_element_by_css_selector('input')
-        size_cell = cols[1].find_element_by_css_selector('input')
-        description_cell = cols[2].find_element_by_css_selector('input')
-        self.assertEqual(date_cell.get_attribute('value'), yesterday.isoformat())
-        self.assertEqual(float(size_cell.get_attribute('value')), 500)
-        self.assertEqual(description_cell.get_attribute('value'), 'dividends received')
-        self.assertEqual(cols[3].text, '£2,500.00')
+        self.assertEqual(t.date, yesterday)
+        self.assertEqual(t.size, 500)
+        self.assertEqual(t.description, 'dividends received')
+        self.assertEqual(t.balance, '£2,500.00')
