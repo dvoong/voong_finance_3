@@ -27,6 +27,12 @@
       <input id="submit-button" type="submit" value="submit">
     </form>
     <table id="transaction-list">
+      <tr class="table-header">
+	<th id="date-header">Date</th>
+	<th id="transaction-size-header">Transaction Size</th>
+	<th id="description-header">Description</th>
+	<th id="closing-balance-header">Balance</th>
+      </tr>
       {% for t in transactions %}
       <tr class="transaction">
 	<form id="transaction-update-form" action="/update-transaction" method="post">{% csrf_token %}

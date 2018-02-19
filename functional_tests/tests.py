@@ -51,6 +51,10 @@ class TransactionList:
     def __init__(self, driver):
 
         self.element = driver.find_element_by_id('transaction-list')
+        self.date_header = self.element.find_element_by_id('date-header')
+        self.transaction_size_header = self.element.find_element_by_id('transaction-size-header')
+        self.description_header = self.element.find_element_by_id('description-header')
+        self.closing_balance_header = self.element.find_element_by_id('closing-balance-header')
 
     def get_transactions(self):
         return self.element.find_elements_by_css_selector('.transaction')
