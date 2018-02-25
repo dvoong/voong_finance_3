@@ -114,8 +114,8 @@ class TestHome(TestCase):
         today = datetime.date.today()
         user1 = User.objects.create_user(username='voong.david@gmail.com', password='password')
         user2 = User.objects.create_user(username='voong.hannah@gmail.com', password='password')
-        Transaction.objects.create(user=user1, date=today, size=10, description='description', closing_balance=10)
-        Transaction.objects.create(user=user2, date=today, size=100, description='description2', closing_balance=100)
+        Transaction.objects.create(user=user1, date=today, size=10, description='description', closing_balance=10, index=0)
+        Transaction.objects.create(user=user2, date=today, size=100, description='description2', closing_balance=100, index=0)
         self.client.login(username='voong.david@gmail.com', password='password')
         response = self.client.get('/home')
         self.assertEqual(list(response.context['transactions']), list(Transaction.objects.filter(user=user1)))
@@ -148,10 +148,10 @@ class TestCreateTransaction(TestCase):
         self.assertEqual(t.date, datetime.date(2018, 1, 1))
         self.assertEqual(t.size, 1000)
         self.assertEqual(t.description, 'pay day')
-
+        self.assertEqual(t.index, 0)
 
     def test_create_past_transaction(self):
-        Transaction.objects.create(date=datetime.date(2018, 1, 2), size=100, description='dividends received', user=self.user, closing_balance=100)
+        Transaction.objects.create(date=datetime.date(2018, 1, 2), size=100, description='dividends received', user=self.user, closing_balance=100, index=0)
         self.client.post('/create-transaction', {'date': '2018-01-01', 'size': 1000, 'description': 'pay day'})
         transactions = Transaction.objects.all().order_by('date')
         self.assertEqual(len(transactions), 2)
@@ -161,12 +161,34 @@ class TestCreateTransaction(TestCase):
         self.assertEqual(t.size, 1000)
         self.assertEqual(t.description, 'pay day')
         self.assertEqual(t.closing_balance, 1000)
+        self.assertEqual(t.index, 0)
 
         t = transactions[1]
         self.assertEqual(t.date, datetime.date(2018, 1, 2))
         self.assertEqual(t.size, 100)
         self.assertEqual(t.description, 'dividends received')
         self.assertEqual(t.closing_balance, 1100)
+        self.assertEqual(t.index, 0)
+
+    def test_create_multiple_transactions_on_the_same_date(self):
+        Transaction.objects.create(date=datetime.date(2018, 1, 2), size=100, description='dividends received', user=self.user, closing_balance=100, index=0)
+        self.client.post('/create-transaction', {'date': '2018-01-02', 'size': 1000, 'description': 'pay day'})
+        transactions = Transaction.objects.all().order_by('date', 'index')
+        self.assertEqual(len(transactions), 2)
+
+        t = transactions[0]
+        self.assertEqual(t.date, datetime.date(2018, 1, 2))
+        self.assertEqual(t.size, 100)
+        self.assertEqual(t.description, 'dividends received')
+        self.assertEqual(t.closing_balance, 100)
+        self.assertEqual(t.index, 0)
+
+        t = transactions[1]
+        self.assertEqual(t.date, datetime.date(2018, 1, 2))
+        self.assertEqual(t.size, 1000)
+        self.assertEqual(t.description, 'pay day')
+        self.assertEqual(t.closing_balance, 1100)
+        self.assertEqual(t.index, 1)
                 
 
 class TestTransactionUpdate(TestCase):
@@ -195,9 +217,9 @@ class TestTransactionUpdate(TestCase):
         self.assertEqual(t.id, transaction_id)
 
     def test_recalculates_closing_balance(self):
-        a = Transaction.objects.create(user=self.user, date='2018-01-01', size=1, description='a', id=1, closing_balance=1)
-        b = Transaction.objects.create(user=self.user, date='2018-01-02', size=10, description='b', id=2, closing_balance=11)
-        c = Transaction.objects.create(user=self.user, date='2018-01-03', size=100, description='c', id=3, closing_balance=111)
+        a = Transaction.objects.create(user=self.user, date='2018-01-01', size=1, description='a', id=1, closing_balance=1, index=0)
+        b = Transaction.objects.create(user=self.user, date='2018-01-02', size=10, description='b', id=2, closing_balance=11, index=1)
+        c = Transaction.objects.create(user=self.user, date='2018-01-03', size=100, description='c', id=3, closing_balance=111, index=2)
         self.client.post('/update-transaction', {'date': '2017-12-31', 'size': '10.00', 'description': 'b', 'id': str(2)})
         a = Transaction.objects.get(pk=1)
         b = Transaction.objects.get(pk=2)
@@ -208,9 +230,9 @@ class TestTransactionUpdate(TestCase):
         self.assertEqual(c.closing_balance, 111)
 
     def test_recalculates_closing_balance_date_and_size_change(self):
-        a = Transaction.objects.create(user=self.user, date='2018-01-01', size=1, description='a', id=1, closing_balance=1)
-        b = Transaction.objects.create(user=self.user, date='2018-01-02', size=10, description='b', id=2, closing_balance=11)
-        c = Transaction.objects.create(user=self.user, date='2018-01-03', size=100, description='c', id=3, closing_balance=111)
+        a = Transaction.objects.create(user=self.user, date='2018-01-01', size=1, description='a', id=1, closing_balance=1, index=0)
+        b = Transaction.objects.create(user=self.user, date='2018-01-02', size=10, description='b', id=2, closing_balance=11, index=1)
+        c = Transaction.objects.create(user=self.user, date='2018-01-03', size=100, description='c', id=3, closing_balance=111, index=2)
         self.client.post('/update-transaction', {'date': '2017-12-31', 'size': '20.00', 'description': 'b', 'id': str(2)})
         a = Transaction.objects.get(pk=1)
         b = Transaction.objects.get(pk=2)
@@ -221,6 +243,15 @@ class TestTransactionUpdate(TestCase):
         self.assertEqual(a.closing_balance, 21)
         self.assertEqual(c.closing_balance, 121)
 
-        
-
+    def test_move_transaction_to_a_date_with_another_transaction(self):
+        a = Transaction.objects.create(user=self.user, date='2018-01-01', size=1, description='a', id=1, closing_balance=1, index=0)
+        b = Transaction.objects.create(user=self.user, date='2018-01-02', size=10, description='b', id=2, closing_balance=11, index=0)
+        self.client.post('/update-transaction', {'date': '2018-01-01', 'size': '10.00', 'description': 'b', 'id': str(2)})
+        a = Transaction.objects.get(pk=1)
+        self.assertEqual(a.index, 0)
+        b = Transaction.objects.get(pk=2)
+        self.assertEqual(b.date, datetime.date(2018, 1, 1))
+        self.assertEqual(b.size, 10)
+        self.assertEqual(b.closing_balance, 11)
+        self.assertEqual(b.index, 1)
         

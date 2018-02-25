@@ -295,10 +295,62 @@ class TestTransactionModification(TestLogin):
         today = datetime.date.today()
         yesterday = today - datetime.timedelta(days=1)
         tomorrow = today + datetime.timedelta(days=1)
+        day_before_yesterday = yesterday - datetime.timedelta(days=1)
 
         self.create_transaction(yesterday, 1, 'a')
         self.create_transaction(today, 2, 'b')
         self.create_transaction(tomorrow, 3, 'c')
 
-        transactions = TransactionList(self.driver).get_transactions()
-        print(transactions)
+        homepage = HomePage(self.driver)
+        transaction_list = homepage.transaction_list
+        transactions = transaction_list.get_transactions()
+
+        t = transactions[0]
+        self.assertEqual(t.description, 'a')
+        self.assertEqual(t.balance, '£1.00')
+
+        t = transactions[1]
+        self.assertEqual(t.description, 'b')
+        self.assertEqual(t.balance, '£3.00')
+        
+        t = transactions[2]
+        self.assertEqual(t.description, 'c')
+        self.assertEqual(t.balance, '£6.00')
+
+        t.date = yesterday
+        t.save()
+
+        homepage = HomePage(self.driver)
+        transaction_list = homepage.transaction_list
+        transactions = transaction_list.get_transactions()
+        t = transactions[1]
+
+        self.assertEqual(t.description, 'c')
+        self.assertEqual(t.date, yesterday)
+        self.assertEqual(t.size, 3)
+        self.assertEqual(t.balance, '£4.00')
+
+        # t.date = day_before_yesterday
+        # t.save()
+
+        # homepage = HomePage(self.driver)
+        # transaction_list = homepage.transaction_list
+        # transactions = transaction_list.get_transactions()
+
+        # t = transactions[0]
+        # self.assertEqual(t.description, 'c')
+        # self.assertEqual(t.date, day_before_yesterday)
+        # self.assertEqual(t.size, 3)
+        # self.assertEqual(t.balance, '£3.00')
+
+        # t = transactions[1]
+        # self.assertEqual(t.description, 'a')
+        # self.assertEqual(t.date, yesterday)
+        # self.assertEqual(t.size, 1)
+        # self.assertEqual(t.balance, '£4.00')
+
+        # t = transactions[0]
+        # self.assertEqual(t.description, 'b')
+        # self.assertEqual(t.date, today)
+        # self.assertEqual(t.size, 2)
+        # self.assertEqual(t.balance, '£6.00')

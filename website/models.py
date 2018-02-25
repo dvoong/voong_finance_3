@@ -9,3 +9,4 @@ class Transaction(models.Model):
     description = models.TextField()
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     closing_balance = models.FloatField()
+    index = models.IntegerField()

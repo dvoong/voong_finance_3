@@ -68,8 +68,9 @@ def create_transaction(request):
     date = request.POST['date']
     size = float(request.POST['size'])
     description = request.POST['description']
+    index = len(Transaction.objects.filter(user=request.user, date=date))
     try:
-        last_transaction = Transaction.objects.filter(user=request.user, date__lt=date).latest('date')
+        last_transaction = Transaction.objects.filter(user=request.user, date__lte=date).latest('date', 'index')
         closing_balance = last_transaction.closing_balance + size
     except Transaction.DoesNotExist:
         closing_balance = size
@@ -79,7 +80,8 @@ def create_transaction(request):
         size=size,
         description=description,
         user=request.user,
-        closing_balance=closing_balance
+        closing_balance=closing_balance,
+        index=index
     )
 
     # update future transactions
@@ -99,20 +101,29 @@ def update_transaction(request):
     t = Transaction.objects.get(user=user, id=transaction_id)
     old_date = t.date
     old_size = t.size
+    old_index = t.index
 
     # update transaction
+    index = len(Transaction.objects.filter(user=user, date=date))
     t.date = date
     t.size = size
     t.description = description
+    t.index = index
 
     # update transactions between old and new dates (assuming transaction size has not changed)
-    transactions_to_update = Transaction.objects.filter(user=user, date__gt=min(old_date, t.date), date__lt=max(old_date, t.date))
-    if t.date < old_date:
+    if t.date < old_date: # moved back in time
+        transactions_to_update = Transaction.objects.filter(user=user, date__gt=t.date, date__lt=old_date).exclude(id=transaction_id)
+        transactions_to_update_2 = Transaction.objects.filter(user=user, date=old_date, index__lt=old_index).exclude(id=transaction_id)
+        transactions_to_update = list(transactions_to_update) + list(transactions_to_update_2)
         for t_ in transactions_to_update:
             t_.closing_balance += old_size
             t.closing_balance -= t_.size
             t_.save()
-    else:
+
+    else: # moved forward in time
+        transactions_to_update = Transaction.objects.filter(user=user, date__gt=old_date, date__lte=t.date)
+        transactions_to_update_2 = Transaction.objects.filter(user=user, date=old_date, index__gt=old_index)
+        transactions_to_update = list(transactions_to_update) + list(transactions_to_update_2)
         for t_ in transactions_to_update:
             t_.closing_balance -= old_size
             t.closing_balance += t_.size
