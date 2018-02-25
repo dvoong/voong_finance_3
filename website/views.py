@@ -140,3 +140,29 @@ def update_transaction(request):
     t.save()
     
     return redirect('home')
+
+def modify_transaction(request):
+    if request.POST['action'] == 'update':
+        return update_transaction(request)
+    elif request.POST['action'] == 'delete':
+        return delete_transaction(request)
+
+def delete_transaction(request):
+    user = request.user
+    transaction_id = int(request.POST['id'])
+    date = datetime.datetime.strptime(request.POST['date'], '%Y-%m-%d').date()
+    size = float(request.POST['size'])
+    description = request.POST['description']
+
+    t = Transaction.objects.get(user=user, id=transaction_id)
+
+    from django.db.models import Q
+
+    transactions_to_update = Transaction.objects.filter(Q(date__gt=t.date) | Q(date=t.date, index__gt=t.index), user=user)
+    for t_ in transactions_to_update:
+        t_.closing_balance -= t.size
+        t_.save()
+
+    t.delete()
+
+    return redirect('home')

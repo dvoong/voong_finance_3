@@ -35,12 +35,13 @@
       </tr>
       {% for t in transactions %}
       <tr class="transaction">
-	<form id="transaction-update-form" action="/update-transaction" method="post">{% csrf_token %}
+	<form id="transaction-modify-form" action="/modify-transaction" method="post">{% csrf_token %}
 	  <td class="transaction-date"><input class="date-input" type="date" name="date" value="{{t.date|date:'Y-m-d'}}"></td>
 	  <td class="transaction-size"><input class="transaction-size-input" type="number" step="0.01" name="size" value="{{t.size}}"></td>
 	  <td class="transaction-description"><input class="description-input" name="description" value="{{t.description}}"></td>
 	  <td class="transaction-balance">{{t.closing_balance|to_currency}}</td>
-	  <td><input class="save-transaction-button" type="submit" value="save"></td>
+	  <td><input class="save-transaction-button" type="submit" name="action" value="update"></td>
+	  <td><input class="delete-transaction-button" type="submit" name="action" value="delete"></td>
 	  <input class="id" name="id" type="hidden" value="{{t.id}}">
 	</form>
       </tr>

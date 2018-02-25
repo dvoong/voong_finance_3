@@ -23,6 +23,6 @@ urlpatterns = [
     path('register', views.register, name='register'),
     path('login', views.login_view, name='login'),
     path('create-transaction', views.create_transaction, name='create_transaction'),
-    path('update-transaction', views.update_transaction, name='update_transaction'),
+    path('modify-transaction', views.modify_transaction, name='modify_transaction'),
     path('', views.index),
 ]

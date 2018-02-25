@@ -41,6 +41,12 @@ class TransactionForm:
         self.description_input = self.element.find_element_by_id('description-input')
         self.submit_button = self.element.find_element_by_id('submit-button')
 
+    def create_transaction(self, date, size, description):
+        self.date_input.send_keys('{:02d}{:02d}{}'.format(date.day, date.month, date.year))
+        self.transaction_size_input.send_keys(size)
+        self.description_input.send_keys(description)
+        self.submit_button.click()
+
 class Menu:
 
     def __init__(self, driver):
@@ -81,6 +87,7 @@ class Transaction:
         self.balance_element = self.element.find_element_by_css_selector('.transaction-balance')
         self.id = self.element.find_element_by_css_selector('.id')
         self.save_button = self.element.find_element_by_css_selector('.save-transaction-button')
+        self.delete_button = self.element.find_element_by_css_selector('.delete-transaction-button')
         
     @property
     def date(self):
@@ -115,6 +122,9 @@ class Transaction:
 
     def save(self):
         self.save_button.click()
+
+    def delete(self):
+        self.delete_button.click()
         
 class TestRegistration(StaticLiveServerTestCase):
 
@@ -154,21 +164,28 @@ class TestLogin(StaticLiveServerTestCase):
     def test(self):
         homepage = HomePage(self.driver)
 
-class TestTransactionCreation(TestLogin):
+class TransactionalTest(TestLogin):
+
+    def create_transaction(self, date, size, description):
+        homepage = HomePage(self.driver)        
+        f = homepage.transaction_form
+        f.create_transaction(date, size, description)
+
+    def get_transactions(self):
+        homepage = HomePage(self.driver)
+        transaction_list = homepage.transaction_list
+        transactions = transaction_list.get_transactions()
+        return transactions
+        
+class TestTransactionCreation(TransactionalTest):
 
     def test(self):
         homepage = HomePage(self.driver)
         today = datetime.date.today()
 
-        f = homepage.transaction_form
-        f.date_input.send_keys('{:02d}{:02d}{}'.format(today.day, today.month, today.year))
-        f.transaction_size_input.send_keys('1000')
-        f.description_input.send_keys('pay day')
-        f.submit_button.click()
+        self.create_transaction(today, 1000, 'pay day')
 
-        homepage = HomePage(self.driver)
-        transaction_list = homepage.transaction_list
-        transactions = transaction_list.get_transactions()
+        transactions = self.get_transactions()
         self.assertEqual(len(transactions), 1)
         
         t = transactions[0]
@@ -177,6 +194,7 @@ class TestTransactionCreation(TestLogin):
         self.assertEqual(t.description, 'pay day')
         self.assertEqual(t.balance, '£1,000.00')
 
+        homepage = HomePage(self.driver)
         balance_chart = homepage.balance_chart
         bars = balance_chart.plot_area.find_elements_by_css_selector('.bar')
         self.assertEqual(len(bars), 29)
@@ -192,16 +210,10 @@ class TestTransactionCreation(TestLogin):
 
         ## creates another transaction before the first transaction - check balances calculted properly
 
-        f = homepage.transaction_form
         yesterday = today - datetime.timedelta(days=1)
-        f.date_input.send_keys('{:02d}{:02d}{}'.format(yesterday.day, yesterday.month, yesterday.year))
-        f.transaction_size_input.send_keys('500')
-        f.description_input.send_keys('dividends received')
-        f.submit_button.click()
+        self.create_transaction(yesterday, 500, 'dividends received')
 
-        homepage = HomePage(self.driver)
-        transaction_list = homepage.transaction_list
-        transactions = transaction_list.get_transactions()
+        transactions = self.get_transactions()
         self.assertEqual(len(transactions), 2)
 
         t = transactions[0]
@@ -222,9 +234,7 @@ class TestTransactionCreation(TestLogin):
         t.date = tomorrow
         t.save()
 
-        homepage = HomePage(self.driver)
-        transaction_list = homepage.transaction_list
-        transactions = transaction_list.get_transactions()
+        transactions = self.get_transactions()
         self.assertEqual(len(transactions), 2)
         
         t = transactions[1]
@@ -262,9 +272,7 @@ class TestTransactionCreation(TestLogin):
         t.size = 2000
         t.save()
         
-        homepage = HomePage(self.driver)
-        transaction_list = homepage.transaction_list
-        transactions = transaction_list.get_transactions()
+        transactions = self.get_transactions()
         self.assertEqual(len(transactions), 2)
         
         t = transactions[0]
@@ -280,16 +288,8 @@ class TestTransactionCreation(TestLogin):
         self.assertEqual(t.balance, '£2,500.00')
 
 
-class TestTransactionModification(TestLogin):
-
-    def create_transaction(self, date, size, description):
-        homepage = HomePage(self.driver)        
-        f = homepage.transaction_form
-        f.date_input.send_keys('{:02d}{:02d}{}'.format(date.day, date.month, date.year))
-        f.transaction_size_input.send_keys(size)
-        f.description_input.send_keys(description)
-        f.submit_button.click()
-
+class TestTransactionModification(TransactionalTest):
+        
     def test(self):
 
         today = datetime.date.today()
@@ -301,9 +301,7 @@ class TestTransactionModification(TestLogin):
         self.create_transaction(today, 2, 'b')
         self.create_transaction(tomorrow, 3, 'c')
 
-        homepage = HomePage(self.driver)
-        transaction_list = homepage.transaction_list
-        transactions = transaction_list.get_transactions()
+        transactions = self.get_transactions()
 
         t = transactions[0]
         self.assertEqual(t.description, 'a')
@@ -320,9 +318,7 @@ class TestTransactionModification(TestLogin):
         t.date = yesterday
         t.save()
 
-        homepage = HomePage(self.driver)
-        transaction_list = homepage.transaction_list
-        transactions = transaction_list.get_transactions()
+        transactions = self.get_transactions()
         t = transactions[1]
 
         self.assertEqual(t.description, 'c')
@@ -330,27 +326,57 @@ class TestTransactionModification(TestLogin):
         self.assertEqual(t.size, 3)
         self.assertEqual(t.balance, '£4.00')
 
-        # t.date = day_before_yesterday
-        # t.save()
+        t.date = day_before_yesterday
+        t.save()
 
-        # homepage = HomePage(self.driver)
-        # transaction_list = homepage.transaction_list
-        # transactions = transaction_list.get_transactions()
+        transactions = self.get_transactions()
+        
+        t = transactions[0]
+        self.assertEqual(t.description, 'c')
+        self.assertEqual(t.date, day_before_yesterday)
+        self.assertEqual(t.size, 3)
+        self.assertEqual(t.balance, '£3.00')
 
-        # t = transactions[0]
-        # self.assertEqual(t.description, 'c')
-        # self.assertEqual(t.date, day_before_yesterday)
-        # self.assertEqual(t.size, 3)
-        # self.assertEqual(t.balance, '£3.00')
+        t = transactions[1]
+        self.assertEqual(t.description, 'a')
+        self.assertEqual(t.date, yesterday)
+        self.assertEqual(t.size, 1)
+        self.assertEqual(t.balance, '£4.00')
 
-        # t = transactions[1]
-        # self.assertEqual(t.description, 'a')
-        # self.assertEqual(t.date, yesterday)
-        # self.assertEqual(t.size, 1)
-        # self.assertEqual(t.balance, '£4.00')
+        t = transactions[2]
+        self.assertEqual(t.description, 'b')
+        self.assertEqual(t.date, today)
+        self.assertEqual(t.size, 2)
+        self.assertEqual(t.balance, '£6.00')
 
-        # t = transactions[0]
-        # self.assertEqual(t.description, 'b')
-        # self.assertEqual(t.date, today)
-        # self.assertEqual(t.size, 2)
-        # self.assertEqual(t.balance, '£6.00')
+
+        
+class TestTransactionDeletion(TransactionalTest):
+
+    def test(self):
+
+        today = datetime.date.today()
+        yesterday = today - datetime.timedelta(days=1)
+        tomorrow = today + datetime.timedelta(days=1)
+        day_before_yesterday = yesterday - datetime.timedelta(days=1)
+
+        self.create_transaction(yesterday, 1, 'a')
+        self.create_transaction(today, 2, 'b')
+        self.create_transaction(tomorrow, 3, 'c')
+
+        transactions = self.get_transactions()
+        t = transactions[1]
+        t.delete()
+
+        transactions = self.get_transactions()
+        t = transactions[0]
+        self.assertEqual(t.description, 'a')
+        self.assertEqual(t.date, yesterday)
+        self.assertEqual(t.size, 1)
+        self.assertEqual(t.balance, '£1.00')
+
+        t = transactions[1]
+        self.assertEqual(t.description, 'c')
+        self.assertEqual(t.date, tomorrow)
+        self.assertEqual(t.size, 3)
+        self.assertEqual(t.balance, '£4.00')

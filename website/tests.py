@@ -207,7 +207,7 @@ class TestTransactionUpdate(TestCase):
         self.assertEqual(len(transactions), 1)
         t = transactions[0]
         transaction_id = t.id
-        self.client.post('/update-transaction', {'date': '2018-01-02', 'size': '1000.00', 'description': 'pay day', 'id': str(transaction_id)})
+        self.client.post('/modify-transaction', {'date': '2018-01-02', 'size': '1000.00', 'description': 'pay day', 'id': str(transaction_id), 'action':'update'})
         transactions = Transaction.objects.all()
         self.assertEqual(len(transactions), 1)
         t = transactions[0]
@@ -220,7 +220,7 @@ class TestTransactionUpdate(TestCase):
         a = Transaction.objects.create(user=self.user, date='2018-01-01', size=1, description='a', id=1, closing_balance=1, index=0)
         b = Transaction.objects.create(user=self.user, date='2018-01-02', size=10, description='b', id=2, closing_balance=11, index=1)
         c = Transaction.objects.create(user=self.user, date='2018-01-03', size=100, description='c', id=3, closing_balance=111, index=2)
-        self.client.post('/update-transaction', {'date': '2017-12-31', 'size': '10.00', 'description': 'b', 'id': str(2)})
+        self.client.post('/modify-transaction', {'date': '2017-12-31', 'size': '10.00', 'description': 'b', 'id': str(2), 'action': 'update'})
         a = Transaction.objects.get(pk=1)
         b = Transaction.objects.get(pk=2)
         c = Transaction.objects.get(pk=3)
@@ -233,7 +233,7 @@ class TestTransactionUpdate(TestCase):
         a = Transaction.objects.create(user=self.user, date='2018-01-01', size=1, description='a', id=1, closing_balance=1, index=0)
         b = Transaction.objects.create(user=self.user, date='2018-01-02', size=10, description='b', id=2, closing_balance=11, index=1)
         c = Transaction.objects.create(user=self.user, date='2018-01-03', size=100, description='c', id=3, closing_balance=111, index=2)
-        self.client.post('/update-transaction', {'date': '2017-12-31', 'size': '20.00', 'description': 'b', 'id': str(2)})
+        self.client.post('/modify-transaction', {'date': '2017-12-31', 'size': '20.00', 'description': 'b', 'id': str(2), 'action': 'update'})
         a = Transaction.objects.get(pk=1)
         b = Transaction.objects.get(pk=2)
         c = Transaction.objects.get(pk=3)
@@ -246,7 +246,7 @@ class TestTransactionUpdate(TestCase):
     def test_move_transaction_to_a_date_with_another_transaction(self):
         a = Transaction.objects.create(user=self.user, date='2018-01-01', size=1, description='a', id=1, closing_balance=1, index=0)
         b = Transaction.objects.create(user=self.user, date='2018-01-02', size=10, description='b', id=2, closing_balance=11, index=0)
-        self.client.post('/update-transaction', {'date': '2018-01-01', 'size': '10.00', 'description': 'b', 'id': str(2)})
+        self.client.post('/modify-transaction', {'date': '2018-01-01', 'size': '10.00', 'description': 'b', 'id': str(2), 'action': 'update'})
         a = Transaction.objects.get(pk=1)
         self.assertEqual(a.index, 0)
         b = Transaction.objects.get(pk=2)
