@@ -50,7 +50,7 @@ function draw_y_axis(y_axis, canvas_width, canvas_height, padding){
 	.domain([y_min, y_max])
 	.range([canvas_height - padding.top - padding.bottom, 0]);
 
-    y_axis.call(d3.axisLeft(y_scale))
+    y_axis.call(d3.axisLeft(y_scale).tickFormat(function(t){return '£' + t.toLocaleString()}))
     return y_scale;
 }
 

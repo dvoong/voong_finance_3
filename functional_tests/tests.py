@@ -208,6 +208,13 @@ class TestTransactionCreation(TransactionalTest):
         self.assertEqual(float(bars[0].get_attribute('balance')), 0)
         self.assertEqual(float(bars[-1].get_attribute('balance')), 1000)
 
+        y_ticks = balance_chart.y_axis.text.split('\n')
+        for tick in y_ticks:
+            number_int = int(tick.replace('£', '').replace(',', ''))
+            number_float = float(tick.replace('£', '').replace(',', ''))
+            self.assertTrue(tick.startswith('£'))
+            self.assertEqual(number_int, number_float) # int numbers only
+        
         ## creates another transaction before the first transaction - check balances calculted properly
 
         yesterday = today - datetime.timedelta(days=1)
