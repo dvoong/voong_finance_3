@@ -44,8 +44,8 @@ function draw_y_axis(y_axis, canvas_width, canvas_height, padding){
 
     var balance_min = d3.min(balances, function(d){return d.balance});
     var balance_max = d3.max(balances, function(d){return d.balance});
-    var y_min = 1.1 * balance_min;
-    var y_max = 1.1 * balance_max;
+    var y_min = balance_min > 0 ? 0.9 * balance_min : 1.1 * balance_min;
+    var y_max = balance_max > 0 ? 1.1 * balance_max : 0.9 * balance_max;
     var y_scale = d3.scaleLinear()
 	.domain([y_min, y_max])
 	.range([canvas_height - padding.top - padding.bottom, 0]);
@@ -55,6 +55,18 @@ function draw_y_axis(y_axis, canvas_width, canvas_height, padding){
 }
 
 function draw_bars(plot_area, x_scale, y_scale, canvas_width, canvas_height, padding){
+    var y_reference = null;
+    if(y_scale.domain()[0] < 0 && y_scale.domain()[1] >= 0){
+	// 0 is within the y-axis range, set that as the reference
+	y_reference = y_scale(0);
+    } else if (y_scale.domain()[0] < 0 ) {
+	// y-axis range is only negative, set reference to the top of the chart
+	y_reference = y_scale.range()[1];
+    } else {
+	// y-axis range is only positive, set reference to the bottom of the chart
+	y_reference = y_scale.range()[0];
+    }
+    
     plot_area.selectAll('.bar')
 	.data(balances)
 	.enter()
@@ -67,19 +79,20 @@ function draw_bars(plot_area, x_scale, y_scale, canvas_width, canvas_height, pad
 	    x_lower = x_scale(x_lower);
 	    return padding.left + x_lower
 	})
-	.attr('y', canvas_height - padding.bottom)
+	.attr('y', padding.top + y_reference)
 	.attr('width', 0.9 * (canvas_width - padding.left - padding.right) / balances.length)
 	.attr('date', function(d){return d.date})
 	.attr('balance', function(d){return d.balance})
 	.transition()
 	.attr('y', function(d){
-	    var y_lower = y_scale(d.balance);
-	    return padding.top + y_lower;
+	    if(d.balance >= 0){
+	    	return padding.top + y_scale(d.balance);
+	    } else {
+	    	return padding.top + y_reference;
+	    }
 	})
 	.attr('height', function(d){
-	    var y_lower = y_scale(d.balance);
-	    var y_upper = canvas_height - padding.bottom;
-	    return y_upper - y_lower - padding.top;
+	    return Math.abs(y_scale(d.balance) - y_reference)
 	})
 
 }
