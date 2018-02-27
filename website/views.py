@@ -19,9 +19,11 @@ def index(request):
 def home(request):
     user = request.user
     today = datetime.date.today()
-    start = request.GET.get('start', today - datetime.timedelta(days=14))
-    end = request.GET.get('end', today + datetime.timedelta(days=15))
-    dates = pd.DataFrame(pd.date_range(start, end - datetime.timedelta(days=1)), columns=['date'])
+    # start = request.GET.get('start', today - datetime.timedelta(days=14))
+    # end = request.GET.get('end', today + datetime.timedelta(days=15))
+    start = datetime.datetime.strptime(request.GET['start'], '%Y-%m-%d').date() if 'end' in request.GET else today - datetime.timedelta(days=14)
+    end = datetime.datetime.strptime(request.GET['end'], '%Y-%m-%d').date() if 'end' in request.GET else today + datetime.timedelta(days=14)
+    dates = pd.DataFrame(pd.date_range(start, end), columns=['date'])
     balances = dates
 
     try:

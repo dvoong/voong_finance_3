@@ -30,6 +30,7 @@ class HomePage:
         self.transaction_form = TransactionForm(driver)
         self.menu = Menu(driver)
         self.transaction_list = TransactionList(driver)
+        self.date_selector = DateSelector(driver.find_element_by_id('date-selector'))
 
 class TransactionForm:
 
@@ -76,6 +77,16 @@ class BalanceChart:
         self.x_axis = self.canvas.find_element_by_id('x-axis')
         self.y_axis = self.canvas.find_element_by_id('y-axis')
         self.plot_area = self.canvas.find_element_by_id('plot-area')
+        self.bars = [BalanceBar(element) for element in self.plot_area.find_elements_by_css_selector('.bar')]
+        self.y_ticks = self.y_axis.text.split('\n')
+        self.x_ticks = self.x_axis.text.split('\n')
+
+class BalanceBar:
+
+    def __init__(self, element):
+        self.element = element
+        self.balance = float(self.element.get_attribute('balance'))
+        self.date = datetime.datetime.strptime(self.element.get_attribute('date'), '%Y-%m-%d').date()
 
 class Transaction:
 
@@ -125,6 +136,37 @@ class Transaction:
 
     def delete(self):
         self.delete_button.click()
+
+
+class DateSelector:
+
+    def __init__(self, element):
+        self.element = element
+        self.start_input = self.element.find_element_by_id('start-input')
+        self.end_input = self.element.find_element_by_id('end-input')
+        self.submit_button = self.element.find_element_by_css_selector('input[type="submit"]')
+
+    @property
+    def start(self):
+        return datetime.datetime.strptime(self.start_input.get_attribute('value'), '%Y-%m-%d').date()
+
+    @start.setter
+    def start(self, date):
+        keys = '{:02d}{:02d}{}'.format(date.day, date.month, date.year)        
+        self.start_input.send_keys(keys)
+
+    @property
+    def end(self):
+        return datetime.datetime.strptime(self.end_input.get_attribute('value'), '%Y-%m-%d').date()
+
+    @end.setter
+    def end(self, date):
+        keys = '{:02d}{:02d}{}'.format(date.day, date.month, date.year)        
+        self.end_input.send_keys(keys)
+
+    def submit(self):
+        self.submit_button.click()
+        
         
 class TestRegistration(StaticLiveServerTestCase):
 
@@ -147,6 +189,7 @@ class TestRegistration(StaticLiveServerTestCase):
 
         homepage = HomePage(self.driver)
 
+        
 class TestLogin(StaticLiveServerTestCase):
 
     def setUp(self):
@@ -196,19 +239,19 @@ class TestTransactionCreation(TransactionalTest):
 
         homepage = HomePage(self.driver)
         balance_chart = homepage.balance_chart
-        bars = balance_chart.plot_area.find_elements_by_css_selector('.bar')
+        bars = balance_chart.bars
         self.assertEqual(len(bars), 29)
         
         bar_today = bars[14]
-        self.assertEqual(bar_today.get_attribute('date'), today.isoformat())
-        self.assertEqual(bars[0].get_attribute('date'), (today - datetime.timedelta(days=14)).isoformat())
-        self.assertEqual(bars[-1].get_attribute('date'), (today + datetime.timedelta(days=14)).isoformat())
+        self.assertEqual(bar_today.date, today)
+        self.assertEqual(bars[0].date, today - datetime.timedelta(days=14))
+        self.assertEqual(bars[-1].date, today + datetime.timedelta(days=14))
         
-        self.assertEqual(float(bar_today.get_attribute('balance')), 1000)
-        self.assertEqual(float(bars[0].get_attribute('balance')), 0)
-        self.assertEqual(float(bars[-1].get_attribute('balance')), 1000)
+        self.assertEqual(bar_today.balance, 1000)
+        self.assertEqual(bars[0].balance, 0)
+        self.assertEqual(bars[-1].balance, 1000)
 
-        y_ticks = balance_chart.y_axis.text.split('\n')
+        y_ticks = balance_chart.y_ticks
         for tick in y_ticks:
             number_int = int(tick.replace('£', '').replace(',', ''))
             number_float = float(tick.replace('£', '').replace(',', ''))
@@ -387,3 +430,27 @@ class TestTransactionDeletion(TransactionalTest):
         self.assertEqual(t.date, tomorrow)
         self.assertEqual(t.size, 3)
         self.assertEqual(t.balance, '£4.00')
+
+        
+class TestDateSelection(TransactionalTest):
+
+    def test(self):
+        today = datetime.date.today()
+        last_month = today - datetime.timedelta(days=30)
+
+        self.create_transaction(last_month, 100, 'a')
+        self.create_transaction(today, -50, 'b')
+
+        balance_chart = BalanceChart(self.driver)
+
+        self.assertEqual(balance_chart.bars[0].balance, 100)
+        self.assertEqual(balance_chart.bars[14].balance, 50)
+        
+        date_selector = DateSelector(self.driver)
+
+        date_selector.start = last_month
+        date_selector.end = last_month + datetime.timedelta(days=7)
+        date_selector.submit()
+
+        balance_chart = BalanceChart(self.driver)
+        
