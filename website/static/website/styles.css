@@ -10,3 +10,25 @@
 #plot-area .bar {
     fill: indianred;
 }
+
+form {
+  color: #555;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 10 10 10 10;
+}
+
+form h2{
+    text-align: center;
+}
+
+#transaction-list-container {
+  color: #555;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 10 10 10 10;
+}
+
+div.container {
+    padding-bottom: 100;
+}

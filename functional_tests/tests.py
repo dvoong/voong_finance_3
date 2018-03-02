@@ -453,4 +453,10 @@ class TestDateSelection(TransactionalTest):
         date_selector.submit()
 
         balance_chart = BalanceChart(self.driver)
+
+        self.assertEqual(len(balance_chart.bars), 8)
+        self.assertEqual(balance_chart.bars[0].balance, 100)
+        self.assertEqual(balance_chart.bars[0].date, last_month)
+        self.assertEqual(balance_chart.bars[7].balance, 100)
+        self.assertEqual(balance_chart.bars[7].date, last_month + datetime.timedelta(days=7))
         
