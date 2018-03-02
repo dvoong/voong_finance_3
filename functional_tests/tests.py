@@ -226,6 +226,8 @@ class TestTransactionCreation(TransactionalTest):
         homepage = HomePage(self.driver)
         today = datetime.date.today()
 
+        self.assertEqual(homepage.transaction_form.date_input.get_attribute('value'), today.isoformat())
+
         self.create_transaction(today, 1000, 'pay day')
 
         transactions = self.get_transactions()

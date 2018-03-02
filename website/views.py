@@ -44,7 +44,13 @@ def home(request):
         balances['balance'] += transactions_by_date['cumsum']
     
     balances['date'] = balances['date'].dt.strftime('%Y-%m-%d')
-    template_kwargs = {'transactions': transactions, 'balances': balances.to_dict('records'), 'start': start, 'end': end}
+    template_kwargs = {
+        'transactions': transactions,
+        'balances': balances.to_dict('records'),
+        'start': start,
+        'end': end,
+        'today': datetime.date.today(),
+    }
     return render(request, 'website/home.html', template_kwargs)
 
 def welcome(request):
