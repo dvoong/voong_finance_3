@@ -19,8 +19,6 @@ def index(request):
 def home(request):
     user = request.user
     today = datetime.date.today()
-    # start = request.GET.get('start', today - datetime.timedelta(days=14))
-    # end = request.GET.get('end', today + datetime.timedelta(days=15))
     start = datetime.datetime.strptime(request.GET['start'], '%Y-%m-%d').date() if 'end' in request.GET else today - datetime.timedelta(days=14)
     end = datetime.datetime.strptime(request.GET['end'], '%Y-%m-%d').date() if 'end' in request.GET else today + datetime.timedelta(days=14)
     dates = pd.DataFrame(pd.date_range(start, end), columns=['date'])
@@ -78,6 +76,9 @@ def create_transaction(request):
     size = float(request.POST['size'])
     description = request.POST['description']
     index = len(Transaction.objects.filter(user=request.user, date=date))
+    today = datetime.date.today()
+    start = datetime.datetime.strptime(request.POST['start'], '%Y-%m-%d').date() if 'end' in request.POST else today - datetime.timedelta(days=14)
+    end = datetime.datetime.strptime(request.POST['end'], '%Y-%m-%d').date() if 'end' in request.POST else today + datetime.timedelta(days=14)
     try:
         last_transaction = Transaction.objects.filter(user=request.user, date__lte=date).latest('date', 'index')
         closing_balance = last_transaction.closing_balance + size
@@ -98,7 +99,7 @@ def create_transaction(request):
     for t in transactions:
         t.closing_balance += size
         t.save()
-    return redirect('home')
+    return redirect('/home?start={}&end={}'.format(start, end))
 
 def update_transaction(request):
     user = request.user
