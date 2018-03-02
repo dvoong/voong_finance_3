@@ -447,6 +447,8 @@ class TestDateSelection(TransactionalTest):
         self.assertEqual(balance_chart.bars[14].balance, 50)
         
         date_selector = DateSelector(self.driver)
+        self.assertEqual(date_selector.start, today - datetime.timedelta(days=14))
+        self.assertEqual(date_selector.end, today + datetime.timedelta(days=14))
 
         date_selector.start = last_month
         date_selector.end = last_month + datetime.timedelta(days=7)
