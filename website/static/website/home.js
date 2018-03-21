@@ -83,6 +83,8 @@ function draw_bars(plot_area, x_scale, y_scale, canvas_width, canvas_height, pad
 	.attr('width', 0.9 * (canvas_width - padding.left - padding.right) / balances.length)
 	.attr('date', function(d){return d.date})
 	.attr('balance', function(d){return d.balance})
+	.on('mouseover', tooltips.mouseover_callback)
+	.on('mouseout', tooltips.mouseout_callback)
 	.transition()
 	.attr('y', function(d){
 	    if(d.balance >= 0){
@@ -96,3 +98,27 @@ function draw_bars(plot_area, x_scale, y_scale, canvas_width, canvas_height, pad
 	})
 
 }
+
+function ToolTip(){
+    that = this;
+
+    this.tooltip = d3.select('#tooltip');
+
+    this.mouseover_callback = function(d){
+	that.tooltip.transition()
+            .duration(200)
+            .style("opacity", .9);
+	that.tooltip.style("opacity", 1);
+	that.tooltip.html(d.date + ": £" + d.balance)
+            .style("left", (d3.event.pageX) + "px")
+            .style("top", (d3.event.pageY - 28) + "px");
+    };
+
+    this.mouseout_callback = function(d){
+	that.tooltip.transition()
+            .duration(500)
+            .style("opacity", 0);
+    };
+    
+}
+var tooltips = new ToolTip();
