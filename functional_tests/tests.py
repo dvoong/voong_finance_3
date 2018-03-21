@@ -52,6 +52,7 @@ class Menu:
 
     def __init__(self, driver):
         self.element = driver.find_element_by_id('menu')
+        self.sign_out_button = driver.find_element_by_id('sign-out')
 
 class TransactionList:
 
@@ -463,4 +464,43 @@ class TestDateSelection(TransactionalTest):
         self.assertEqual(balance_chart.bars[0].date, last_month)
         self.assertEqual(balance_chart.bars[7].balance, 100)
         self.assertEqual(balance_chart.bars[7].date, last_month + datetime.timedelta(days=7))
+        
+class TestSignOut(StaticLiveServerTestCase):
+
+    def setUp(self):
+        self.driver = Chrome()
+        
+    def tearDown(self):
+        if hasattr(self, '_outcome'):  # Python 3.4+
+            result = self.defaultTestResult()  # these 2 methods have no side effects
+            self._feedErrorsToResult(result, self._outcome.errors)
+        else:  # Python 3.2 - 3.3 or 3.0 - 3.1 and 2.7
+            result = getattr(self, '_outcomeForDoCleanups', self._resultForDoCleanups)
+        error = self.list2reason(result.errors)
+        failure = self.list2reason(result.failures)
+        ok = not error and not failure
+
+        # demo:   report short info immediately (not important)
+        if not ok:
+            import time
+            time.sleep(30)
+
+    def list2reason(self, exc_list):
+        if exc_list and exc_list[-1][0] is self:
+            return exc_list[-1][1]
+        
+    def test(self):
+        self.driver.get(self.live_server_url)
+
+        registration_form = RegistrationForm(self.driver)
+        registration_form.email_input.send_keys('voong.david@gmail.com')
+        registration_form.password_input.send_keys('password')
+        registration_form.password_check_input.send_keys('password')
+        registration_form.submit_button.click()
+
+        homepage = HomePage(self.driver)
+
+        menu = homepage.menu
+        menu.sign_out_button.click()
+        self.assertEqual(self.driver.title, 'Welcome')
         

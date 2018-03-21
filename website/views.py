@@ -3,7 +3,7 @@ import pandas as pd
 from django.shortcuts import render, redirect
 from django.http import HttpResponse
 from django.contrib.auth.models import User
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import authenticate, login, logout
 from website.models import Transaction
 
 # Create your views here.
@@ -176,3 +176,7 @@ def delete_transaction(request):
     t.delete()
 
     return redirect('home')
+
+def sign_out(request):
+    logout(request)
+    return redirect('welcome')

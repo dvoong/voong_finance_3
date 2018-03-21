@@ -24,5 +24,6 @@ urlpatterns = [
     path('login', views.login_view, name='login'),
     path('create-transaction', views.create_transaction, name='create_transaction'),
     path('modify-transaction', views.modify_transaction, name='modify_transaction'),
+    path('sign-out', views.sign_out, name='sign_out'),
     path('', views.index),
 ]

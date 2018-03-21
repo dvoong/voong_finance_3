@@ -3,6 +3,7 @@ from unittest.mock import patch
 from django.test import TestCase
 from django.urls import resolve
 from django.contrib.auth.models import User
+from django.contrib import auth
 from website.models import Transaction
 
 # Create your tests here.
@@ -255,3 +256,17 @@ class TestTransactionUpdate(TestCase):
         self.assertEqual(b.closing_balance, 11)
         self.assertEqual(b.index, 1)
         
+class TestSignOut(TestCase):
+
+    def test_url_resolution(self):
+        resolver = resolve('/sign-out')
+        self.assertEqual(resolver.view_name, 'sign_out')
+
+    def test(self):
+
+        user = User.objects.create_user(username='voong.david@gmail.com', email='voong.david@gmail.com', password='password')
+        self.client.login(username='voong.david@gmail.com', password='password')
+        response = self.client.get('/sign-out')
+        user = auth.get_user(self.client)
+        self.assertEqual(user.is_authenticated, False)
+        self.assertRedirects(response, '/welcome')
