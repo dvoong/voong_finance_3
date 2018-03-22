@@ -19,7 +19,7 @@ def index(request):
 def home(request):
     user = request.user
     today = datetime.date.today()
-    start = datetime.datetime.strptime(request.GET['start'], '%Y-%m-%d').date() if 'end' in request.GET else today - datetime.timedelta(days=14)
+    start = datetime.datetime.strptime(request.GET['start'], '%Y-%m-%d').date() if 'start' in request.GET else today - datetime.timedelta(days=14)
     end = datetime.datetime.strptime(request.GET['end'], '%Y-%m-%d').date() if 'end' in request.GET else today + datetime.timedelta(days=14)
     dates = pd.DataFrame(pd.date_range(start, end), columns=['date'])
     balances = dates
@@ -48,6 +48,10 @@ def home(request):
         'start': start,
         'end': end,
         'today': datetime.date.today(),
+        'start_plus_7': start + datetime.timedelta(days=7),
+        'end_plus_7': end + datetime.timedelta(days=7),
+        'start_minus_7': start - datetime.timedelta(days=7),
+        'end_minus_7': end - datetime.timedelta(days=7),
     }
     return render(request, 'website/home.html', template_kwargs)
 

@@ -3,6 +3,32 @@ from selenium.webdriver import Chrome
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 from django.contrib.auth.models import User
 
+class TestCase(StaticLiveServerTestCase):
+        
+    def tearDown(self):
+        if hasattr(self, '_outcome'):  # Python 3.4+
+            result = self.defaultTestResult()  # these 2 methods have no side effects
+            self._feedErrorsToResult(result, self._outcome.errors)
+        else:  # Python 3.2 - 3.3 or 3.0 - 3.1 and 2.7
+            result = getattr(self, '_outcomeForDoCleanups', self._resultForDoCleanups)
+        error = self.list2reason(result.errors)
+        failure = self.list2reason(result.failures)
+        ok = not error and not failure
+
+        # demo:   report short info immediately (not important)
+        if not ok:
+            import time
+            time.sleep(30)
+
+        super().tearDown()
+
+    def list2reason(self, exc_list):
+        if exc_list and exc_list[-1][0] is self:
+            return exc_list[-1][1]
+
+    def create_user(self, email, password):
+        User.objects.create_user(username=email, email=email, password=password)        
+
 class RegistrationForm:
     
     def __init__(self, driver):
@@ -22,27 +48,73 @@ class LoginForm:
         self.password_input = self.element.find_element_by_id('password-input')
         self.submit_button = self.element.find_element_by_id('submit-button')
 
+    def login_user(self, email, password):
+
+        self.email_input.send_keys(email)
+        self.password_input.send_keys(password)
+        self.submit_button.click()
+
+class WelcomePage:
+
+    def __init__(self, driver):
+        self.registration_form = RegistrationForm(driver)
+        self.login_form = LoginForm(driver)
+
+    def login_user(self, email, password):
+        self.login_form.login_user(email=email, password=password)
+
 class HomePage:
 
     def __init__(self, driver):
 
+        self.driver = driver
         self.balance_chart = BalanceChart(driver)
         self.transaction_form = TransactionForm(driver)
         self.menu = Menu(driver)
         self.transaction_list = TransactionList(driver)
         self.date_selector = DateSelector(driver.find_element_by_id('date-selector'))
+        self.week_forward_button = driver.find_element_by_id('week-forward-button')
+        self.week_backward_button = driver.find_element_by_id('week-backward-button')
+        self.date_range = self.get_date_range()
+
+    def create_transaction(self, update=True, *args, **kwargs):
+        self.transaction_form.create_transaction(*args, **kwargs)
+        if update == True:
+            self.__init__(self.driver)
+
+    def move_date_range_forward(self, days=7, update=True):
+        if days == 7:
+            self.week_forward_button.click()
+        else:
+            raise Exception('unknown days attribute: {}'.format(days))
+        if update == True:
+            self.__init__(self.driver)
+
+    def move_date_range_backward(self, days=7, update=True):
+        if days == 7:
+            self.week_backward_button.click()
+        else:
+            raise Exception('unknown days attribute: {}'.format(days))
+        if update == True:
+            self.__init__(self.driver)
+
+    def get_date_range(self):
+        body = self.driver.find_element_by_tag_name('body')
+        start = datetime.datetime.strptime(body.get_attribute('date_range_start'), '%Y-%m-%d').date()
+        end = datetime.datetime.strptime(body.get_attribute('date_range_end'), '%Y-%m-%d').date()
+        return [start, end]
 
 class TransactionForm:
 
     def __init__(self, driver):
         
         self.element = driver.find_element_by_id('transaction-form')
-        self.date_input = self.element.find_element_by_id('date-input')
-        self.transaction_size_input = self.element.find_element_by_id('transaction-size-input')
-        self.description_input = self.element.find_element_by_id('description-input')
-        self.submit_button = self.element.find_element_by_id('submit-button')
+        self.date_input = driver.find_element_by_css_selector('#date-input[form="transaction-form"]')
+        self.transaction_size_input = driver.find_element_by_css_selector('#transaction-size-input[form="transaction-form"]')
+        self.description_input = driver.find_element_by_css_selector('#description-input[form="transaction-form"]')
+        self.submit_button = driver.find_element_by_css_selector('#submit-button[form="transaction-form"]')
 
-    def create_transaction(self, date, size, description):
+    def create_transaction(self, date, size, description=""):
         self.date_input.send_keys('{:02d}{:02d}{}'.format(date.day, date.month, date.year))
         self.transaction_size_input.send_keys(size)
         self.description_input.send_keys(description)
@@ -402,7 +474,6 @@ class TestTransactionModification(TransactionalTest):
         self.assertEqual(t.size, 2)
         self.assertEqual(t.balance, '£6.00')
 
-
         
 class TestTransactionDeletion(TransactionalTest):
 
@@ -503,4 +574,27 @@ class TestSignOut(StaticLiveServerTestCase):
         menu = homepage.menu
         menu.sign_out_button.click()
         self.assertEqual(self.driver.title, 'Welcome')
+        
+class TestDateRangeSelector(TestCase):
+
+    def setUp(self):
+        self.driver = Chrome()
+        self.create_user(email="voong.david@gmail.com", password="password")
+
+    def test(self):
+        self.driver.get(self.live_server_url)
+        welcome_page = WelcomePage(self.driver)
+        welcome_page.login_user(email="voong.david@gmail.com", password="password")
+
+        today = datetime.date.today()
+        homepage = HomePage(self.driver)
+        homepage.create_transaction(date=today, size=10, update=True)
+        homepage.move_date_range_forward(days=7, update=True)
+        self.assertEqual(homepage.date_range, [today - datetime.timedelta(days=7), today + datetime.timedelta(days=21)])
+
+        homepage.move_date_range_backward(days=7, update=True)
+        self.assertEqual(homepage.date_range, [today - datetime.timedelta(days=14), today + datetime.timedelta(days=14)])
+
+        homepage.move_date_range_backward(days=7, update=True)
+        self.assertEqual(homepage.date_range, [today - datetime.timedelta(days=21), today + datetime.timedelta(days=7)])
         

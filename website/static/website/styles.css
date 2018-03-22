@@ -45,3 +45,11 @@ div.chart-tooltip {
   border-radius: 8px;
   pointer-events: none;
 }
+
+button.date-navigator {
+    width: 100%;
+}
+
+.date-navigator-button-container {
+    padding-bottom: 15px;
+}
