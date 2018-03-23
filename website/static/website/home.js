@@ -1,106 +1,11 @@
 console.log('home.js');
 
-$(document).ready(function(){
-    draw_chart();
-});
-
-function draw_chart(){
-    var padding = {top: 10, left: 60, right: 20, bottom: 40};
-    var balance_chart = d3.select('#balance-chart');
-    var canvas = balance_chart.select('#canvas');
-    var x_axis = canvas.select('#x-axis');
-    var y_axis = canvas.select('#y-axis');
-    var plot_area = canvas.select('#plot-area');
-
-    var canvas_height = parseInt(canvas.style('height'));
-    var canvas_width = parseInt(canvas.style('width'));
-
-    var x_scale = draw_x_axis(x_axis, canvas_width, canvas_height, padding);
-    var y_scale = draw_y_axis(y_axis, canvas_width, canvas_height, padding);
-    var bars = draw_bars(plot_area, x_scale, y_scale, canvas_width, canvas_height, padding);
-}
-
-function draw_x_axis(x_axis, canvas_width, canvas_height, padding){
-    x_axis.attr('transform', 'translate(' + padding.left + ', ' + (canvas_height - padding.bottom) + ')');
-
-    var start = new Date(d3.min(balances, function(d){return d.date}));
-    var end = new Date(d3.max(balances, function(d){return d.date}));
-    
-    var x_min = new Date(start);
-    x_min.setDate(start.getDate() - 0.5);
-    var x_max = new Date(end);
-    x_max.setDate(end.getDate() +0.5);
-
-    var x_scale = d3.scaleUtc()
-	.domain([x_min, x_max])
-	.range([0, canvas_width - padding.left - padding.right]);
-
-    x_axis.call(d3.axisBottom(x_scale))
-    return x_scale;
-}
-
-function draw_y_axis(y_axis, canvas_width, canvas_height, padding){
-    y_axis.attr('transform', 'translate(' + padding.left + ', ' + padding.top + ')');
-
-    var balance_min = d3.min(balances, function(d){return d.balance});
-    var balance_max = d3.max(balances, function(d){return d.balance});
-    var y_min = balance_min > 0 ? 0.9 * balance_min : 1.1 * balance_min;
-    var y_max = balance_max > 0 ? 1.1 * balance_max : 0.9 * balance_max;
-    var y_scale = d3.scaleLinear()
-	.domain([y_min, y_max])
-	.range([canvas_height - padding.top - padding.bottom, 0]);
-
-    y_axis.call(d3.axisLeft(y_scale).tickFormat(function(t){return '£' + t.toLocaleString()}))
-    return y_scale;
-}
-
-function draw_bars(plot_area, x_scale, y_scale, canvas_width, canvas_height, padding){
-    var y_reference = null;
-    if(y_scale.domain()[0] < 0 && y_scale.domain()[1] >= 0){
-	// 0 is within the y-axis range, set that as the reference
-	y_reference = y_scale(0);
-    } else if (y_scale.domain()[0] < 0 ) {
-	// y-axis range is only negative, set reference to the top of the chart
-	y_reference = y_scale.range()[1];
-    } else {
-	// y-axis range is only positive, set reference to the bottom of the chart
-	y_reference = y_scale.range()[0];
-    }
-    
-    plot_area.selectAll('.bar')
-	.data(balances)
-	.enter()
-	.append('rect')
-	.attr('class', 'bar')
-	.attr('x', function(d){
-	    var date = new Date(d.date);
-	    var x_lower = new Date(date);
-	    x_lower.setDate(x_lower.getDate() - 0.45);
-	    x_lower = x_scale(x_lower);
-	    return padding.left + x_lower
-	})
-	.attr('y', padding.top + y_reference)
-	.attr('width', 0.9 * (canvas_width - padding.left - padding.right) / balances.length)
-	.attr('date', function(d){return d.date})
-	.attr('balance', function(d){return d.balance})
-	.on('mouseover', tooltips.mouseover_callback)
-	.on('mouseout', tooltips.mouseout_callback)
-	.transition()
-	.attr('y', function(d){
-	    if(d.balance >= 0){
-	    	return padding.top + y_scale(d.balance);
-	    } else {
-	    	return padding.top + y_reference;
-	    }
-	})
-	.attr('height', function(d){
-	    return Math.abs(y_scale(d.balance) - y_reference)
-	})
-
-}
+// =========
+// Tool Tip
+// =========
 
 function ToolTip(){
-    that = this;
+    var that = this;
 
     this.tooltip = d3.select('#tooltip');
 
@@ -125,4 +30,264 @@ function ToolTip(){
     };
     
 }
-var tooltips = new ToolTip();
+
+
+// ==============
+// Balance Chart
+// ==============
+
+function BalanceChart(selection, balances){
+    var that = this;
+    that.selection = selection;
+    that.balances = balances;
+    that.padding = {top: 10, left: 60, right: 20, bottom: 40};    
+    that.canvas = new Canvas(selection.select('#canvas'));
+    that.plot_area = that.canvas.selection.select('#plot-area');
+    that.x_axis = new XAxis(that.canvas.selection.select('#x-axis'));
+    that.y_axis = new YAxis(that.canvas.selection.select('#y-axis'));
+    that.set_x_axis_position();
+    that.set_x_axis_range();
+    that.set_x_axis_domain();
+    that.set_y_axis_position();
+    that.set_y_axis_range();
+    that.set_y_axis_domain();
+}
+
+BalanceChart.prototype.resize = function(){
+    this.canvas.width = this.canvas.get_width();
+    this.canvas.height = this.canvas.get_height();
+    this.set_x_axis_range();
+    this.set_x_axis_domain();
+    this.set_y_axis_range();
+    this.set_y_axis_domain();
+    this.draw();
+}
+
+BalanceChart.prototype.set_x_axis_position = function(position){
+    var padding = this.padding;
+    var canvas_height = this.canvas.height;
+    position = position ? position !== undefined : [padding.left, canvas_height - padding.bottom];
+    this.x_axis.position = position;
+}
+
+BalanceChart.prototype.set_y_axis_position = function(position){
+    var padding = this.padding;
+    position = position ? position !== undefined : [padding.left, padding.top];
+    this.y_axis.position = position;
+}
+
+BalanceChart.prototype.set_x_axis_range = function(range){
+    range = range ? range !== undefined : [0, this.canvas.width - this.padding.left - this.padding.right];
+    this.x_axis.set_range(range);
+}
+
+BalanceChart.prototype.set_y_axis_range = function(range){
+    range = range ? range !== undefined : [this.canvas.height - this.padding.top - this.padding.bottom, 0];
+    this.y_axis.set_range(range);
+}
+
+BalanceChart.prototype.set_x_axis_domain = function(domain){
+    var domain = domain ? domain !== undefined : this.get_x_domain();
+    this.x_axis.set_domain(domain);
+}
+
+BalanceChart.prototype.set_y_axis_domain = function(domain){
+    domain = domain ? domain !== undefined : this.get_y_domain();
+    this.y_axis.set_domain(domain);
+}
+
+BalanceChart.prototype.get_x_domain = function(){
+    var start = new Date(d3.min(this.balances, function(d){return d.date}));
+    var end = new Date(d3.max(this.balances, function(d){return d.date}));
+
+    var x_min = new Date(start);
+    x_min.setDate(start.getDate() - 0.5);
+    var x_max = new Date(end);
+    x_max.setDate(end.getDate() +0.5);
+    return [x_min, x_max];
+
+}
+
+BalanceChart.prototype.get_y_domain = function(){
+    var balance_min = d3.min(this.balances, function(d){return d.balance});
+    var balance_max = d3.max(this.balances, function(d){return d.balance});
+    var y_min = balance_min > 0 ? 0.9 * balance_min : 1.1 * balance_min;
+    var y_max = balance_max > 0 ? 1.1 * balance_max : 0.9 * balance_max;
+    return [y_min, y_max];
+    
+}
+
+BalanceChart.prototype.draw_x_axis = function(){
+    this.x_axis.draw();
+}
+
+BalanceChart.prototype.draw_y_axis = function(){
+    this.y_axis.draw();
+}
+
+BalanceChart.prototype.draw_bars = function(){
+    
+    var that = this;
+    var y_reference = null;
+    var x_scale = this.x_axis.scale;
+    var y_scale = this.y_axis.scale;
+    var padding = this.padding;
+    var balances = this.balances
+    var canvas_width = this.canvas.width;
+    var plot_area = this.plot_area;
+    
+    if(y_scale.domain()[0] < 0 && y_scale.domain()[1] >= 0){
+	// 0 is within the y-axis range, set that as the reference
+	y_reference = y_scale(0);
+    } else if (y_scale.domain()[0] < 0 ) {
+	// y-axis range is only negative, set reference to the top of the chart
+	y_reference = y_scale.range()[1];
+    } else {
+	// y-axis range is only positive, set reference to the bottom of the chart
+	y_reference = y_scale.range()[0];
+    }
+
+    function set_x(d){
+	var date = new Date(d.date);
+	var x_lower = new Date(date);
+	x_lower.setDate(x_lower.getDate() - 0.45);
+	x_lower = x_scale(x_lower);
+	return padding.left + x_lower
+    }
+    
+    function set_y(d){
+	if(d.balance >= 0){
+	    return padding.top + y_scale(d.balance);
+	} else {
+	    return padding.top + y_reference;
+	}
+    }
+
+    function set_height(d){
+	return Math.abs(y_scale(d.balance) - y_reference)
+    }
+
+    plot_area.selectAll('.bar')
+	.data(balances)
+	.transition()
+	.attr('x', set_x)
+	.attr('width', 0.9 * (canvas_width - padding.left - padding.right) / balances.length);
+    
+    plot_area.selectAll('.bar')
+	.data(balances)
+	.enter()
+	.append('rect')
+	.attr('class', 'bar')
+	.attr('x', set_x)
+	.attr('y', padding.top + y_reference)
+	.attr('width', 0.9 * (canvas_width - padding.left - padding.right) / balances.length)
+	.attr('date', function(d){return d.date})
+	.attr('balance', function(d){return d.balance})
+	.on('mouseover', tooltips.mouseover_callback)
+	.on('mouseout', tooltips.mouseout_callback)
+	.transition()
+	.attr('y', set_y)
+	.attr('height', set_height);
+    
+}
+
+BalanceChart.prototype.draw = function(){
+    this.draw_x_axis();
+    this.draw_y_axis();
+    this.draw_bars();
+}
+
+// =========
+// X-Axis
+// =========
+
+function XAxis(selection){
+    var that = this;
+    that.selection = selection;
+    that.scale = d3.scaleUtc();
+}
+
+XAxis.prototype.set_range = function(range){
+    this.scale.range(range);
+}
+
+XAxis.prototype.set_domain = function(domain){
+    this.scale.domain(domain);
+}
+
+XAxis.prototype.draw = function(){
+    var x = this.position[0];
+    var y = this.position[1];
+    var scale = this.scale;
+    this.selection.attr('transform', 'translate(' + x + ', ' + y + ')');
+    this.selection.call(d3.axisBottom(scale));
+}
+
+
+// =========
+// Y-Axis
+// =========
+
+function YAxis(selection){
+    var that = this;
+    that.selection = selection;
+    that.scale = d3.scaleLinear()
+}
+
+YAxis.prototype.set_range = function(range){
+    this.scale.range(range);
+}
+
+YAxis.prototype.set_domain = function(domain){
+    this.scale.domain(domain);
+}
+
+YAxis.prototype.draw = function(){
+    var x = this.position[0];
+    var y = this.position[1];
+    var scale = this.scale;
+    function tick_formatter(t){
+	return '£' + t.toLocaleString()
+    }
+    
+    this.selection.attr('transform', 'translate(' + x + ', ' + y + ')');
+    this.selection.call(d3.axisLeft(scale).tickFormat(tick_formatter));
+}
+
+
+// =========
+// Canvas
+// =========
+
+function Canvas(selection){
+    var that = this;
+    that.selection = selection;
+    that.width = this.get_width();
+    that.height = this.get_height();
+	
+}
+
+Canvas.prototype.get_width = function(width){
+    return parseInt(this.selection.style('width'));
+}
+
+Canvas.prototype.get_height = function(){
+    return parseInt(this.selection.style('height'));
+}
+
+
+// =========
+// Other
+// =========
+
+function resize_window(){
+    balance_chart.resize();
+    
+}
+
+
+$(document).ready(function(){
+    balance_chart = new BalanceChart(d3.select('#balance-chart'), balances);
+    tooltips = new ToolTip();
+    balance_chart.draw();
+});
