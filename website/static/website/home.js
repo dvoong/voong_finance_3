@@ -328,7 +328,6 @@ function updateURLParameter(url, param, paramVal){
 $(document).ready(function(){
     
     $('#week-forward-form').on('submit', function(e){
-	console.log('week_forward_submit');
 	var form = $(this);
 	
 	function success(d){
@@ -368,7 +367,6 @@ $(document).ready(function(){
     });
     
     $('#week-backward-form').on('submit', function(e){
-	console.log('week_backward_submit');
 	var form = $(this);
 	
 	function success(d){
