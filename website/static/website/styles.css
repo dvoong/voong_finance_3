@@ -5,6 +5,7 @@
 
 #balance-chart {
     height: 250px;
+    margin-top: 15px;
 }
 
 #plot-area .bar {

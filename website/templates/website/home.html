@@ -3,41 +3,58 @@
     <title></title>
     {% load custom_template_tags %}
     {% load static %}
-    <link rel="stylesheet" href="{% static "website/styles.css" %}">
+
+    <!--            -->
+    <!-- Javascript -->
+    <!--            -->
+    
+    <!-- jquery -->
     <script
       src="http://code.jquery.com/jquery-3.3.1.js"
       integrity="sha256-2Kok7MbOyxpgUVvAk/HJ2jigOSYS2auK4Pfzbm7uH60="
       crossorigin="anonymous">
     </script>
+    <!-- d3.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/4.13.0/d3.js"></script>
-    <link rel="stylesheet"
-	  href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
-	  integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
-    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN"
-	    crossorigin="anonymous">
-    </script>
+    <!-- popper.js -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"
 	    integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"
 	    crossorigin="anonymous">
     </script>
+    <!-- bootstrap -->
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"
 	    integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
 	    crossorigin="anonymous">
     </script>
+    
+    <!--     -->
+    <!-- CSS -->
+    <!--     -->
+    
+    <!-- bootstrap -->
+    <link rel="stylesheet"
+	  href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+	  integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <link rel="stylesheet" href="{% static "website/styles.css" %}">
+
   </head>
   
   <body date_range_start="{{ start | date:'Y-m-d' }}" date_range_end="{{ end | date:'Y-m-d' }}" onresize="resize_window()">
-    <nav id = "menu" class="navbar navbar-default">
-      <div class="container-fluid">
-	<div class="navbar-header">
-	  <a class="navbar-brand" href="#">WebSiteName</a>
-	</div>
-	<ul class="nav navbar-nav">
-	  <li class="active"><a href="#">Home</a></li>
-	  <li><a href="#">Page 1</a></li>
-	  <li><a href="#">Page 2</a></li>
-	  <li><a href="#">Page 3</a></li>
-	  <li><a id="sign-out" href="sign-out">Sign Out</a></li>
+
+    <nav class="navbar navbar-dark navbar-expand-lg" style="background-color: indianred;">
+      <a class="navbar-brand" href="#">Voong Finance</a>
+      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+	<span class="navbar-toggler-icon"></span>
+      </button>
+
+      <div class="collapse navbar-collapse" id="navbarSupportedContent">
+	<ul class="navbar-nav mr-auto">
+	  <li class="nav-item active">
+            <a class="nav-link" href="/">Home <span class="sr-only">(current)</span></a>
+	  </li>
+	  <li class="nav-item">
+            <a class="nav-link" href="sign-out">Sign Out</a>
+	  </li>
 	</ul>
       </div>
     </nav>
