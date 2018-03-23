@@ -97,8 +97,8 @@ BalanceChart.prototype.set_y_axis_domain = function(domain){
 }
 
 BalanceChart.prototype.get_x_domain = function(){
-    var start = new Date(d3.min(this.balances, function(d){return d.date}));
-    var end = new Date(d3.max(this.balances, function(d){return d.date}));
+    var start = new Date(Date.parse(d3.min(this.balances, function(d){return d.date})));
+    var end = new Date(Date.parse(d3.max(this.balances, function(d){return d.date})));
 
     var x_min = new Date(start);
     x_min.setDate(start.getDate() - 0.5);
@@ -221,6 +221,15 @@ XAxis.prototype.draw = function(){
     var scale = this.scale;
     this.selection.attr('transform', 'translate(' + x + ', ' + y + ')');
     this.selection.call(d3.axisBottom(scale));
+
+    var now = new Date();
+    var today = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
+    this.selection
+	.selectAll('g.tick text')
+	.filter(function(d){
+	    return d.getTime() == today.getTime()
+	})
+	.attr('fill', 'blue');
 }
 
 
