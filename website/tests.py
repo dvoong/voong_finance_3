@@ -270,3 +270,37 @@ class TestSignOut(TestCase):
         user = auth.get_user(self.client)
         self.assertEqual(user.is_authenticated, False)
         self.assertRedirects(response, '/welcome')
+
+class TestGetBalances(TestCase):
+
+    def test_url_resolution(self):
+        resolver = resolve('/get-balances')
+        self.assertEqual(resolver.view_name, 'get_balances')
+
+    def test(self):
+        username1 = 'voong.david@gmail.com'
+        password1 = 'password'
+        username2 = 'voong.hannah@gmail.com'
+        password2 = 'hannah'
+        user1 = User.objects.create_user(username=username1, email=username1, password=password1)
+        user2 = User.objects.create_user(username=username2, email=username2, password=password2)
+
+        transactions = [
+            (datetime.date(2018, 1, 1), 10, 'a', user1, 10, 0),
+            (datetime.date(2018, 1, 2), 5, 'b', user1, 15, 0),
+            (datetime.date(2018, 1, 1), 20, 'c', user2, 20, 0),
+        ]
+
+        for t in transactions:
+            Transaction.objects.create(date=t[0], size=t[1], description=t[2], user=t[3], closing_balance=t[4], index=t[5])
+        
+        self.client.login(username='voong.david@gmail.com', password='password')
+        response = self.client.get('/get-balances', {'start': '2018-01-01', 'end': '2018-01-03'})
+        expected = {
+            'data': [
+                {'date': '2018-01-01', 'balance': 10.0},
+                {'date': '2018-01-02', 'balance': 15.0},
+                {'date': '2018-01-03', 'balance': 15.0}
+            ]
+        }
+        self.assertEqual(expected, response.json())

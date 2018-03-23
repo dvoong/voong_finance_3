@@ -1,7 +1,7 @@
 import datetime
 import pandas as pd
 from django.shortcuts import render, redirect
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 from website.models import Transaction
@@ -184,3 +184,32 @@ def delete_transaction(request):
 def sign_out(request):
     logout(request)
     return redirect('welcome')
+
+def get_balances(request):
+    user = request.user
+    today = datetime.date.today()
+    start = datetime.datetime.strptime(request.GET['start'], '%Y-%m-%d').date() if 'start' in request.GET else today - datetime.timedelta(days=14)
+    end = datetime.datetime.strptime(request.GET['end'], '%Y-%m-%d').date() if 'end' in request.GET else today + datetime.timedelta(days=14)
+    dates = pd.DataFrame(pd.date_range(start, end), columns=['date'])
+    balances = dates
+
+    try:
+        last_transaction = Transaction.objects.filter(user=user, date__lt=start).latest('date')
+        closing_balance = last_transaction.closing_balance
+    except Transaction.DoesNotExist:
+        closing_balance = 0
+    
+    balances['balance'] = closing_balance
+    
+    transactions = Transaction.objects.filter(user=user, date__gte=start, date__lt=end).order_by('date')
+    if len(transactions):
+        transactions_df = pd.DataFrame(list(transactions.values()))
+        transactions_df['date'] = transactions_df['date'].astype('datetime64[ns]')
+        transactions_by_date = transactions_df.groupby('date')['size'].sum().reset_index()
+        transactions_by_date = dates.merge(transactions_by_date, on='date', how='left').fillna(0)
+        transactions_by_date['cumsum']  = transactions_by_date['size'].cumsum()
+        balances['balance'] += transactions_by_date['cumsum']
+    
+    balances['date'] = balances['date'].dt.strftime('%Y-%m-%d')
+
+    return JsonResponse({'data': balances.to_dict('records')})

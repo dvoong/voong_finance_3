@@ -168,13 +168,15 @@ BalanceChart.prototype.draw_bars = function(){
     }
 
     plot_area.selectAll('.bar')
-	.data(balances)
+	.data(balances, function(d){return d.date})
 	.transition()
 	.attr('x', set_x)
-	.attr('width', 0.9 * (canvas_width - padding.left - padding.right) / balances.length);
+	.attr('width', 0.9 * (canvas_width - padding.left - padding.right) / balances.length)
+	.attr('y', set_y)
+	.attr('height', set_height);
     
     plot_area.selectAll('.bar')
-	.data(balances)
+	.data(balances, function(d){return d.date})
 	.enter()
 	.append('rect')
 	.attr('class', 'bar')
@@ -188,6 +190,16 @@ BalanceChart.prototype.draw_bars = function(){
 	.transition()
 	.attr('y', set_y)
 	.attr('height', set_height);
+
+    plot_area.selectAll('.bar')
+	.data(balances, function(d){return d.date})
+	.exit()
+	.transition()
+	.attr('x', set_x)
+	.attr('width', 0.9 * (canvas_width - padding.left - padding.right) / balances.length)
+	.attr('y', y_reference)
+	.attr('height', 0)
+	.remove();
     
 }
 
@@ -220,7 +232,7 @@ XAxis.prototype.draw = function(){
     var y = this.position[1];
     var scale = this.scale;
     this.selection.attr('transform', 'translate(' + x + ', ' + y + ')');
-    this.selection.call(d3.axisBottom(scale));
+    this.selection.transition().call(d3.axisBottom(scale));
 
     var now = new Date();
     var today = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
@@ -260,7 +272,7 @@ YAxis.prototype.draw = function(){
     }
     
     this.selection.attr('transform', 'translate(' + x + ', ' + y + ')');
-    this.selection.call(d3.axisLeft(scale).tickFormat(tick_formatter));
+    this.selection.transition().call(d3.axisLeft(scale).tickFormat(tick_formatter));
 }
 
 
@@ -284,6 +296,118 @@ Canvas.prototype.get_height = function(){
     return parseInt(this.selection.style('height'));
 }
 
+// ================
+// Event triggers
+// ================
+
+function toISODateString(date){
+    return date.toISOString().slice(0, 10);
+}
+
+function updateURLParameter(url, param, paramVal){
+    var newAdditionalURL = "";
+    var tempArray = url.split("?");
+    var baseURL = tempArray[0];
+    var additionalURL = tempArray[1];
+    var temp = "";
+    if (additionalURL) {
+        tempArray = additionalURL.split("&");
+        for (var i=0; i<tempArray.length; i++){
+            if(tempArray[i].split('=')[0] != param){
+                newAdditionalURL += temp + tempArray[i];
+                temp = "&";
+            }
+        }
+    }
+
+    var rows_txt = temp + "" + param + "=" + paramVal;
+    return "?" + newAdditionalURL + rows_txt;
+    //return baseURL + "?" + newAdditionalURL + rows_txt;
+}
+
+$(document).ready(function(){
+    
+    $('#week-forward-form').on('submit', function(e){
+	console.log('week_forward_submit');
+	var form = $(this);
+	
+	function success(d){
+	    balances = d['data'];
+	    balance_chart.balances = balances;
+	    balance_chart.resize();
+	    $('body').attr('date_range_start', args[0].value);
+	    $('body').attr('date_range_end', args[1].value);
+
+	    var start_new = new Date(args[0].value);
+	    var end_new = new Date(args[1].value);
+	    start_new.setDate(start_new.getDate() + 7);
+	    end_new.setDate(end_new.getDate() + 7);
+	    var start_input = form.find('input[name="start"]');
+	    var end_input = form.find('input[name="end"]');
+	    start_input.val(toISODateString(start_new));
+	    end_input.val(toISODateString(end_new));
+
+	    var form_backward = $('#week-backward-form');
+	    var start_new = new Date(args[0].value);
+	    var end_new = new Date(args[1].value);
+	    start_new.setDate(start_new.getDate() - 7);
+	    end_new.setDate(end_new.getDate() - 7);
+	    var start_input = form_backward.find('input[name="start"]');
+	    var end_input = form_backward.find('input[name="end"]');
+	    start_input.val(toISODateString(start_new));
+	    end_input.val(toISODateString(end_new));
+	    
+
+	}
+	
+	e.preventDefault();
+	var url = '/get-balances';
+	var args = form.serializeArray();
+	$.get(url, args, success);
+
+    });
+    
+    $('#week-backward-form').on('submit', function(e){
+	console.log('week_backward_submit');
+	var form = $(this);
+	
+	function success(d){
+	    balances = d['data'];
+	    balance_chart.balances = balances;
+	    balance_chart.resize();
+	    $('body').attr('date_range_start', args[0].value);
+	    $('body').attr('date_range_end', args[1].value);
+
+	    var start_new = new Date(args[0].value);
+	    var end_new = new Date(args[1].value);
+	    start_new.setDate(start_new.getDate() - 7);
+	    end_new.setDate(end_new.getDate() - 7);
+	    var start_input = form.find('input[name="start"]');
+	    var end_input = form.find('input[name="end"]');
+	    start_input.val(toISODateString(start_new));
+	    end_input.val(toISODateString(end_new));
+
+	    var form_forward = $('#week-forward-form');
+	    var start_new = new Date(args[0].value);
+	    var end_new = new Date(args[1].value);
+	    start_new.setDate(start_new.getDate() + 7);
+	    end_new.setDate(end_new.getDate() + 7);
+	    var start_input = form_forward.find('input[name="start"]');
+	    var end_input = form_forward.find('input[name="end"]');
+	    start_input.val(toISODateString(start_new));
+	    end_input.val(toISODateString(end_new));
+
+	}
+	
+	e.preventDefault();
+	var url = '/get-balances';
+	var args = form.serializeArray();
+	$.get(url, args, success);
+
+    });
+
+});
+
 
 // =========
 // Other
@@ -293,7 +417,6 @@ function resize_window(){
     balance_chart.resize();
     
 }
-
 
 $(document).ready(function(){
     balance_chart = new BalanceChart(d3.select('#balance-chart'), balances);
