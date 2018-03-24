@@ -3,33 +3,14 @@ console.log('home.js');
 // =========
 // Tool Tip
 // =========
+import { ToolTip } from "./tooltip";
 
-function ToolTip(){
-    var that = this;
+var balance_chart = null;
+var tooltips = null;
 
-    this.tooltip = d3.select('#tooltip');
-
-    this.mouseover_callback = function(d){
-	that.tooltip.transition()
-            .duration(200)
-            .style("opacity", .9);
-	that.tooltip.style("opacity", 1);
-	that.tooltip.html("<b>" + d.date + "</b>" + "<br>£" + d.balance.toFixed(2))
-            .style("left", (d3.event.pageX) + "px")
-            .style("top", (d3.event.pageY - 28) + "px");
-	d3.select(this)
-	    .style('opacity', 0.6)
-    };
-
-    this.mouseout_callback = function(d){
-	that.tooltip.transition()
-            .duration(500)
-            .style("opacity", 0);
-	d3.select(this)
-	    .style('opacity', 1)
-    };
-    
-}
+declare var balances: any[];
+declare var $: any;
+declare var d3: any;
 
 // =========
 // Canvas
@@ -323,6 +304,12 @@ function toISODateString(date){
 }
 
 $(document).ready(function(){
+    balance_chart = new BalanceChart(d3.select('#balance-chart'), balances);
+    tooltips = new ToolTip();
+    balance_chart.draw();
+});
+
+$(document).ready(function(){
     
     $('#week-forward-form').on('submit', function(e){
 	var form = $(this);
@@ -399,32 +386,9 @@ $(document).ready(function(){
 	$.get(url, args, success);
 
     });
-
-});
-
-
-// =========
-// Other
-// =========
-
-function resize_window(){
-    balance_chart.resize();
     
-}
+    $(window).resize(function(){
+	balance_chart.resize();
+    });
 
-$(document).ready(function(){
-    balance_chart = new BalanceChart(d3.select('#balance-chart'), balances);
-    tooltips = new ToolTip();
-    balance_chart.draw();
 });
-
-var balance_chart = null;
-var tooltips = null;
-
-declare var balances: any[];
-declare var $: any;
-declare var d3: any;
-
-//declare var staticData: any;
-//declare var balances: any;
-
