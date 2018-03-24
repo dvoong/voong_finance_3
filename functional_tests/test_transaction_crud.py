@@ -30,7 +30,8 @@ class TestTransactionCreation(TransactionalTest):
         homepage = HomePage(self.driver)
         today = datetime.date.today()
 
-        self.assertEqual(homepage.transaction_form.date_input.get_attribute('value'), today.isoformat())
+        self.assertEqual(homepage.transaction_form.date_input.get_attribute('value'),
+                         today.isoformat())
 
         self.create_transaction(today, 1000, 'pay day')
 
@@ -242,3 +243,50 @@ class TestTransactionDeletion(TransactionalTest):
         self.assertEqual(t.size, 3)
         self.assertEqual(t.balance, '£4.00')
 
+class TestRepeatTransactions(TestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.user = self.create_user('voong.david@gmail.com', 'password')
+
+    def test(self):
+
+        today = datetime.date.today()
+        
+        self.driver.get(self.live_server_url)
+        welcome_page = WelcomePage(self.driver)
+        welcome_page.login_user('voong.david@gmail.com', 'password')
+
+        homepage = HomePage(self.driver)
+        transaction_form = homepage.transaction_form
+        transaction_form.date = today
+        transaction_form.transaction_size = -10
+        transaction_form.description = 'phone contract'
+        transaction_form.repeat_options.select_by_visible_text('Weekly')
+        transaction_form.submit()
+
+        homepage = HomePage(self.driver)
+        transactions = homepage.transaction_list.get_transactions()
+
+        self.assertEqual(len(transactions), 3)
+        
+        t = transactions[0]
+        self.assertEqual(t.date, today)
+        self.assertEqual(t.size, -10)
+        self.assertEqual(t.description, 'phone contract')
+        self.assertEqual(t.balance, '£-10.00')
+        
+        t = transactions[1]
+        self.assertEqual(t.date, today + datetime.timedelta(days=7))
+        self.assertEqual(t.size, -10)
+        self.assertEqual(t.description, 'phone contract')
+        self.assertEqual(t.balance, '£-20.00')
+        
+        t = transactions[2]
+        self.assertEqual(t.date, today + datetime.timedelta(days=14))
+        self.assertEqual(t.size, -10)
+        self.assertEqual(t.description, 'phone contract')
+        self.assertEqual(t.balance, '£-30.00')
+        
+        
+    

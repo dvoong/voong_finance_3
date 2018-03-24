@@ -31,8 +31,8 @@ $(document).ready(function(){
 	    balances = d['data'];
 	    balance_chart.balances = balances;
 	    balance_chart.resize();
-	    $('body').attr('date_range_start', args[0].value);
-	    $('body').attr('date_range_end', args[1].value);
+	    $('#date-selector #start-input').val(args[0].value);
+	    $('#date-selector #end-input').val(args[1].value);
 
 	    var start_new = new Date(args[0].value);
 	    var end_new = new Date(args[1].value);
@@ -69,8 +69,8 @@ $(document).ready(function(){
 	    balances = d['data'];
 	    balance_chart.balances = balances;
 	    balance_chart.resize();
-	    $('body').attr('date_range_start', args[0].value);
-	    $('body').attr('date_range_end', args[1].value);
+	    $('#date-selector #start-input').val(args[0].value);
+	    $('#date-selector #end-input').val(args[1].value);
 
 	    var start_new = new Date(args[0].value);
 	    var end_new = new Date(args[1].value);

@@ -4,7 +4,9 @@ from django.shortcuts import render, redirect
 from django.http import HttpResponse, JsonResponse
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
-from website.models import Transaction
+from website.models import Transaction, RepeatTransaction
+
+strptime = datetime.datetime.strptime
 
 # Create your views here.
 def is_authenticated(user):
@@ -19,29 +21,19 @@ def index(request):
 def home(request):
     user = request.user
     today = datetime.date.today()
-    start = datetime.datetime.strptime(request.GET['start'], '%Y-%m-%d').date() if 'start' in request.GET else today - datetime.timedelta(days=14)
-    end = datetime.datetime.strptime(request.GET['end'], '%Y-%m-%d').date() if 'end' in request.GET else today + datetime.timedelta(days=14)
-    dates = pd.DataFrame(pd.date_range(start, end), columns=['date'])
-    balances = dates
+    if 'start' in request.GET:
+        start = strptime(request.GET['start'], '%Y-%m-%d').date()
+    else:
+        start = today - datetime.timedelta(days=14)
+    if  'end' in request.GET:
+        end = strptime(request.GET['end'], '%Y-%m-%d').date()
+    else:
+        end = today + datetime.timedelta(days=14)
 
-    try:
-        last_transaction = Transaction.objects.filter(user=user, date__lt=start).latest('date')
-        closing_balance = last_transaction.closing_balance
-    except Transaction.DoesNotExist:
-        closing_balance = 0
-    
-    balances['balance'] = closing_balance
-    
-    transactions = Transaction.objects.filter(user=user, date__gte=start, date__lt=end).order_by('date')
-    if len(transactions):
-        transactions_df = pd.DataFrame(list(transactions.values()))
-        transactions_df['date'] = transactions_df['date'].astype('datetime64[ns]')
-        transactions_by_date = transactions_df.groupby('date')['size'].sum().reset_index()
-        transactions_by_date = dates.merge(transactions_by_date, on='date', how='left').fillna(0)
-        transactions_by_date['cumsum']  = transactions_by_date['size'].cumsum()
-        balances['balance'] += transactions_by_date['cumsum']
-    
+    balances = get_balances_2(user, start, end)
+
     balances['date'] = balances['date'].dt.strftime('%Y-%m-%d')
+    transactions = get_transactions(user, start, end)
     template_kwargs = {
         'transactions': transactions,
         'balances': balances.to_dict('records'),
@@ -81,28 +73,50 @@ def create_transaction(request):
     description = request.POST['description']
     index = len(Transaction.objects.filter(user=request.user, date=date))
     today = datetime.date.today()
-    start = datetime.datetime.strptime(request.POST['start'], '%Y-%m-%d').date() if 'end' in request.POST else today - datetime.timedelta(days=14)
-    end = datetime.datetime.strptime(request.POST['end'], '%Y-%m-%d').date() if 'end' in request.POST else today + datetime.timedelta(days=14)
+    if 'start' in request.POST:
+        start = strptime(request.POST['start'], '%Y-%m-%d').date()
+    else:
+        start = today - datetime.timedelta(days=14)
+    if 'end' in request.POST:
+        end = strptime(request.POST['end'], '%Y-%m-%d').date()
+    else:
+        end = today + datetime.timedelta(days=14)
     try:
-        last_transaction = Transaction.objects.filter(user=request.user, date__lte=date).latest('date', 'index')
+        last_transaction = Transaction.objects.filter(user=request.user,
+                                                      date__lte=date).latest('date', 'index')
         closing_balance = last_transaction.closing_balance + size
     except Transaction.DoesNotExist:
         closing_balance = size
+    repeat_status = request.POST.get('repeat_status', 'does_not_repeat')
 
-    Transaction.objects.create(
-        date=datetime.datetime.strptime(date, '%Y-%m-%d').date(),
-        size=size,
-        description=description,
-        user=request.user,
-        closing_balance=closing_balance,
-        index=index
-    )
+    if repeat_status == 'does_not_repeat':
+        # TODO: generate transactions from repeat transactions between the last transaction
+        # and this transaction
+        Transaction.objects.create(
+            date=datetime.datetime.strptime(date, '%Y-%m-%d').date(),
+            size=size,
+            description=description,
+            user=request.user,
+            closing_balance=closing_balance,
+            index=index
+        )
+        
+        # update future transactions
+        transactions = Transaction.objects.filter(date__gt=strptime(date, '%Y-%m-%d').date(),
+                                                  user=request.user)
+        for t in transactions:
+            t.closing_balance += size
+            t.save()
 
-    # update future transactions
-    transactions = Transaction.objects.filter(date__gt=datetime.datetime.strptime(date, '%Y-%m-%d').date(), user=request.user)
-    for t in transactions:
-        t.closing_balance += size
-        t.save()
+    else:
+        RepeatTransaction.objects.create(
+            start_date=datetime.datetime.strptime(date, '%Y-%m-%d').date(),
+            size=size,
+            description=description,
+            user=request.user,
+            index=0,
+            frequency=repeat_status
+        )
     return redirect('/home?start={}&end={}'.format(start, end))
 
 def update_transaction(request):
@@ -126,8 +140,14 @@ def update_transaction(request):
 
     # update transactions between old and new dates (assuming transaction size has not changed)
     if t.date < old_date: # moved back in time
-        transactions_to_update = Transaction.objects.filter(user=user, date__gt=t.date, date__lt=old_date).exclude(id=transaction_id)
-        transactions_to_update_2 = Transaction.objects.filter(user=user, date=old_date, index__lt=old_index).exclude(id=transaction_id)
+        transactions_to_update = Transaction.objects.filter(
+            user=user,
+            date__gt=t.date,
+            date__lt=old_date).exclude(id=transaction_id)
+        transactions_to_update_2 = Transaction.objects.filter(
+            user=user,
+            date=old_date,
+            index__lt=old_index).exclude(id=transaction_id)
         transactions_to_update = list(transactions_to_update) + list(transactions_to_update_2)
         for t_ in transactions_to_update:
             t_.closing_balance += old_size
@@ -135,8 +155,13 @@ def update_transaction(request):
             t_.save()
 
     else: # moved forward in time
-        transactions_to_update = Transaction.objects.filter(user=user, date__gt=old_date, date__lte=t.date)
-        transactions_to_update_2 = Transaction.objects.filter(user=user, date=old_date, index__gt=old_index)
+        transactions_to_update = Transaction.objects.filter(
+            user=user, date__gt=old_date,
+            date__lte=t.date)
+        transactions_to_update_2 = Transaction.objects.filter(
+            user=user,
+            date=old_date,
+            index__gt=old_index)
         transactions_to_update = list(transactions_to_update) + list(transactions_to_update_2)
         for t_ in transactions_to_update:
             t_.closing_balance -= old_size
@@ -188,8 +213,22 @@ def sign_out(request):
 def get_balances(request):
     user = request.user
     today = datetime.date.today()
-    start = datetime.datetime.strptime(request.GET['start'], '%Y-%m-%d').date() if 'start' in request.GET else today - datetime.timedelta(days=14)
-    end = datetime.datetime.strptime(request.GET['end'], '%Y-%m-%d').date() if 'end' in request.GET else today + datetime.timedelta(days=14)
+    if 'start' in request.GET:
+        start = strptime(request.GET['start'], '%Y-%m-%d').date()
+    else:
+        start = today - datetime.timedelta(days=14)
+    if 'end' in request.GET:
+        end = strptime(request.GET['end'], '%Y-%m-%d').date()
+    else:
+        end = today + datetime.timedelta(days=14)
+
+    balances = get_balances_2(user, start, end)
+    
+    balances['date'] = balances['date'].dt.strftime('%Y-%m-%d')
+    return JsonResponse({'data': balances.to_dict('records')})
+
+def get_balances_2(user, start, end):
+
     dates = pd.DataFrame(pd.date_range(start, end), columns=['date'])
     balances = dates
 
@@ -200,8 +239,39 @@ def get_balances(request):
         closing_balance = 0
     
     balances['balance'] = closing_balance
+
+    repeat_transactions = RepeatTransaction.objects.filter(user=user,
+                                                     start_date__lt=end)
+
+    transactions = []
+    for rt in repeat_transactions:
+        t = rt.generate_next_transaction()
+        while t.date <= end:
+            transactions.append(t)
+            rt.previous_transaction_date = t.date
+            t = rt.generate_next_transaction()
+        rt.save()
+
+    index = 0
+    last = None
+    for t in sorted(transactions, key=lambda t: t.date):
+        if last is None:
+            t.index = index
+            closing_balance += t.size
+            t.closing_balance = closing_balance
+            last = t
+        else:
+            if last.date == t.date:
+                index += 1
+            else:
+                index = 0
+            t.index = index
+            closing_balance += t.size
+            t.closing_balance = closing_balance
+        t.save()
+
+    transactions = get_transactions(user, start, end)
     
-    transactions = Transaction.objects.filter(user=user, date__gte=start, date__lt=end).order_by('date')
     if len(transactions):
         transactions_df = pd.DataFrame(list(transactions.values()))
         transactions_df['date'] = transactions_df['date'].astype('datetime64[ns]')
@@ -209,7 +279,12 @@ def get_balances(request):
         transactions_by_date = dates.merge(transactions_by_date, on='date', how='left').fillna(0)
         transactions_by_date['cumsum']  = transactions_by_date['size'].cumsum()
         balances['balance'] += transactions_by_date['cumsum']
-    
-    balances['date'] = balances['date'].dt.strftime('%Y-%m-%d')
 
-    return JsonResponse({'data': balances.to_dict('records')})
+    return balances
+
+def get_transactions(user, start, end):
+    
+    return Transaction.objects.filter(user=user,
+                                      date__gte=start,
+                                      date__lte=end).order_by('date')
+    

@@ -1,4 +1,7 @@
 import datetime
+from selenium.webdriver.support.ui import Select
+
+strptime = datetime.datetime.strptime
 
 class HomePage:
 
@@ -19,26 +22,23 @@ class HomePage:
         if update == True:
             self.__init__(self.driver)
 
-    def move_date_range_forward(self, days=7, update=True):
+    def move_date_range_forward(self, days=7):
         if days == 7:
             self.week_forward_button.click()
         else:
             raise Exception('unknown days attribute: {}'.format(days))
-        if update == True:
-            self.__init__(self.driver)
 
-    def move_date_range_backward(self, days=7, update=True):
+    def move_date_range_backward(self, days=7):
         if days == 7:
             self.week_backward_button.click()
         else:
             raise Exception('unknown days attribute: {}'.format(days))
-        if update == True:
-            self.__init__(self.driver)
 
     def get_date_range(self):
-        body = self.driver.find_element_by_tag_name('body')
-        start = datetime.datetime.strptime(body.get_attribute('date_range_start'), '%Y-%m-%d').date()
-        end = datetime.datetime.strptime(body.get_attribute('date_range_end'), '%Y-%m-%d').date()
+        start_input = self.driver.find_element_by_css_selector('#date-selector #start-input')
+        end_input = self.driver.find_element_by_css_selector('#date-selector #end-input')
+        start = strptime(start_input.get_attribute('value'), '%Y-%m-%d').date()
+        end = strptime(end_input.get_attribute('value'), '%Y-%m-%d').date()
         return [start, end]
 
 class TransactionForm:
@@ -46,17 +46,52 @@ class TransactionForm:
     def __init__(self, driver):
         
         self.element = driver.find_element_by_id('transaction-form')
-        self.date_input = driver.find_element_by_css_selector('#date-input[form="transaction-form"]')
-        self.transaction_size_input = driver.find_element_by_css_selector('#transaction-size-input[form="transaction-form"]')
-        self.description_input = driver.find_element_by_css_selector('#description-input[form="transaction-form"]')
-        self.submit_button = driver.find_element_by_css_selector('#submit-button[form="transaction-form"]')
+        css_selector = '#date-input[form="transaction-form"]'
+        self.date_input = driver.find_element_by_css_selector(css_selector)
+        css_selector = '#transaction-size-input[form="transaction-form"]'
+        self.transaction_size_input = driver.find_element_by_css_selector(css_selector)
+        css_selector = '#description-input[form="transaction-form"]'
+        self.description_input = driver.find_element_by_css_selector(css_selector)
+        css_selector = '#submit-button[form="transaction-form"]'
+        self.submit_button = driver.find_element_by_css_selector(css_selector)
+        css_selector = '#repeat-options[form="transaction-form"]'
+        self.repeat_options = Select(driver.find_element_by_css_selector(css_selector))
 
     def create_transaction(self, date, size, description=""):
-        self.date_input.send_keys('{:02d}{:02d}{}'.format(date.day, date.month, date.year))
+        self.date = date
         self.transaction_size_input.send_keys(size)
         self.description_input.send_keys(description)
         self.submit_button.click()
 
+    @property
+    def date(self):
+        return strptime(self.date_input.get_attribute('value'), '%Y-%m-%d').date()
+
+    @date.setter
+    def date(self, date):
+        keys = '{:02d}{:02d}{}'.format(date.day, date.month, date.year)        
+        self.date_input.send_keys(keys)
+
+    @property
+    def transaction_size(self):
+        return float(self.transaction_size_input.get_attribute('value'))
+
+    @transaction_size.setter
+    def transaction_size(self, transaction_size):
+        self.transaction_size_input.send_keys(transaction_size)
+
+    @property
+    def description(self):
+        return float(self.description_input.get_attribute('value'))
+
+    @description.setter
+    def description(self, description):
+        self.description_input.send_keys(description)
+
+    def submit(self):
+        self.submit_button.click()
+
+        
 class Menu:
 
     def __init__(self, driver):

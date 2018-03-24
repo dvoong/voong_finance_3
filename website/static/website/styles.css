@@ -52,3 +52,7 @@ button.date-navigator {
 .date-navigator-button-container {
     padding-bottom: 15px;
 }
+
+.btn--width-100 {
+    width: 100%;
+}
