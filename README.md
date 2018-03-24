@@ -12,6 +12,9 @@ Install required python packages
 
 `conda install --file requirements.txt`
 
+### Other requirements
+node.js
+
 ### Running the application locally
 
 `python manage.py runserver`
