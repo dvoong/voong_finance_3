@@ -9,8 +9,6 @@ declare var balances: any[];
 declare var $: any;
 declare var d3: any;
 
-var x = 10;
-
 // ================
 // Event triggers
 // ================
