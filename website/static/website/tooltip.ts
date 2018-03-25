@@ -1,4 +1,4 @@
-declare var d3: any;
+var d3 = require("d3");
 
 function ToolTip(){
     var that = this;

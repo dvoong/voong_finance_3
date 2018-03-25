@@ -1,17 +1,13 @@
 console.log('home.js');
 
+declare var balances: any[];
+
+var $ = require("jquery");
+var d3 = require("d3");
+
 import { BalanceChart } from "./balance_chart";
 
 var balance_chart = null;
-var tooltips = null;
-
-declare var balances: any[];
-declare var $: any;
-declare var d3: any;
-
-// ================
-// Event triggers
-// ================
 
 function toISODateString(date){
     return date.toISOString().slice(0, 10);
