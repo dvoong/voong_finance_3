@@ -25,7 +25,7 @@ SECRET_KEY = 'amzu!dzvdrwmu!8y1-(a9af4hb7y!u$4=h4ms2cm9cl%bu-dwi'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['voong-finance-dev.eu-west-2.elasticbeanstalk.com']
+ALLOWED_HOSTS = ['voong-finance-dev.eu-west-2.elasticbeanstalk.com', 'localhost']
 
 
 # Application definition

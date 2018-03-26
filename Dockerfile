@@ -15,6 +15,12 @@ WORKDIR /home/www-data/voong_finance
 RUN chown -R www-data:www-data /home/www-data
 EXPOSE 80
 
+USER www-data
+RUN python3 manage.py makemigrations
+RUN python3 manage.py migrate
+RUN python3 manage.py collectstatic
+USER root
+
 CMD ["python3", "manage.py", "runmodwsgi", "--user=www-data", "--group=www-data", "--port=80"]
 
 # RUN python3 manage.py collectstatic
