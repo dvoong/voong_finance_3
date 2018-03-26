@@ -5,3 +5,8 @@ node_modules
 npm-shrinkwrap.json
 db.sqlite3
 chromedriver
+
+# Elastic Beanstalk Files
+.elasticbeanstalk/*
+!.elasticbeanstalk/*.cfg.yml
+!.elasticbeanstalk/*.global.yml
