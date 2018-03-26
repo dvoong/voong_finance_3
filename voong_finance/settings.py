@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'functional_tests',
     'website',
+    'mod_wsgi.server',
 ]
 
 MIDDLEWARE = [
@@ -120,3 +121,4 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/2.0/howto/static-files/
 
 STATIC_URL = '/static/'
+STATIC_ROOT = '{}/static'.format(BASE_DIR)

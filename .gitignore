@@ -1,2 +1,7 @@
 *~
 *.pyc
+website/migrations/*
+node_modules
+npm-shrinkwrap.json
+db.sqlite3
+chromedriver
