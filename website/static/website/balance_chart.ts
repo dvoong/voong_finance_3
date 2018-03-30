@@ -47,7 +47,9 @@ class BalanceChart {
     }
     
     set_x_axis_range(range?: [number, number]): void {
-	if (range === void 0) { range = [0, this.canvas.width - this.padding.left - this.padding.right]; }
+	if (range === void 0) {
+	    range = [0, this.canvas.width - this.padding.left - this.padding.right];
+	}
 	this.x_axis.set_range(range);
     }
 
@@ -63,7 +65,9 @@ class BalanceChart {
     }
 
     set_y_axis_range(range?: [number, number]): void {
-	if (range === void 0) { range = [this.canvas.height - this.padding.top - this.padding.bottom, 0]; }
+	if (range === void 0) {
+	    range = [this.canvas.height - this.padding.top - this.padding.bottom, 0];
+	}
 	this.y_axis.set_range(range);
     }
 
@@ -114,6 +118,8 @@ class BalanceChart {
 	var balances = this.balances
 	var canvas_width = this.canvas.width;
 	var plot_area = this.plot_area;
+	var now = new Date();
+	var today = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
 	
 	if(y_scale.domain()[0] < 0 && y_scale.domain()[1] >= 0){
 	    // 0 is within the y-axis range, set that as the reference
@@ -156,7 +162,9 @@ class BalanceChart {
 	    .data(balances, function(d){return d.date})
 	    .enter()
 	    .append('rect')
-	    .attr('class', 'bar')
+	    .attr('class', function(d){
+		return (d.date == today.toISOString().slice(0, 10)) ? 'bar bar-today' : 'bar';
+	    })
 	    .attr('x', set_x)
 	    .attr('y', padding.top + y_reference)
 	    .attr('width', 0.9 * (canvas_width - padding.left - padding.right) / balances.length)
