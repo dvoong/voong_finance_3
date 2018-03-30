@@ -6,8 +6,10 @@ var $ = require("jquery");
 var d3 = require("d3");
 
 import { BalanceChart } from "./balance_chart";
+import { TransactionsTable } from "./transactions_table";
 
 var balance_chart = null;
+var transactions_table = null;
 
 function toISODateString(date){
     return date.toISOString().slice(0, 10);
@@ -22,7 +24,7 @@ function move_date_range_callback(e, form, days){
 	var start = args[0].value;
 	var end = args[1].value;
 
-	balances = d['data'];
+	balances = d.data.balances;
 	balance_chart.balances = balances;
 	balance_chart.resize();
 
@@ -49,6 +51,11 @@ function move_date_range_callback(e, form, days){
 	var end_input = form_backward.find('input[name="end"]');
 	start_input.val(toISODateString(start_new));
 	end_input.val(toISODateString(end_new));
+
+	transactions = d.data.transactions;
+	transactions_table.transactions = transactions;
+	transactions_table.update();
+	
     }
     
     $.get(url, args, success);
@@ -60,16 +67,18 @@ $(document).ready(function(){
     balance_chart = new BalanceChart(d3.select('#balance-chart'), balances);
     balance_chart.draw();
 
+    transactions_table = new TransactionsTable(d3.select('#transaction-list'), transactions);
+
     $('#week-forward-form').on('submit', function(e){
-	move_date_range_callback(e, $(this), 7);
+    	move_date_range_callback(e, $(this), 7);
     });
     
     $('#week-backward-form').on('submit', function(e){
-	move_date_range_callback(e, $(this), -7);
+    	move_date_range_callback(e, $(this), -7);
     });
     
     $(window).resize(function(){
-	balance_chart.resize();
+    	balance_chart.resize();
     });
 
 });

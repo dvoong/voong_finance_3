@@ -31,12 +31,13 @@ def home(request):
     else:
         end = today + datetime.timedelta(days=14)
 
-    balances = models.get_balances(user, start, end)
+    balances, transactions = models.get_balances(user, start, end)
 
     balances['date'] = balances['date'].dt.strftime('%Y-%m-%d')
-    transactions = models.get_transactions(user, start, end)
+    if len(transactions):
+        transactions['date'] = transactions['date'].dt.strftime('%Y-%m-%d')
     template_kwargs = {
-        'transactions': transactions,
+        'transactions': transactions.to_dict('records'),
         'balances': balances.to_dict('records'),
         'start': start,
         'end': end,
@@ -190,9 +191,6 @@ def modify_transaction(request):
 def delete_transaction(request):
     user = request.user
     transaction_id = int(request.POST['id'])
-    date = datetime.datetime.strptime(request.POST['date'], '%Y-%m-%d').date()
-    size = float(request.POST['size'])
-    description = request.POST['description']
 
     t = Transaction.objects.get(user=user, id=transaction_id)
 
@@ -223,7 +221,15 @@ def get_balances(request):
     else:
         end = today + datetime.timedelta(days=14)
 
-    balances = models.get_balances(user, start, end)
+    balances, transactions = models.get_balances(user, start, end)
     
     balances['date'] = balances['date'].dt.strftime('%Y-%m-%d')
-    return JsonResponse({'data': balances.to_dict('records')})
+    if len(transactions):
+        transactions['date'] = transactions['date'].dt.strftime('%Y-%m-%d')
+    return JsonResponse(
+        {
+            'data':{
+                'balances': balances.to_dict('records'),
+                'transactions': transactions.to_dict('records')
+            }
+        })

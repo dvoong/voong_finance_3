@@ -81,7 +81,6 @@ class BalanceChart {
     get_x_domain() : [Date, Date] {
 	var start: Date = new Date(Date.parse(d3.min(this.balances, function(d){return d.date})));
 	var end = new Date(Date.parse(d3.max(this.balances, function(d){return d.date})));
-
 	start.setDate(start.getDate() - 0.5);
 	end.setDate(end.getDate() +0.5);
 	return [start, end];

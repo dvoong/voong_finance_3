@@ -1,4 +1,5 @@
 import datetime
+import pandas as pd
 from unittest.mock import patch
 from django.test import TestCase
 from django.urls import resolve
@@ -135,7 +136,15 @@ class TestHome(TestCase):
                                    index=0)
         self.client.login(username='voong.david@gmail.com', password='password')
         response = self.client.get('/home')
-        self.assertEqual(list(response.context['transactions']), list(Transaction.objects.filter(user=user1)))
+
+        expected = Transaction.objects.filter(user=user1).values()
+        expected = pd.DataFrame(list(expected))
+        expected['date'] = pd.to_datetime(expected['date'])
+        expected['date'] = expected['date'].dt.strftime('%Y-%m-%d')
+        expected = expected.to_dict('records')
+        actual = response.context['transactions']
+        
+        self.assertEqual(actual, expected)
 
 class TestRegistration(TestCase):
 
@@ -400,12 +409,35 @@ class TestGetBalances(TestCase):
         self.client.login(username='voong.david@gmail.com', password='password')
         response = self.client.get('/get-balances', {'start': '2018-01-01', 'end': '2018-01-03'})
         expected = {
-            'data': [
-                {'date': '2018-01-01', 'balance': 10.0},
-                {'date': '2018-01-02', 'balance': 15.0},
-                {'date': '2018-01-03', 'balance': 15.0}
-            ]
+            'data': {
+                'balances': [
+                    {'date': '2018-01-01', 'balance': 10.0},
+                    {'date': '2018-01-02', 'balance': 15.0},
+                    {'date': '2018-01-03', 'balance': 15.0}
+                ],
+                'transactions': [
+                    {
+                        'closing_balance': 10.0,
+                        'date': '2018-01-01',
+                        'description': 'a',
+                        'id': 1,
+                        'index': 0,
+                        'size': 10.0,
+                        'user_id': 1
+                    },
+                    {
+                        'closing_balance': 15.0,
+                        'date': '2018-01-02',
+                        'description': 'b',
+                        'id': 2,
+                        'index': 0,
+                        'size': 5.0,
+                        'user_id': 1
+                    }
+                ]
+            }
         }
+
         self.assertEqual(expected, response.json())
 
     def test_repeating_transactions(self):
@@ -429,18 +461,50 @@ class TestGetBalances(TestCase):
         
         self.client.login(username='voong.david@gmail.com', password='password')
         response = self.client.get('/get-balances', {'start': '2018-01-01', 'end': '2018-01-09'})
+
         expected = {
-            'data': [
-                {'date': '2018-01-01', 'balance': 10.0},
-                {'date': '2018-01-02', 'balance': 30.0},
-                {'date': '2018-01-03', 'balance': 30.0},
-                {'date': '2018-01-04', 'balance': 30.0},
-                {'date': '2018-01-05', 'balance': 30.0},
-                {'date': '2018-01-06', 'balance': 30.0},
-                {'date': '2018-01-07', 'balance': 30.0},
-                {'date': '2018-01-08', 'balance': 30.0},
-                {'date': '2018-01-09', 'balance': 50.0},
-            ]
+            'data': {
+                'balances': [
+                    {'date': '2018-01-01', 'balance': 10.0},
+                    {'date': '2018-01-02', 'balance': 30.0},
+                    {'date': '2018-01-03', 'balance': 30.0},
+                    {'date': '2018-01-04', 'balance': 30.0},
+                    {'date': '2018-01-05', 'balance': 30.0},
+                    {'date': '2018-01-06', 'balance': 30.0},
+                    {'date': '2018-01-07', 'balance': 30.0},
+                    {'date': '2018-01-08', 'balance': 30.0},
+                    {'date': '2018-01-09', 'balance': 50.0}
+                ],
+                'transactions': [
+                    {
+                        'closing_balance': 10.0,
+                        'date': '2018-01-01',
+                        'description': 'a',
+                        'id': 1,
+                        'index': 0,
+                        'size': 10.0,
+                        'user_id': 1
+                    },
+                    {
+                        'closing_balance': 30.0,
+                        'date': '2018-01-02',
+                        'description': 'c',
+                        'id': 2,
+                        'index': 0,
+                        'size': 20.0,
+                        'user_id': 1
+                    },
+                    {
+                        'closing_balance': 50.0,
+                        'date': '2018-01-09',
+                        'description': 'c',
+                        'id': 3,
+                        'index': 0,
+                        'size': 20.0,
+                        'user_id': 1
+                    }
+                ]
+            }
         }
 
         self.assertEqual(expected, response.json())
