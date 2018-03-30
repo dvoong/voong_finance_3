@@ -85,66 +85,69 @@
 	<input type="submit" class="btn btn-primary" value="Submit">
       </form>
       
-      <div id="transaction-list-container">
+      <div id="transaction-list-container" class="container">
 	<h2>Transactions</h2>
 
 	<form id="transaction-form" class="form" action="/create-transaction" method="post" style="border: none";>{% csrf_token %}	    
 	</form>
 	
 	<table id="transaction-list" class="table">
-	  <tr class="table-header">
-	    <th id="date-header">Date</th>
-	    <th id="transaction-size-header">Transaction Size</th>
-	    <th id="description-header">Description</th>
-	    <th id="closing-balance-header" colspan="3">Balance</th>
-	  </tr>
-
-	  <tr>
-	    <td>
-	      <input id="date-input"
-		     type="date"
-		     name="date"
-		     class="form-control"
-		     value="{{today|date:'Y-m-d'}}"
-		     form="transaction-form">
-	    </td>
-	    <td>
-	      <input id="transaction-size-input"
-		     type="number" step="0.01"
-		     name="size"
-		     class="form-control"
-		     form="transaction-form" required>
-	    </td>
-	    <td>
-	      <input id="description-input"
-		     name="description"
-		     class="form-control"
-		     form="transaction-form">
-	    </td>
-	    <td></td>
-	    <td colspan="2">
-	      <input id="submit-button"
-		     type="submit"
-		     class="btn btn-primary"
-		     style="width: 100%"
-		     value="Create Transaction"
-		     form="transaction-form">
-
-	      <div class="dropdown">
-		<select id="repeat-options"
-			class="btn btn-secondary dropdown-toggle btn--width-100"
-			name="repeat_status"
-			form="transaction-form">
-		  <option value="does_not_repeat">Does not repeat</option>
-		  <option value="daily">Daily</option>
-		  <option value="weekly">Weekly</option>
-		  <option value="monthly">Monthly</option>
-		</select>
-	      </div>
-	      
-	    </td>
-	  </tr>
+	  <thead>
+	    <tr class="table-header">
+	      <th id="date-header">Date</th>
+	      <th id="transaction-size-header">Transaction Size</th>
+	      <th id="description-header">Description</th>
+	      <th id="closing-balance-header" colspan="3">Balance</th>
+	    </tr>
+	  </thead>
 	  
+	  <tbody>
+	    <tr>
+	      <td>
+	  	<input id="date-input"
+	  	       type="date"
+	  	       name="date"
+	  	       class="form-control"
+	  	       value="{{today|date:'Y-m-d'}}"
+	  	       form="transaction-form">
+	      </td>
+	      <td>
+	      <input id="transaction-size-input"
+	  	     type="number" step="0.01"
+	  	     name="size"
+	  	     class="form-control"
+	  	     form="transaction-form" required>
+	      </td>
+	      <td>
+	  	<input id="description-input"
+	  	       name="description"
+	  	       class="form-control"
+	  	     form="transaction-form">
+	      </td>
+	      <td></td>
+	      <td colspan="2">
+	  	<input id="submit-button"
+	  	       type="submit"
+	  	       class="btn btn-primary"
+	  	       style="width: 100%"
+	  	     value="Create Transaction"
+	  	       form="transaction-form">
+		
+	  	<div class="dropdown">
+	  	  <select id="repeat-options"
+	  		  class="btn btn-secondary dropdown-toggle btn--width-100"
+	  		  name="repeat_status"
+	  		  form="transaction-form">
+	  	    <option value="does_not_repeat">Does not repeat</option>
+	  	    <option value="daily">Daily</option>
+	  	    <option value="weekly">Weekly</option>
+	  	    <option value="monthly">Monthly</option>
+	  	  </select>
+	  	</div>
+		
+	      </td>
+	    </tr>
+	  </tbody>
 	</table>
       </div>
 

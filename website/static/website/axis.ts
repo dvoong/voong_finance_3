@@ -30,11 +30,6 @@ class XAxis {
 	var x = this.position[0];
 	var y = this.position[1];
 	var scale = this.scale;
-
-	console.log('test');
-	console.log('test');
-	console.log('test');
-	console.log('test2');
 	
 	this.selection.attr('transform', 'translate(' + x + ', ' + y + ')');
 	this.selection.transition().call(d3.axisBottom(scale));
