@@ -38,14 +38,15 @@ class RepeatTransaction(models.Model):
                                user=self.user)
         else:
             f = {
-                'daily': 1,
-                'weekly': 7,
-                'monthly': 28
+                'daily': add_1day,
+                'weekly': add_7days,
+                'monthly': next_month,
+                'annually': next_year
             }[self.frequency]
-            return Transaction(date=self.previous_transaction_date + datetime.timedelta(days=f),
-                            size=self.size,
-                            description=self.description,
-                            user=self.user)
+            return Transaction(date=f(self.previous_transaction_date),
+                               size=self.size,
+                               description=self.description,
+                               user=self.user)
 
 def get_transactions(user, start, end):
     
@@ -113,3 +114,47 @@ def get_balances(user, start, end):
         
 
     return balances, transactions_df
+
+def add_1day(date):
+    return date + datetime.timedelta(days=1)
+
+def add_7days(date):
+    return date + datetime.timedelta(days=7)
+
+def next_month(date):
+    day = date.day
+    if date.month == 12:
+        year = date.year + 1
+        month = 1
+    else:
+        year = date.year
+        month = date.month + 1
+
+    try:
+        next_month = datetime.date(year, month, day)
+    except ValueError:
+        if month == 12:
+            year += 1
+            month = 1
+        else:
+            month += 1
+        next_month = datetime.date(year, month, 1) - datetime.timedelta(days=1)
+    return next_month
+        
+def next_year(date):
+    day = date.day
+    month = date.month
+    year = date.year + 1
+    
+    try:
+        next_year = datetime.date(year, month, day)
+    except ValueError:
+        if month == 12:
+            year += 1
+            month = 1
+        else:
+            month += 1
+        next_year = datetime.date(year, month, 1) - datetime.timedelta(days=1)
+
+    return next_year
+    
