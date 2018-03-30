@@ -6,6 +6,7 @@ from django.http import HttpResponse, JsonResponse
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 from website.models import Transaction, RepeatTransaction
+from django.db.models import Q
 
 strptime = datetime.datetime.strptime
 
@@ -71,6 +72,7 @@ def login_view(request):
 
 def create_transaction(request):
     date = request.POST['date']
+    user = request.user
     size = float(request.POST['size'])
     description = request.POST['description']
     index = len(Transaction.objects.filter(user=request.user, date=date))
@@ -83,17 +85,51 @@ def create_transaction(request):
         end = strptime(request.POST['end'], '%Y-%m-%d').date()
     else:
         end = today + datetime.timedelta(days=14)
-    try:
-        last_transaction = Transaction.objects.filter(user=request.user,
-                                                      date__lte=date).latest('date', 'index')
-        closing_balance = last_transaction.closing_balance + size
-    except Transaction.DoesNotExist:
-        closing_balance = size
     repeat_status = request.POST.get('repeat_status', 'does_not_repeat')
 
     if repeat_status == 'does_not_repeat':
-        # TODO: generate transactions from repeat transactions between the last transaction
-        # and this transaction
+
+        # generate repeat transactions
+        repeat_transactions = RepeatTransaction.objects.filter(
+            user=user,
+            start_date__lt=end)
+        transactions = []
+        for rt in repeat_transactions:
+            t = rt.generate_next_transaction()
+            while t.date <= end:
+                t_ = Transaction.objects.filter(user=user, date=t.date)
+                t.index = len(t_)
+                transactions.append(t)
+                rt.previous_transaction_date = t.date
+                t = rt.generate_next_transaction()
+            rt.save()
+
+        if len(transactions):
+            t = min(transactions, key=lambda t: (t.date, t.index)) 
+
+            try:
+                last_transaction = Transaction.objects.filter(
+                    Q(date__lt=t.date) | Q(date__lte=t.date, index__lt=t.index),
+                    user=user
+                ).latest('date', 'index')
+                closing_balance = last_transaction.closing_balance
+            except Transaction.DoesNotExist:
+                closing_balance = 0
+
+            for t in transactions:
+                closing_balance += t.size
+                t.closing_balance = closing_balance
+                t.save()
+
+        try:
+            last_transaction = Transaction.objects.filter(
+                user=request.user,
+                date__lte=date
+            ).latest('date', 'index')
+            closing_balance = last_transaction.closing_balance + size
+        except Transaction.DoesNotExist:
+            closing_balance = size
+
         Transaction.objects.create(
             date=datetime.datetime.strptime(date, '%Y-%m-%d').date(),
             size=size,
@@ -127,6 +163,38 @@ def update_transaction(request):
     date = datetime.datetime.strptime(request.POST['date'], '%Y-%m-%d').date()
     size = float(request.POST['size'])
     description = request.POST['description']
+
+    # generate repeat transactions
+    repeat_transactions = RepeatTransaction.objects.filter(
+        user=user,
+        start_date__lt=date)
+    transactions = []
+    for rt in repeat_transactions:
+        t = rt.generate_next_transaction()
+        while t.date <= date:
+            t_ = Transaction.objects.filter(user=user, date=t.date)
+            t.index = len(t_)
+            transactions.append(t)
+            rt.previous_transaction_date = t.date
+            t = rt.generate_next_transaction()
+            rt.save()
+
+    if len(transactions):
+        t = min(transactions, key=lambda t: (t.date, t.index)) 
+
+        try:
+            last_transaction = Transaction.objects.filter(
+                Q(date__lt=t.date) | Q(date__lte=t.date, index__lt=t.index),
+                user=user
+            ).latest('date', 'index')
+            closing_balance = last_transaction.closing_balance
+        except Transaction.DoesNotExist:
+            closing_balance = 0
+
+        for t in transactions:
+            closing_balance += t.size
+            t.closing_balance = closing_balance
+            t.save()
 
     t = Transaction.objects.get(user=user, id=transaction_id)
     old_date = t.date
