@@ -28,7 +28,8 @@ class RepeatTransaction(models.Model):
     description = models.TextField()
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     index = models.IntegerField()
-    frequency = models.CharField(max_length=7)
+    frequency = models.CharField(max_length=7, null=True)
+    end_date = models.DateField(null=True)
 
     def generate_next_transaction(self):
         if self.previous_transaction_date is None:
@@ -43,6 +44,7 @@ class RepeatTransaction(models.Model):
                 'monthly': next_month,
                 'annually': next_year
             }[self.frequency]
+                    
             return Transaction(date=f(self.previous_transaction_date),
                                size=self.size,
                                description=self.description,
@@ -62,7 +64,7 @@ def get_balances(user, start, end):
     transactions = []
     for rt in repeat_transactions:
         t = rt.generate_next_transaction()
-        while t.date <= end:
+        while t.date <= end and (rt.end_date is None or t.date <= rt.end_date):
             t_ = Transaction.objects.filter(user=user, date=t.date)
             t.index = len(t_)
             transactions.append(t)

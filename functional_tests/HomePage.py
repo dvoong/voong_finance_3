@@ -1,5 +1,8 @@
 import datetime
 from selenium.webdriver.support.ui import Select
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.by import By
 
 strptime = datetime.datetime.strptime
 
@@ -44,7 +47,8 @@ class HomePage:
 class TransactionForm:
 
     def __init__(self, driver):
-        
+
+        self.driver = driver
         self.element = driver.find_element_by_id('transaction-form')
         css_selector = '#date-input[form="transaction-form"]'
         self.date_input = driver.find_element_by_css_selector(css_selector)
@@ -54,8 +58,8 @@ class TransactionForm:
         self.description_input = driver.find_element_by_css_selector(css_selector)
         css_selector = '#submit-button[form="transaction-form"]'
         self.submit_button = driver.find_element_by_css_selector(css_selector)
-        css_selector = '#repeat-options[form="transaction-form"]'
-        self.repeat_options = Select(driver.find_element_by_css_selector(css_selector))
+        self.repeat_checkbox = driver.find_element_by_id('repeat-checkbox')
+        self.repeat_options = RepeatOptions(self.driver)
 
     def create_transaction(self, date, size, description=""):
         self.date = date
@@ -89,6 +93,9 @@ class TransactionForm:
         self.description_input.send_keys(description)
 
     def submit(self):
+        WebDriverWait(self.driver, 5).until(
+            EC.invisibility_of_element_located((By.ID, 'repeat-options-div'))
+        )
         self.submit_button.click()
 
         
@@ -122,6 +129,9 @@ class BalanceChart:
         self.x_axis = self.canvas.find_element_by_id('x-axis')
         self.y_axis = self.canvas.find_element_by_id('y-axis')
         self.plot_area = self.canvas.find_element_by_id('plot-area')
+        WebDriverWait(self.element, 5).until(
+            EC.presence_of_element_located((By.CSS_SELECTOR, '.bar'))
+        )
         self.bars = [BalanceBar(element) for element in self.plot_area.find_elements_by_css_selector('.bar')]
         self.y_ticks = self.y_axis.text.split('\n')
         self.x_ticks = self.x_axis.text.split('\n')
@@ -211,3 +221,48 @@ class DateSelector:
 
     def submit(self):
         self.submit_button.click()
+
+class RepeatOptions:
+
+    def __init__(self, driver):
+
+        self.driver = driver
+        self.element = driver.find_element_by_id('repeat-options-div')
+        self.close_button = driver.find_element_by_id('repeat-options-close-button')
+        self.ends_after_n_occurrences = self.element.find_element_by_id('ends-after-n-occurrences')
+        self.n_occurrences_input =self.element.find_element_by_id('n-occurrences-input')
+        self.ends_on_date = self.element.find_element_by_id('ends-on-date')
+        self.end_date_input = self.element.find_element_by_id('ends-on-date-input')
+        self.never_ends = self.element.find_element_by_id('never-ends')
+        self.frequency_input = Select(self.element.find_element_by_id('frequency-input'))
+
+    def close(self):
+        try:
+            element = WebDriverWait(self.driver, 5).until(
+                EC.visibility_of_element_located((By.ID, "repeat-options-close-button"))
+            )
+            self.close_button.click()
+        except:
+            pass
+
+    def select(self, option):
+        WebDriverWait(self.driver, 5).until(
+            EC.visibility_of_element_located((By.ID, 'ends-after-n-occurrences'))
+        )
+        if option == 'ends_after_#_occurrences':
+            self.ends_after_n_occurrences.click()
+        elif option == 'ends_on_date':
+            self.ends_on_date.click()
+        elif option == 'never':
+            self.never_ends.click()
+
+    def set_n_occurrences(self, occurrences):
+        self.n_occurrences_input.clear()
+        self.n_occurrences_input.send_keys(occurrences)
+        
+    def set_end_date(self, date):
+        keys = '{:02d}{:02d}{}'.format(date.day, date.month, date.year)        
+        self.end_date_input.send_keys(keys)
+
+    def set_frequency(self, frequency):
+        self.frequency_input.select_by_value(frequency)

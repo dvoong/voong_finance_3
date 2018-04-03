@@ -262,7 +262,8 @@ class TestRepeatTransactions(TestCase):
         transaction_form.date = today
         transaction_form.transaction_size = -10
         transaction_form.description = 'phone contract'
-        transaction_form.repeat_options.select_by_visible_text('Weekly')
+        transaction_form.repeat_checkbox.click()
+        transaction_form.repeat_options.close()
         transaction_form.submit()
 
         homepage = HomePage(self.driver)
@@ -287,6 +288,147 @@ class TestRepeatTransactions(TestCase):
         self.assertEqual(t.size, -10)
         self.assertEqual(t.description, 'phone contract')
         self.assertEqual(t.balance, '£-30.00')
+
         
+class TestCustomRepeatTransaction(TestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.user = self.create_user('voong.david@gmail.com', 'password')
+
+    def test_never_ends(self):
+
+        today = datetime.date.today()
         
-    
+        self.driver.get(self.live_server_url)
+        welcome_page = WelcomePage(self.driver)
+        welcome_page.login_user('voong.david@gmail.com', 'password')
+
+        homepage = HomePage(self.driver)
+        transaction_form = homepage.transaction_form
+        transaction_form.date = today
+        transaction_form.transaction_size = -10
+        transaction_form.description = 'phone contract'
+        transaction_form.repeat_checkbox.click()
+
+        repeat_options = transaction_form.repeat_options
+        repeat_options.close()
+        
+        transaction_form.submit()
+        
+        homepage = HomePage(self.driver)
+        transactions = homepage.transaction_list.get_transactions()
+
+        self.assertEqual(len(transactions), 3)
+        
+        t = transactions[0]
+        self.assertEqual(t.date, today)
+        self.assertEqual(t.size, -10)
+        self.assertEqual(t.description, 'phone contract')
+        self.assertEqual(t.balance, '£-10.00')
+        
+        t = transactions[1]
+        self.assertEqual(t.date, today + datetime.timedelta(days=7))
+        self.assertEqual(t.size, -10)
+        self.assertEqual(t.description, 'phone contract')
+        self.assertEqual(t.balance, '£-20.00')
+        
+        t = transactions[2]
+        self.assertEqual(t.date, today + datetime.timedelta(days=14))
+        self.assertEqual(t.size, -10)
+        self.assertEqual(t.description, 'phone contract')
+        self.assertEqual(t.balance, '£-30.00')
+
+    def test_ends_after_2_occurrences(self):
+
+        today = datetime.date.today()
+        
+        self.driver.get(self.live_server_url)
+        welcome_page = WelcomePage(self.driver)
+        welcome_page.login_user('voong.david@gmail.com', 'password')
+
+        homepage = HomePage(self.driver)
+        transaction_form = homepage.transaction_form
+        transaction_form.date = today
+        transaction_form.transaction_size = -10
+        transaction_form.description = 'phone contract'
+        transaction_form.repeat_checkbox.click()
+
+        repeat_options = transaction_form.repeat_options
+        repeat_options.select('ends_after_#_occurrences')
+        repeat_options.set_n_occurrences(2)
+        repeat_options.close()
+        
+        transaction_form.submit()
+        
+        homepage = HomePage(self.driver)
+        transactions = homepage.transaction_list.get_transactions()
+
+        self.assertEqual(len(transactions), 2)
+        
+        t = transactions[0]
+        self.assertEqual(t.date, today)
+        self.assertEqual(t.size, -10)
+        self.assertEqual(t.description, 'phone contract')
+        self.assertEqual(t.balance, '£-10.00')
+        
+        t = transactions[1]
+        self.assertEqual(t.date, today + datetime.timedelta(days=7))
+        self.assertEqual(t.size, -10)
+        self.assertEqual(t.description, 'phone contract')
+        self.assertEqual(t.balance, '£-20.00')
+
+    def test_monthly_transactions(self):
+
+        start = datetime.date(2018, 4, 1)
+        end = datetime.date(2018, 7, 1)
+        
+        self.driver.get(self.live_server_url)
+        welcome_page = WelcomePage(self.driver)
+        welcome_page.login_user('voong.david@gmail.com', 'password')
+
+        self.driver.get('{}/home?start=2018-04-01&end=2018-08-01'.format(self.live_server_url))
+                        
+        homepage = HomePage(self.driver)
+        transaction_form = homepage.transaction_form
+        transaction_form.date = start
+        transaction_form.transaction_size = -10
+        transaction_form.description = 'phone contract'
+        transaction_form.repeat_checkbox.click()
+
+        repeat_options = transaction_form.repeat_options
+        repeat_options.select('ends_on_date')
+        repeat_options.set_frequency('monthly')
+        repeat_options.set_end_date(end)
+        repeat_options.close()
+
+        transaction_form.submit()
+        
+        homepage = HomePage(self.driver)
+        transactions = homepage.transaction_list.get_transactions()
+
+        self.assertEqual(len(transactions), 4)
+        
+        t = transactions[0]
+        self.assertEqual(t.date, start)
+        self.assertEqual(t.size, -10)
+        self.assertEqual(t.description, 'phone contract')
+        self.assertEqual(t.balance, '£-10.00')
+        
+        t = transactions[1]
+        self.assertEqual(t.date, datetime.date(2018, 5, 1))
+        self.assertEqual(t.size, -10)
+        self.assertEqual(t.description, 'phone contract')
+        self.assertEqual(t.balance, '£-20.00')
+        
+        t = transactions[2]
+        self.assertEqual(t.date, datetime.date(2018, 6, 1))
+        self.assertEqual(t.size, -10)
+        self.assertEqual(t.description, 'phone contract')
+        self.assertEqual(t.balance, '£-30.00')
+        
+        t = transactions[3]
+        self.assertEqual(t.date, datetime.date(2018, 7, 1))
+        self.assertEqual(t.size, -10)
+        self.assertEqual(t.description, 'phone contract')
+        self.assertEqual(t.balance, '£-40.00')

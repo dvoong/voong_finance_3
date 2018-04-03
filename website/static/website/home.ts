@@ -4,6 +4,7 @@ declare var balances: any[];
 
 var $ = require("jquery");
 var d3 = require("d3");
+require('bootstrap');
 
 import { BalanceChart } from "./balance_chart";
 import { TransactionsTable } from "./transactions_table";
@@ -79,6 +80,33 @@ $(document).ready(function(){
     
     $(window).resize(function(){
     	balance_chart.resize();
+    });
+
+    $('#repeat-checkbox').change(function(e){
+	console.log('on change');
+	if($(this).prop('checked')){
+	    $(this).val('repeats');
+	    var modal = $('#myModal');
+	    modal.modal('show');
+	    console.log('show modal');
+	} else {
+	    $(this).val('does_not_repeat');
+	}
+
+
+    });
+
+    $('input:radio[name="end_condition"]').change(function(e){
+	if($(this).attr('id') == 'ends-after-n-occurrences'){
+	    $('#n-occurrences-input').prop('disabled', false);
+	    $('#ends-on-date-input').prop('disabled', true);
+	} else if ($(this).attr('id') == 'ends-on-date'){
+	    $('#n-occurrences-input').prop('disabled', true);
+	    $('#ends-on-date-input').prop('disabled', false);
+	} else {
+	    $('#n-occurrences-input').prop('disabled', true);
+	    $('#ends-on-date-input').prop('disabled', true);
+	}
     });
 
 });

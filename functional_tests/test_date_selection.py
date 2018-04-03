@@ -22,8 +22,9 @@ class TestDateSelection(TestCase):
 
         homepage = HomePage(self.driver)
         homepage.create_transaction(date=last_month, size=100, description='a', update=True)
-        homepage.create_transaction(date=today, size=-50, description='b', update=True)
 
+        homepage.create_transaction(date=today, size=-50, description='b', update=True)
+        
         balance_chart = homepage.balance_chart
         self.assertEqual(balance_chart.bars[0].balance, 100)
         self.assertEqual(balance_chart.bars[14].balance, 50)

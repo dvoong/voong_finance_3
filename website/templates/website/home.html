@@ -8,7 +8,6 @@
     <link rel="icon" 
 	  type="image/x-icon"
 	  href="{% static 'website/favicon.ico' %}" />
-
   </head>
   
   <body>
@@ -88,9 +87,123 @@
       <div id="transaction-list-container" class="container">
 	<h2>Transactions</h2>
 
-	<form id="transaction-form" class="form" action="/create-transaction" method="post" style="border: none";>{% csrf_token %}	    
+	<form id="transaction-form" class="form" action="/create-transaction" method="post" style="border: none";>{% csrf_token %}
+	  <input id="start-input"
+		 type="date"
+		 name="start"
+		 class="form-control"
+		 value="{{start|date:'Y-m-d'}}"
+		 hidden>
+	  <input id="end-input"
+		 type="date"
+		 name="end"
+		 class="form-control"
+		 value="{{end|date:'Y-m-d'}}"
+		 hidden>
+	  
 	</form>
-	
+
+	<!-- The Modal -->
+	<div class="modal fade" id="myModal">
+	  <div class="modal-dialog">
+	    <div class="modal-content">
+
+	      <!-- Modal Header -->
+	      <div class="modal-header">
+		<h4 class="modal-title">Reapeat transaction ends</h4>
+		<button type="button" class="close" data-dismiss="modal">&times;</button>
+	      </div>
+
+	      <!-- Modal body -->
+	      <div id="repeat-options-div" class="modal-body">
+
+		<select
+		  id="frequency-input"
+		  class="dropdown"
+		  form="transaction-form"
+		  name="frequency">
+		  <option value="daily">Daily</option>
+		  <option value="weekly" selected>Weekly</option>
+		  <option value="monthly">Monthly</option>
+		  <option value="yearly">Yearly</option>
+		</select>
+		
+		<div class="for-check row" style="padding: 5px 5px 5px 15px">
+		  <div class="col-sm-6">
+		  <input class="form-check-input"
+			 type="radio"
+			 id="never-ends"
+			 name="end_condition"
+			 value="never_ends"
+			 form="transaction-form"
+			 checked>
+		  <label class="form-check-label" for="never-ends">
+		    Never ends
+		  </label>
+		  </div>
+		</div>
+
+		<div class="for-check row" style="padding: 5px 5px 5px 15px">
+		  <div class="col-sm-6">
+		    <input class="form-check-input"
+		    	   type="radio"
+			   name="end_condition"
+			   value="n_occurrences"
+		    	   id="ends-after-n-occurrences"
+			   form="transaction-form">
+		    <label class="form-check-label" for="ends-after-n-occurrences">
+		      Ends after # transactions
+		    </label>
+		  </div>
+		  <div class="col-sm-6">
+		    <input id="n-occurrences-input"
+			   class="form-control"
+			   type="number"
+			   step="1"
+			   value="1"
+			   name="n_occurrences"
+			   form="transaction-form"
+			   disabled>
+		  </div>
+		</div>
+		
+		<div class="for-check row" style="padding: 5px 5px 5px 15px">
+		  <div class="col-sm-6">
+		  <input class="form-check-input"
+			 type="radio"
+			 id="ends-on-date"
+			 name="end_condition"
+			 value="ends_on_date"
+			 form="transaction-form">
+		  <label class="form-check-label" for="ends-on-date">
+		    Ends on
+		  </label>
+		  </div>
+		  <div class="col-sm-6">
+		    <input id="ends-on-date-input"
+			   class="form-control"
+			   type="date"
+			   value="{{today|date:'Y-m-d'}}"
+			   name="end_date"
+			   form="transaction-form"
+			   disabled>
+		  </div>
+		</div>
+		
+	      </div>
+
+	      <!-- Modal footer -->
+	      <div class="modal-footer">
+		<button id="repeat-options-close-button"
+			type="button"
+			class="btn btn-danger"
+			data-dismiss="modal">Close</button>
+	      </div>
+
+	    </div>
+	  </div>
+	</div>
+
 	<table id="transaction-list" class="table">
 	  <thead>
 	    <tr class="table-header">
@@ -112,17 +225,17 @@
 	  	       form="transaction-form">
 	      </td>
 	      <td>
-	      <input id="transaction-size-input"
-	  	     type="number" step="0.01"
-	  	     name="size"
-	  	     class="form-control"
-	  	     form="transaction-form" required>
+		<input id="transaction-size-input"
+	  	       type="number" step="0.01"
+	  	       name="size"
+	  	       class="form-control"
+	  	       form="transaction-form" required>
 	      </td>
 	      <td>
 	  	<input id="description-input"
 	  	       name="description"
 	  	       class="form-control"
-	  	     form="transaction-form">
+	  	       form="transaction-form">
 	      </td>
 	      <td></td>
 	      <td colspan="2">
@@ -130,21 +243,21 @@
 	  	       type="submit"
 	  	       class="btn btn-primary"
 	  	       style="width: 100%"
-	  	     value="Create Transaction"
+	  	       value="Create Transaction"
 	  	       form="transaction-form">
 		
-	  	<div class="dropdown">
-	  	  <select id="repeat-options"
-	  		  class="btn btn-secondary dropdown-toggle btn--width-100"
-	  		  name="repeat_status"
-	  		  form="transaction-form">
-	  	    <option value="does_not_repeat">Does not repeat</option>
-	  	    <option value="daily">Daily</option>
-	  	    <option value="weekly">Weekly</option>
-	  	    <option value="monthly">Monthly</option>
-	  	    <option value="annually">Annually</option>
-	  	  </select>
-	  	</div>
+		<div class="form-check">
+		  <input class="form-check-input"
+			 type="checkbox"
+			 value="does_not_repeat"
+			 name="repeat_status"
+			 id="repeat-checkbox"
+			 form="transaction-form">
+		  <label class="form-check-label" for="repeat-checkbox">
+		    Repeats
+		  </label>
+
+		</div>
 		
 	      </td>
 	    </tr>

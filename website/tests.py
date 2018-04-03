@@ -230,7 +230,45 @@ class TestCreateTransaction(TestCase):
         self.assertEqual(t.description, 'pay day')
         self.assertEqual(t.closing_balance, 1100)
         self.assertEqual(t.index, 1)
-                
+
+    def test_create_repeat_transaction_ends_on_n_occurrences(self):
+        
+        self.client.post('/create-transaction',
+                         {
+                             'date': '2018-01-01',
+                             'size': 1,
+                             'description': 'a',
+                             'frequency': 'weekly',
+                             'repeat_status': 'repeats',
+                             'end_condition': 'n_occurrences',
+                             'n_occurrences': 2
+                         }
+        )
+
+        self.client.get('/home', {'start': '2018-01-01', 'end': '2018-01-15'})
+
+        repeat_transactions = RepeatTransaction.objects.all()
+        self.assertEqual(len(repeat_transactions), 1)
+
+        r = repeat_transactions[0]
+        self.assertEqual(r.end_date, datetime.date(2018, 1, 8))
+        
+        transactions = Transaction.objects.all().order_by('date', 'index')
+        self.assertEqual(len(transactions), 2)
+        
+        t = transactions[0]
+        self.assertEqual(t.date, datetime.date(2018, 1, 1))
+        self.assertEqual(t.size, 1)
+        self.assertEqual(t.description, 'a')
+        self.assertEqual(t.closing_balance, 1)
+        self.assertEqual(t.index, 0)
+
+        t = transactions[1]
+        self.assertEqual(t.date, datetime.date(2018, 1, 8))
+        self.assertEqual(t.size, 1)
+        self.assertEqual(t.description, 'a')
+        self.assertEqual(t.closing_balance, 2)
+        self.assertEqual(t.index, 0)
 
 class TestTransactionUpdate(TestCase):
 
@@ -449,7 +487,7 @@ class TestGetBalances(TestCase):
                                                  size=10,
                                                  description='a',
                                                  user=user,
-                                                closing_balance=10,
+                                                 closing_balance=10,
                                                  index=0)
 
         rt = RepeatTransaction.objects.create(start_date=datetime.date(2018, 1, 2),

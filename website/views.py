@@ -71,21 +71,22 @@ def login_view(request):
         return redirect('welcome')
 
 def create_transaction(request):
-    date = request.POST['date']
+    date = strptime(request.POST['date'], '%Y-%m-%d').date()
     user = request.user
     size = float(request.POST['size'])
     description = request.POST['description']
     index = len(Transaction.objects.filter(user=request.user, date=date))
+    repeat_status = request.POST.get('repeat_status', 'does_not_repeat')
+    frequency = request.POST.get('frequency', None)
     today = datetime.date.today()
     if 'start' in request.POST:
         start = strptime(request.POST['start'], '%Y-%m-%d').date()
     else:
         start = today - datetime.timedelta(days=14)
-    if 'end' in request.POST:
+    if  'end' in request.POST:
         end = strptime(request.POST['end'], '%Y-%m-%d').date()
     else:
         end = today + datetime.timedelta(days=14)
-    repeat_status = request.POST.get('repeat_status', 'does_not_repeat')
 
     if repeat_status == 'does_not_repeat':
 
@@ -131,7 +132,7 @@ def create_transaction(request):
             closing_balance = size
 
         Transaction.objects.create(
-            date=datetime.datetime.strptime(date, '%Y-%m-%d').date(),
+            date=date,
             size=size,
             description=description,
             user=request.user,
@@ -140,21 +141,79 @@ def create_transaction(request):
         )
         
         # update future transactions
-        transactions = Transaction.objects.filter(date__gt=strptime(date, '%Y-%m-%d').date(),
+        transactions = Transaction.objects.filter(date__gt=date,
                                                   user=request.user)
         for t in transactions:
             t.closing_balance += size
             t.save()
 
     else:
-        RepeatTransaction.objects.create(
-            start_date=datetime.datetime.strptime(date, '%Y-%m-%d').date(),
-            size=size,
-            description=description,
-            user=request.user,
-            index=0,
-            frequency=repeat_status
-        )
+        end_condition = request.POST.get('end_condition', 'never_ends')
+        if end_condition  == 'never_ends':
+            RepeatTransaction.objects.create(
+                start_date=date,
+                size=size,
+                description=description,
+                user=request.user,
+                index=0,
+                frequency=frequency
+            )
+        elif end_condition == 'n_occurrences':
+            
+            def get_end_date(start, frequency, occurrences):
+                if frequency == 'daily':
+                    return start + datetime.timedelta(days=occurrences - 1)
+                elif frequency == 'weekly':
+                    return start + datetime.timedelta(days=7*(occurrences - 1))
+                elif frequency == 'monthly':
+                    month_start = start.month
+                    month_end = (month_start + (occurrences - 1)) % 12
+                    month_end = 12 if month_end == 0 else month_end
+
+                    months_remainder = occurrences - (12 - month_start + 1)
+                    months_remainder = max(0, months_remainder)
+                    year_end += ((months_remainder > 0) * 12 + months_remainder) // 12
+
+                    try:
+                        return datetime.date(year_end, month_end, start.day)
+                    except ValueError:
+                        if month_end == 12:
+                            month_end = 1
+                            year_end += 1
+                        else:
+                            month_end += 1
+                        x = datetime.date(year_end, month_end, 1)
+                        return x - datetime.timedelta(days=1)
+
+            occurrences = int(request.POST['n_occurrences'])
+            
+            end_date = get_end_date(date,
+                                    occurrences=occurrences,
+                                    frequency=frequency)
+
+            RepeatTransaction.objects.create(
+                start_date=date,
+                size=size,
+                description=description,
+                user=request.user,
+                index=0,
+                frequency=frequency,
+                end_date=end_date
+            )
+
+        elif end_condition == 'ends_on_date':
+
+            RepeatTransaction.objects.create(
+                start_date=date,
+                size=size,
+                description=description,
+                user=request.user,
+                index=0,
+                frequency=frequency,
+                end_date=request.POST['end_date']
+            )
+            
+            
     return redirect('/home?start={}&end={}'.format(start, end))
 
 def update_transaction(request):
