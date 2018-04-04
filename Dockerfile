@@ -21,4 +21,6 @@ RUN python3 manage.py migrate
 RUN python3 manage.py collectstatic
 RUN chown -R www-data:www-data /home/www-data
 
+EXPOSE 80
+
 CMD ["python3", "manage.py", "runmodwsgi", "--user=www-data", "--group=www-data", "--port=80"]
