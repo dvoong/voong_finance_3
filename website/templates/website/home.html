@@ -51,20 +51,44 @@
     <div class="container">
 
       <div class="row date-navigator-button-container">
+
 	<div class="col-sm">
 	  <form id="week-backward-form" action="/home" method="get">
 	    <input name="start" value="{{ start_minus_7|date:'Y-m-d' }}" hidden>
 	    <input name="end" value="{{ end_minus_7|date:'Y-m-d' }}" hidden>
-	    <button id="week-backward-button" type="submit" class="btn btn-primary date-navigator">Back 7 Days</button>
+	    <button id="week-backward-button"
+		    type="submit"
+		    class="btn btn-primary date-navigator">
+	      Back 7 Days
+	    </button>
 	  </form>
 	</div>
+	
+	<div class="col-sm">
+	  <form id="center-on-today-form">
+	    <input name="start" value="{{ center_on_today_start|date:'Y-m-d' }}" hidden>
+	    <input name="end" value="{{ center_on_today_end|date:'Y-m-d' }}" hidden>
+	    <button id="center-on-today-button"
+		    type="submit"
+		    class="btn btn-primary date-navigator">
+	      Today
+	    </button>
+	    
+	  </form>
+	</div>
+	
 	<div class="col-sm">
 	  <form id="week-forward-form" action="/home" method="get">
-	    <button id="week-forward-button" type="submit" class="btn btn-primary date-navigator">Forward 7 Days</button>
+	    <button id="week-forward-button"
+		    type="submit"
+		    class="btn btn-primary date-navigator">
+	      Forward 7 Days
+	    </button>
 	    <input name="start" value="{{ start_plus_7|date:'Y-m-d' }}" hidden>
 	    <input name="end" value="{{ end_plus_7|date:'Y-m-d' }}" hidden>
 	  </form>
 	</div>
+	
       </div>
       
       <form id="date-selector" action="/home" method="get">

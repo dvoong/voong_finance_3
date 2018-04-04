@@ -32,6 +32,10 @@ def home(request):
     else:
         end = today + datetime.timedelta(days=14)
 
+    days = (end - start).days
+    center_on_today_start = today - datetime.timedelta(days=days//2)
+    center_on_today_end = today + datetime.timedelta(days=days - days//2)
+
     balances, transactions = models.get_balances(user, start, end)
 
     balances['date'] = balances['date'].dt.strftime('%Y-%m-%d')
@@ -42,11 +46,13 @@ def home(request):
         'balances': balances.to_dict('records'),
         'start': start,
         'end': end,
-        'today': datetime.date.today(),
+        'today': today,
         'start_plus_7': start + datetime.timedelta(days=7),
         'end_plus_7': end + datetime.timedelta(days=7),
         'start_minus_7': start - datetime.timedelta(days=7),
         'end_minus_7': end - datetime.timedelta(days=7),
+        'center_on_today_start': center_on_today_start,
+        'center_on_today_end': center_on_today_end,
     }
     return render(request, 'website/home.html', template_kwargs)
 

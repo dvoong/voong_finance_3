@@ -16,7 +16,7 @@ function toISODateString(date){
     return date.toISOString().slice(0, 10);
 }
 
-function move_date_range_callback(e, form, days){
+function move_date_range_callback(e, form){
     var url = '/get-balances';
     var args = form.serializeArray();
     e.preventDefault();
@@ -36,8 +36,8 @@ function move_date_range_callback(e, form, days){
 	var form_forward = $('#week-forward-form');
 	var start_new = new Date(start);
 	var end_new = new Date(end);
-	start_new.setDate(start_new.getDate() + Math.abs(days));
-	end_new.setDate(end_new.getDate() + Math.abs(days));
+	start_new.setDate(start_new.getDate() + 7);
+	end_new.setDate(end_new.getDate() + 7);
 	var start_input = form_forward.find('input[name="start"]');
 	var end_input = form_forward.find('input[name="end"]');
 	start_input.val(toISODateString(start_new));
@@ -46,8 +46,8 @@ function move_date_range_callback(e, form, days){
 	var form_backward = $('#week-backward-form');
 	var start_new = new Date(start);
 	var end_new = new Date(end);
-	start_new.setDate(start_new.getDate() - Math.abs(days));
-	end_new.setDate(end_new.getDate() - Math.abs(days));
+	start_new.setDate(start_new.getDate() - 7);
+	end_new.setDate(end_new.getDate() - 7);
 	var start_input = form_backward.find('input[name="start"]');
 	var end_input = form_backward.find('input[name="end"]');
 	start_input.val(toISODateString(start_new));
@@ -71,11 +71,15 @@ $(document).ready(function(){
     transactions_table = new TransactionsTable(d3.select('#transaction-list'), transactions);
 
     $('#week-forward-form').on('submit', function(e){
-    	move_date_range_callback(e, $(this), 7);
+    	move_date_range_callback(e, $(this));
     });
     
     $('#week-backward-form').on('submit', function(e){
-    	move_date_range_callback(e, $(this), -7);
+    	move_date_range_callback(e, $(this));
+    });
+    
+    $('#center-on-today-form').on('submit', function(e){
+    	move_date_range_callback(e, $(this));
     });
     
     $(window).resize(function(){
