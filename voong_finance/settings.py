@@ -12,6 +12,8 @@ https://docs.djangoproject.com/en/2.0/ref/settings/
 
 import os
 
+env = os.environ.get('VOONG_FINANCE_ENV', 'dev')
+
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -20,13 +22,19 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # See https://docs.djangoproject.com/en/2.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'amzu!dzvdrwmu!8y1-(a9af4hb7y!u$4=h4ms2cm9cl%bu-dwi'
+if env == 'dev':
+    SECRET_KEY = 'amzu!dzvdrwmu!8y1-(a9af4hb7y!u$4=h4ms2cm9cl%bu-dwi'
+else:
+    SECRET_KEY = os.environ['SECRET_KEY']
 
 # SECURITY WARNING: don't run with debug turned on in production!
+# DEBUG = True if env == 'dev' else False
 DEBUG = True
 
-ALLOWED_HOSTS = ['voong-finance-dev.eu-west-2.elasticbeanstalk.com', 'localhost']
-
+if env == 'dev':
+    ALLOWED_HOSTS = ['localhost']
+else:
+    ALLOWED_HOSTS = os.environ['ALLOWED_HOSTS'].split(':')
 
 # Application definition
 
@@ -76,13 +84,25 @@ WSGI_APPLICATION = 'voong_finance.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/2.0/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+if env == 'dev':
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        }
     }
-}
 
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.mysql',
+            'NAME': os.environ['RDS_DB_NAME'],
+            'USER': os.environ['RDS_USERNAME'],
+            'PASSWORD': os.environ['RDS_PASSWORD'],
+            'HOST': os.environ['RDS_HOSTNAME'],
+            'PORT': os.environ['RDS_PORT'],
+        }
+    }
 
 # Password validation
 # https://docs.djangoproject.com/en/2.0/ref/settings/#auth-password-validators
