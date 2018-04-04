@@ -1,6 +1,6 @@
 FROM debian:latest
 
-RUN apt-get update -y && apt-get upgrade -y
+RUN apt-get update && apt-get upgrade -y
 RUN apt-get install -y python3
 RUN apt-get install -y apache2
 RUN apt-get install -y apache2-dev
