@@ -72,7 +72,12 @@ class YAxis{
 	var y = this.position[1];
 	var scale = this.scale;
 	function tick_formatter(t){
-	    return '£' + t.toLocaleString()
+	    return '£' + t.toLocaleString(
+		undefined,
+		{
+		    maximumFractionDigits: 2,
+		    minimumFractionDigits: 2,
+		})
 	}
 	
 	this.selection.attr('transform', 'translate(' + x + ', ' + y + ')');
