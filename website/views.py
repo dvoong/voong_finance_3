@@ -99,7 +99,7 @@ def create_transaction(request):
         # generate repeat transactions
         repeat_transactions = RepeatTransaction.objects.filter(
             user=user,
-            start_date__lt=end)
+            start_date__lte=end)
         
         for rt in repeat_transactions:
             for t in rt.generate_next_transaction(end):
@@ -194,34 +194,11 @@ def update_transaction(request):
     # generate repeat transactions
     repeat_transactions = RepeatTransaction.objects.filter(
         user=user,
-        start_date__lt=date)
-    transactions = []
+        start_date__lte=date)
+        
     for rt in repeat_transactions:
-        t = rt.generate_next_transaction()
-        while t.date <= date:
-            t_ = Transaction.objects.filter(user=user, date=t.date)
-            t.index = len(t_)
-            transactions.append(t)
-            rt.previous_transaction_date = t.date
-            t = rt.generate_next_transaction()
-            rt.save()
-
-    if len(transactions):
-        t = min(transactions, key=lambda t: (t.date, t.index)) 
-
-        try:
-            last_transaction = Transaction.objects.filter(
-                Q(date__lt=t.date) | Q(date__lte=t.date, index__lt=t.index),
-                user=user
-            ).latest('date', 'index')
-            closing_balance = last_transaction.closing_balance
-        except Transaction.DoesNotExist:
-            closing_balance = 0
-
-        for t in transactions:
-            closing_balance += t.size
-            t.closing_balance = closing_balance
-            t.save()
+        for t in rt.generate_next_transaction(date):
+            t.recalculate_closing_balances()
 
     t = Transaction.objects.get(user=user, id=transaction_id)
     old_date = t.date

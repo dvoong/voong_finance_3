@@ -105,7 +105,7 @@ def get_transactions(user, start, end):
 def get_balances(user, start, end):
 
     repeat_transactions = RepeatTransaction.objects.filter(user=user,
-                                                     start_date__lt=end)
+                                                           start_date__lte=end)
         
     for rt in repeat_transactions:
         for t in rt.generate_next_transaction(end):
