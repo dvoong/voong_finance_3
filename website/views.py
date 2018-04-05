@@ -100,59 +100,21 @@ def create_transaction(request):
         repeat_transactions = RepeatTransaction.objects.filter(
             user=user,
             start_date__lt=end)
-        transactions = []
+        
         for rt in repeat_transactions:
-            t = rt.generate_next_transaction()
-            while t.date <= end:
-                t_ = Transaction.objects.filter(user=user, date=t.date)
-                t.index = len(t_)
-                transactions.append(t)
-                rt.previous_transaction_date = t.date
-                t = rt.generate_next_transaction()
-            rt.save()
+            for t in rt.generate_next_transaction(end):
+                t.recalculate_closing_balances()
 
-        if len(transactions):
-            t = min(transactions, key=lambda t: (t.date, t.index)) 
-
-            try:
-                last_transaction = Transaction.objects.filter(
-                    Q(date__lt=t.date) | Q(date__lte=t.date, index__lt=t.index),
-                    user=user
-                ).latest('date', 'index')
-                closing_balance = last_transaction.closing_balance
-            except Transaction.DoesNotExist:
-                closing_balance = 0
-
-            for t in transactions:
-                closing_balance += t.size
-                t.closing_balance = closing_balance
-                t.save()
-
-        try:
-            last_transaction = Transaction.objects.filter(
-                user=request.user,
-                date__lte=date
-            ).latest('date', 'index')
-            closing_balance = last_transaction.closing_balance + size
-        except Transaction.DoesNotExist:
-            closing_balance = size
-
-        Transaction.objects.create(
+        t = Transaction(
             date=date,
             size=size,
             description=description,
-            user=request.user,
-            closing_balance=closing_balance,
+            user=user,
             index=index
         )
-        
-        # update future transactions
-        transactions = Transaction.objects.filter(date__gt=date,
-                                                  user=request.user)
-        for t in transactions:
-            t.closing_balance += size
-            t.save()
 
+        t.recalculate_closing_balances()
+        
     else:
         end_condition = request.POST.get('end_condition', 'never_ends')
         if end_condition  == 'never_ends':

@@ -11,9 +11,31 @@ class Transaction(models.Model):
     size = models.FloatField()
     description = models.TextField()
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    closing_balance = models.FloatField()
+    closing_balance = models.FloatField(null=True)
     index = models.IntegerField()
 
+    def recalculate_closing_balances(self):
+
+        Transaction = self.__class__
+        
+        try:
+            last_transaction = Transaction.objects.filter(
+                user=self.user,
+                date__lte=self.date
+            ).latest('date', 'index')
+            closing_balance = last_transaction.closing_balance + self.size
+        except Transaction.DoesNotExist:
+            closing_balance = self.size
+
+        self.closing_balance = closing_balance
+        self.save()
+            
+        # update future transactions
+        transactions = Transaction.objects.filter(date__gt=self.date, user=self.user)
+        for t in transactions:
+            t.closing_balance += self.size
+            t.save()
+        
 class RepeatTransaction(models.Model):
 
     REPEAT_STATUSES = (
@@ -31,24 +53,48 @@ class RepeatTransaction(models.Model):
     frequency = models.CharField(max_length=7, null=True)
     end_date = models.DateField(null=True)
 
-    def generate_next_transaction(self):
+    def generate_next_transaction(self, end):
+        
+        if self.start_date > end:
+            return
+        
         if self.previous_transaction_date is None:
-            return Transaction(date=self.start_date,
-                               size=self.size,
-                               description=self.description,
-                               user=self.user)
-        else:
-            f = {
-                'daily': add_1day,
-                'weekly': add_7days,
-                'monthly': next_month,
-                'annually': next_year
-            }[self.frequency]
-                    
-            return Transaction(date=f(self.previous_transaction_date),
-                               size=self.size,
-                               description=self.description,
-                               user=self.user)
+            self.previous_transaction_date = self.start_date
+            self.save()
+            yield Transaction(date=self.start_date,
+                              size=self.size,
+                              description=self.description,
+                              user=self.user,
+                              index=len(Transaction.objects.filter(
+                                  user=self.user,
+                                  date=self.start_date)))
+
+        f = {
+            'daily': add_1day,
+            'weekly': add_7days,
+            'monthly': next_month,
+            'annually': next_year
+        }[self.frequency]
+
+        date = f(self.previous_transaction_date)
+        t = Transaction(date=date,
+                        size=self.size,
+                        description=self.description,
+                        user=self.user,
+                        index=len(Transaction.objects.filter(
+                            user=self.user,
+                            date=date)))
+                        
+        while t.date <= end and (self.end_date is None or t.date <= self.end_date):
+            self.previous_transaction_date = t.date
+            self.save()
+            yield t
+            date = f(self.previous_transaction_date)
+            t = Transaction(date=date,
+                            size=self.size,
+                            description=self.description,
+                            user=self.user,
+                            index=len(Transaction.objects.filter(user=self.user, date=date)))
 
 def get_transactions(user, start, end):
     
@@ -60,34 +106,10 @@ def get_balances(user, start, end):
 
     repeat_transactions = RepeatTransaction.objects.filter(user=user,
                                                      start_date__lt=end)
-
-    transactions = []
+        
     for rt in repeat_transactions:
-        t = rt.generate_next_transaction()
-        while t.date <= end and (rt.end_date is None or t.date <= rt.end_date):
-            t_ = Transaction.objects.filter(user=user, date=t.date)
-            t.index = len(t_)
-            transactions.append(t)
-            rt.previous_transaction_date = t.date
-            t = rt.generate_next_transaction()
-        rt.save()
-
-    if len(transactions):
-        t = min(transactions, key=lambda t: (t.date, t.index)) 
-
-        try:
-            last_transaction = Transaction.objects.filter(
-                Q(date__lt=t.date) | Q(date__lte=t.date, index__lt=t.index),
-                user=user
-            ).latest('date', 'index')
-            closing_balance = last_transaction.closing_balance
-        except Transaction.DoesNotExist:
-            closing_balance = 0
-
-        for t in transactions:
-            closing_balance += t.size
-            t.closing_balance = closing_balance
-            t.save()
+        for t in rt.generate_next_transaction(end):
+            t.recalculate_closing_balances()
 
     dates = pd.DataFrame(pd.date_range(start, end), columns=['date'])
     balances = dates

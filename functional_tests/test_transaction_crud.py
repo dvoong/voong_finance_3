@@ -60,12 +60,13 @@ class TestTransactionCreation(TransactionalTest):
 
         y_ticks = balance_chart.y_ticks
         for tick in y_ticks:
-            number_int = int(tick.replace('£', '').replace(',', ''))
-            number_float = float(tick.replace('£', '').replace(',', ''))
+            number_int = int(tick.replace('£', '').replace(',', '').replace('.', ''))
+            number_float = float(tick.replace('£', '').replace(',', '').replace('.', ''))
             self.assertTrue(tick.startswith('£'))
             self.assertEqual(number_int, number_float) # int numbers only
         
-        ## creates another transaction before the first transaction - check balances calculted properly
+        ## creates another transaction before the first
+        ## transaction - check balances calculted properly
 
         yesterday = today - datetime.timedelta(days=1)
         self.create_transaction(yesterday, 500, 'dividends received')
