@@ -15,11 +15,14 @@ class HomePage:
         self.transaction_form = TransactionForm(driver)
         self.menu = Menu(driver)
         self.transaction_list = TransactionList(driver)
+        self.repeat_transactions_list = RepeatTransactionsList(driver)
         self.date_selector = DateSelector(driver.find_element_by_id('date-selector'))
         self.week_forward_button = driver.find_element_by_id('week-forward-button')
         self.week_backward_button = driver.find_element_by_id('week-backward-button')
         self.date_range = self.get_date_range()
-
+        self.transactions_tab = driver.find_element_by_id('transactions-tab')
+        self.repeat_transactions_tab = driver.find_element_by_id('repeat-transactions-tab')
+        
     def create_transaction(self, update=True, *args, **kwargs):
         self.transaction_form.create_transaction(*args, **kwargs)
         if update == True:
@@ -44,6 +47,12 @@ class HomePage:
         end = strptime(end_input.get_attribute('value'), '%Y-%m-%d').date()
         return [start, end]
 
+    def show_repeat_transactions_view(self):
+        self.repeat_transactions_tab.click()
+        WebDriverWait(self.driver, 5).until(
+            EC.visibility_of_element_located((By.ID, 'repeat-transactions'))
+        )
+
 class TransactionForm:
 
     def __init__(self, driver):
@@ -61,10 +70,24 @@ class TransactionForm:
         self.repeat_checkbox = driver.find_element_by_id('repeat-checkbox')
         self.repeat_options = RepeatOptions(self.driver)
 
-    def create_transaction(self, date, size, description=""):
+    def create_transaction(self,
+                           date,
+                           size,
+                           description="",
+                           repeats='does_not_repeat',
+                           ends=None):
         self.date = date
         self.transaction_size_input.send_keys(size)
         self.description_input.send_keys(description)
+        if repeats == 'does_not_repeat':
+            if self.repeat_checkbox.is_selected():
+                self.repeat_checkbox.click()
+        else:
+            if not self.repeat_checkbox.is_selected():
+                self.repeat_checkbox.click()
+            self.set_repeat_frequency(repeats)
+            self.set_end_criteria(ends)
+            self.repeat_options.close()
         self.submit_button.click()
 
     @property
@@ -98,6 +121,11 @@ class TransactionForm:
         )
         self.submit_button.click()
 
+    def set_repeat_frequency(self, frequency):
+        self.repeat_options.set_frequency(frequency)
+
+    def set_end_criteria(self, ends):
+        self.repeat_options.set_end_criteria(ends)
         
 class Menu:
 
@@ -237,13 +265,13 @@ class RepeatOptions:
         self.frequency_input = Select(self.element.find_element_by_id('frequency-input'))
 
     def close(self):
-        try:
-            element = WebDriverWait(self.driver, 5).until(
-                EC.visibility_of_element_located((By.ID, "repeat-options-close-button"))
-            )
-            self.close_button.click()
-        except:
-            pass
+        WebDriverWait(self.driver, 5).until(
+            EC.visibility_of_element_located((By.ID, "repeat-options-close-button"))
+        )
+        self.close_button.click()
+        WebDriverWait(self.driver, 5).until(
+            EC.invisibility_of_element_located((By.ID, "repeat-options-close-button"))
+        )
 
     def select(self, option):
         WebDriverWait(self.driver, 5).until(
@@ -266,3 +294,41 @@ class RepeatOptions:
 
     def set_frequency(self, frequency):
         self.frequency_input.select_by_value(frequency)
+
+    def set_end_criteria(self, ends):
+        self.select(ends['how'])
+        if ends['how'] == 'never':
+            pass
+        elif ends['how'] == 'ends_after_#_occurrences':
+            self.set_n_occurrences(ends['when'])
+        elif ends['how'] == 'ends_on_date':
+            self.set_end_date(ends['when'])
+        else:
+            raise Exception('unrecognised end criteria: {}'.format(ends))
+
+class RepeatTransactionsList:
+
+    def __init__(self, driver):
+
+        self.driver = driver
+        self.element = driver.find_element_by_id('repeat-transactions')
+        self.table = self.element.find_element_by_tag_name('table')
+
+    def assert_in(self, date, size, description, repeats, ends):
+        x = (date, size, description, repeats, ends)
+        assert len(list(filter(lambda y: y == x, self.items))) > 0
+
+    @property
+    def items(self):
+        rows = self.table.find_elements_by_css_selector('.repeat-transaction-row')
+        items = []
+        for row in rows:
+            tds = row.find_elements_by_tag_name('td')
+            date = strptime(tds[0].get_attribute('innerHTML'), '%Y-%m-%d').date()
+            size = float(tds[1].get_attribute('innerHTML').replace('£', ''))
+            description = tds[2].get_attribute('innerHTML')
+            repeats = tds[3].get_attribute('innerHTML')
+            ends = tds[4].get_attribute('innerHTML')
+            items.append((date, size, description, repeats, ends))
+        return items
+    

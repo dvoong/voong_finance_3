@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'functional_tests',
     'website',
     'mod_wsgi.server',
+    'django.contrib.humanize',
 ]
 
 MIDDLEWARE = [

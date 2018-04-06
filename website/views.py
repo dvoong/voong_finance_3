@@ -41,6 +41,9 @@ def home(request):
     balances['date'] = balances['date'].dt.strftime('%Y-%m-%d')
     if len(transactions):
         transactions['date'] = transactions['date'].dt.strftime('%Y-%m-%d')
+
+    repeat_transactions = RepeatTransaction.objects.filter(user=user)
+    
     template_kwargs = {
         'transactions': transactions.to_dict('records'),
         'balances': balances.to_dict('records'),
@@ -53,6 +56,7 @@ def home(request):
         'end_minus_7': end - datetime.timedelta(days=7),
         'center_on_today_start': center_on_today_start,
         'center_on_today_end': center_on_today_end,
+        'repeat_transactions': repeat_transactions,
     }
     return render(request, 'website/home.html', template_kwargs)
 
