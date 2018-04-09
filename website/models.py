@@ -1,40 +1,9 @@
 import datetime
 import pandas as pd
+import numpy as np
 from django.db import models
 from django.contrib.auth.models import User
 from django.db.models import Q
-
-# Create your models here.
-class Transaction(models.Model):
-    
-    date = models.DateField()
-    size = models.FloatField()
-    description = models.TextField()
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    closing_balance = models.FloatField(null=True)
-    index = models.IntegerField()
-
-    def recalculate_closing_balances(self):
-
-        Transaction = self.__class__
-        
-        try:
-            last_transaction = Transaction.objects.filter(
-                user=self.user,
-                date__lte=self.date
-            ).latest('date', 'index')
-            closing_balance = last_transaction.closing_balance + self.size
-        except Transaction.DoesNotExist:
-            closing_balance = self.size
-
-        self.closing_balance = closing_balance
-        self.save()
-            
-        # update future transactions
-        transactions = Transaction.objects.filter(date__gt=self.date, user=self.user)
-        for t in transactions:
-            t.closing_balance += self.size
-            t.save()
         
 class RepeatTransaction(models.Model):
 
@@ -67,7 +36,8 @@ class RepeatTransaction(models.Model):
                               user=self.user,
                               index=len(Transaction.objects.filter(
                                   user=self.user,
-                                  date=self.start_date)))
+                                  date=self.start_date)),
+                              repeat_transaction=self)
 
         f = {
             'daily': add_1day,
@@ -83,7 +53,8 @@ class RepeatTransaction(models.Model):
                         user=self.user,
                         index=len(Transaction.objects.filter(
                             user=self.user,
-                            date=date)))
+                            date=date)),
+                        repeat_transaction=self)
                         
         while t.date <= end and (self.end_date is None or t.date <= self.end_date):
             self.previous_transaction_date = t.date
@@ -94,7 +65,43 @@ class RepeatTransaction(models.Model):
                             size=self.size,
                             description=self.description,
                             user=self.user,
-                            index=len(Transaction.objects.filter(user=self.user, date=date)))
+                            index=len(Transaction.objects.filter(user=self.user, date=date)),
+                            repeat_transaction=self)
+
+# Create your models here.
+class Transaction(models.Model):
+    
+    date = models.DateField()
+    size = models.FloatField()
+    description = models.TextField()
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    closing_balance = models.FloatField(null=True)
+    index = models.IntegerField()
+    repeat_transaction = models.ForeignKey(RepeatTransaction,
+                                           null=True,
+                                           on_delete=models.CASCADE)
+
+    def recalculate_closing_balances(self):
+
+        Transaction = self.__class__
+        
+        try:
+            last_transaction = Transaction.objects.filter(
+                user=self.user,
+                date__lte=self.date
+            ).latest('date', 'index')
+            closing_balance = last_transaction.closing_balance + self.size
+        except Transaction.DoesNotExist:
+            closing_balance = self.size
+
+        self.closing_balance = closing_balance
+        self.save()
+            
+        # update future transactions
+        transactions = Transaction.objects.filter(date__gt=self.date, user=self.user)
+        for t in transactions:
+            t.closing_balance += self.size
+            t.save()
 
 def get_transactions(user, start, end):
     

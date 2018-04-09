@@ -547,3 +547,12 @@ class TestGetBalances(TestCase):
 
         self.assertEqual(expected, response.json())
             
+class TestGetRepeatTransactionDeletionPrompt(TestCase):
+
+
+    def test_url_resolution(self):
+        resolver = resolve('/html-snippets/repeat-transaction-deletion-prompt')
+        self.assertEqual(resolver.view_name, 'get_repeat_transaction_deletion_prompt')
+
+    def test(self):
+        response = self.client.get('/html-snippets/repeat-transaction-deletion-prompt')

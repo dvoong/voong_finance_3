@@ -1,8 +1,10 @@
 console.log('home.js');
+console.log('test3');
 
 declare var balances: any[];
 
 var $ = require("jquery");
+global.jQuery = require("jQuery");
 var d3 = require("d3");
 require('bootstrap');
 
@@ -20,8 +22,11 @@ function move_date_range_callback(e, form){
     var url = '/get-balances';
     var args = form.serializeArray();
     e.preventDefault();
-    
+
+    console.log('move_date_range_callback');
     function success(d){
+	console.log('success');
+	
 	var start = args[0].value;
 	var end = args[1].value;
 
@@ -56,7 +61,9 @@ function move_date_range_callback(e, form){
 	transactions = d.data.transactions;
 	transactions_table.transactions = transactions;
 	transactions_table.update();
-	
+
+	conosle.log(transactions);
+	console.log(balances);
     }
     
     $.get(url, args, success);
@@ -87,12 +94,9 @@ $(document).ready(function(){
     });
 
     $('#repeat-checkbox').change(function(e){
-	console.log('on change');
 	if($(this).prop('checked')){
-	    $(this).val('repeats');
-	    var modal = $('#myModal');
+	    var modal = $('#repeat-options-modal');
 	    modal.modal('show');
-	    console.log('show modal');
 	} else {
 	    $(this).val('does_not_repeat');
 	}

@@ -1,4 +1,56 @@
 var d3 = require("d3");
+var $ = require("jquery");
+
+function attach_form_and_show_prompt(prompt, form){
+    // attach appropriate transaction modification form to the prompt inputs
+    prompt.find('input').attr('form', form.attr('id'));
+    prompt.find('button[type="submit"]').attr('form', form.attr('id'));
+    prompt.modal('show');
+}
+
+function submit_delete(d){
+
+    var form = $(this);
+    var selector = `input[form="${form.attr("id")}"][name="repeat-transaction-id"]`;
+    var repeat_transaction = $(selector).val();
+    var btn = $(document.activeElement);
+
+    if(btn.attr('class').indexOf('delete-transaction-button') != -1){
+
+    	if(repeat_transaction != undefined){
+    	    d3.event.preventDefault();
+    	    var prompt = $('#repeat-transaction-deletion-prompt');
+    	    if(prompt.length === 0){
+    	    	$.get('/html-snippets/repeat-transaction-deletion-prompt', function(x){
+    	    	    $('body').append(x);
+    	    	    prompt = $('#repeat-transaction-deletion-prompt');
+    	    	    attach_form_and_show_prompt(prompt, form);
+    	    	});
+	    } else {
+    		attach_form_and_show_prompt(prompt, form);
+    	    }
+    	}
+	
+    } else if (btn.attr('class').indexOf('repeat-transaction-deletion-delete-button') != -1){
+	// submit normally
+    } else if (btn.attr('class').indexOf('save-transaction-button') != -1) {
+    	if(repeat_transaction != undefined){
+    	    d3.event.preventDefault();
+	    var prompt = $('#repeat-transaction-update-prompt');
+    	    if(prompt.length === 0){
+    		$.get('/html-snippets/repeat-transaction-update-prompt', function(x){
+    		    $('body').append(x);
+    		    prompt = $('#repeat-transaction-update-prompt');
+    		    attach_form_and_show_prompt(prompt, form);
+    		});
+    	    } else {
+    		attach_form_and_show_prompt(prompt, form);
+    	    }
+    	}
+    } else if (btn.attr('class').indexOf('repeat-transaction-update-update-button') != -1) {
+	// submit normally
+    }
+}
 
 class TransactionsTable {
 
@@ -29,6 +81,8 @@ class TransactionsTable {
 	    .attr('hidden', true)
 	    .attr('name', 'csrfmiddlewaretoken')
 	    .attr('value', csrf_token);
+
+	form.on('submit', submit_delete);
 
 	enter.append('td')
 	    .attr('class', 'transaction-date')
@@ -80,12 +134,13 @@ class TransactionsTable {
 	    .attr('value', 'update');
 
 	enter.append('td')
-	    .append('input')
+	    .append('button')
 	    .attr('class', 'delete-transaction-button btn btn-primary')
+	    .attr('form', function(d){return 'transaction-modify-form-' + d.id})
 	    .attr('type', 'submit')
 	    .attr('name', 'action')
-	    .attr('form', function(d){return 'transaction-modify-form-' + d.id})
-	    .attr('value', 'delete');
+	    .attr('value', 'delete')
+	    .html('Delete');
 
 	enter.append('input')
 	    .attr('class', 'id')
@@ -93,6 +148,13 @@ class TransactionsTable {
 	    .attr('type', 'hidden')
 	    .attr('form', function(d){return 'transaction-modify-form-' + d.id})
 	    .attr('value', function(d){return d.id})
+
+	enter.append('input')
+	    .attr('class', 'repeat-transaction-id')
+	    .attr('name', 'repeat-transaction-id')
+	    .attr('type', 'hidden')
+	    .attr('form', function(d){return 'transaction-modify-form-' + d.id})
+	    .attr('value', function(d){return d.repeat_transaction_id});
 
 	var exit = transactions.exit();
 	exit.remove();

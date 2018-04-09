@@ -26,5 +26,11 @@ urlpatterns = [
     path('modify-transaction', views.modify_transaction, name='modify_transaction'),
     path('sign-out', views.sign_out, name='sign_out'),
     path('get-balances', views.get_balances, name='get_balances'),
+    path('html-snippets/repeat-transaction-deletion-prompt',
+         views.get_repeat_transaction_deletion_prompt,
+         name='get_repeat_transaction_deletion_prompt'),
+    path('html-snippets/repeat-transaction-update-prompt',
+         views.get_repeat_transaction_update_prompt,
+         name='get_repeat_transaction_update_prompt'),
     path('', views.index),
 ]

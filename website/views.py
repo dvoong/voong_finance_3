@@ -45,7 +45,7 @@ def home(request):
     repeat_transactions = RepeatTransaction.objects.filter(user=user)
     
     template_kwargs = {
-        'transactions': transactions.to_dict('records'),
+        'transactions': transactions.to_json(orient='records'),
         'balances': balances.to_dict('records'),
         'start': start,
         'end': end,
@@ -98,6 +98,8 @@ def create_transaction(request):
     else:
         end = today + datetime.timedelta(days=14)
 
+    print(request.POST)
+    
     if repeat_status == 'does_not_repeat':
 
         # generate repeat transactions
@@ -259,6 +261,7 @@ def update_transaction(request):
     return redirect('home')
 
 def modify_transaction(request):
+    print(request.POST)
     if request.POST['action'] == 'update':
         return update_transaction(request)
     elif request.POST['action'] == 'delete':
@@ -286,6 +289,7 @@ def sign_out(request):
     return redirect('welcome')
 
 def get_balances(request):
+    print('get_balances')
     user = request.user
     today = datetime.date.today()
     if 'start' in request.GET:
@@ -297,11 +301,17 @@ def get_balances(request):
     else:
         end = today + datetime.timedelta(days=14)
 
+    print(request.GET)
+
     balances, transactions = models.get_balances(user, start, end)
     
     balances['date'] = balances['date'].dt.strftime('%Y-%m-%d')
     if len(transactions):
         transactions['date'] = transactions['date'].dt.strftime('%Y-%m-%d')
+
+    print(balances)
+    print(transactions)
+    
     return JsonResponse(
         {
             'data':{
@@ -309,3 +319,9 @@ def get_balances(request):
                 'transactions': transactions.to_dict('records')
             }
         })
+
+def get_repeat_transaction_deletion_prompt(request):
+    return render(request, 'website/html_snippets/repeat_transaction_deletion_prompt.html')
+
+def get_repeat_transaction_update_prompt(request):
+    return render(request, 'website/html_snippets/repeat_transaction_update_prompt.html')

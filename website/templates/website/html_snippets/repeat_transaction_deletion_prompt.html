@@ -1,0 +1,72 @@
+<!-- The Modal -->
+<div class="modal fade" id="repeat-transaction-deletion-prompt">
+  <div class="modal-dialog">
+    <div class="modal-content">
+
+      <!-- Modal Header -->
+      <div class="modal-header">
+	<h4 class="modal-title">Repeat Transaction Deletion</h4>
+	<button type="button" class="close" data-dismiss="modal">&times;</button>
+      </div>
+
+      <!-- Modal body -->
+      <div class="modal-body">
+	<p>
+	  This transaction repeats, do you want to delete,
+	</p>
+
+	<div class="form-check">
+	  <label class="form-check-label">
+	    <input class="form-check-input"
+		   type="radio"
+		   name="exampleRadios"
+		   id="exampleRadios1"
+		   value="only_this_transaction"
+		   checked>
+	    Only this transaction
+	  </label>
+	</div>
+	
+	<div class="form-check" style="margin-top: 5px">
+	  <label class="form-check-label">
+	    <input class="form-check-input"
+		   type="radio"
+		   name="exampleRadios"
+		   id="exampleRadios2"
+		   value="this_and_future_transactions">
+	    This transaction and future transactions of this kind
+	  </label>
+	</div>
+	
+	<div class="form-check disabled" style="margin-top: 5px">
+	  <label class="form-check-label">
+	    <input class="form-check-input"
+		   type="radio"
+		   name="exampleRadios"
+		   id="exampleRadios3"
+		   value="all_transactions">
+	    All transactions of this kind
+	  </label>
+	</div>
+
+      <!-- Modal footer -->
+      <div class="modal-footer" style="margin-top: 20px">
+	<button id="repeat-transaction-deletion-prompt-close-button"
+		type="button"
+		class="btn btn-secondary"
+		data-dismiss="modal">Cancel
+	</button>
+	<button id="repeat-transaction-deletion-delete-button"
+		type="submit"
+		class="btn btn-danger"
+		name="action"
+		value="delete">
+	  Delete
+	</button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+

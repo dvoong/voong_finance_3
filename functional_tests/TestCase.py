@@ -7,23 +7,23 @@ class TestCase(StaticLiveServerTestCase):
     def setUp(self):
         self.driver = Chrome()
         
-    def tearDown(self):
-        if hasattr(self, '_outcome'):  # Python 3.4+
-            result = self.defaultTestResult()  # these 2 methods have no side effects
-            self._feedErrorsToResult(result, self._outcome.errors)
-        else:  # Python 3.2 - 3.3 or 3.0 - 3.1 and 2.7
-            result = getattr(self, '_outcomeForDoCleanups', self._resultForDoCleanups)
-        error = self.list2reason(result.errors)
-        failure = self.list2reason(result.failures)
-        ok = not error and not failure
+    # def tearDown(self):
+    #     if hasattr(self, '_outcome'):  # Python 3.4+
+    #         result = self.defaultTestResult()  # these 2 methods have no side effects
+    #         self._feedErrorsToResult(result, self._outcome.errors)
+    #     else:  # Python 3.2 - 3.3 or 3.0 - 3.1 and 2.7
+    #         result = getattr(self, '_outcomeForDoCleanups', self._resultForDoCleanups)
+    #     error = self.list2reason(result.errors)
+    #     failure = self.list2reason(result.failures)
+    #     ok = not error and not failure
 
-        # demo:   report short info immediately (not important)
-        if not ok:
-            import time
-            # time.sleep(30)
-            pass
+    #     # demo:   report short info immediately (not important)
+    #     if not ok:
+    #         import time
+    #         # time.sleep(30)
+    #         pass
 
-        super().tearDown()
+    #     super().tearDown()
 
     def list2reason(self, exc_list):
         if exc_list and exc_list[-1][0] is self:
