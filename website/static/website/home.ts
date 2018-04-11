@@ -62,8 +62,6 @@ function move_date_range_callback(e, form){
 	transactions_table.transactions = transactions;
 	transactions_table.update();
 
-	conosle.log(transactions);
-	console.log(balances);
     }
     
     $.get(url, args, success);
