@@ -329,6 +329,35 @@ def delete_transaction(request):
         rt = t.repeat_transaction
         rt.end_date = t.date
         rt.save()
+
+    elif delete_how == 'all_transactions_of_this_type':
+        t = Transaction.objects.get(user=user, id=transaction_id)
+
+        rt = t.repeat_transaction
+        rt.end_date = t.date
+        rt.save()
+
+        ts = Transaction.objects.filter(
+            user=user,
+            repeat_transaction_id=int(repeat_transaction_id))
+
+        ts.delete()
+
+        transactions_to_update = Transaction.objects.filter(
+            date__gte=rt.start_date,
+            user=user)
+
+        for t_ in transactions_to_update:
+            try:
+                last_transaction = Transaction.objects.filter(
+                    Q(date__lt=t_.date) |
+                    Q(date__lte=t_.date, index__lt=t_.index),
+                    user=user).latest('date', 'index')
+                closing_balance = last_transaction.closing_balance + t_.size
+            except Transaction.DoesNotExist:
+                closing_balance = t_.size
+            t_.closing_balance = closing_balance
+            t_.save()
         
     return redirect('/home?start={}&end={}'.format(start, end))
 
