@@ -141,7 +141,7 @@ class TestHome(TestCase):
         expected = pd.DataFrame(list(expected))
         expected['date'] = pd.to_datetime(expected['date'])
         expected['date'] = expected['date'].dt.strftime('%Y-%m-%d')
-        expected = expected.to_dict('records')
+        expected = expected.to_json(orient='records')
         actual = response.context['transactions']
         
         self.assertEqual(actual, expected)
@@ -461,7 +461,8 @@ class TestGetBalances(TestCase):
                         'id': 1,
                         'index': 0,
                         'size': 10.0,
-                        'user_id': 1
+                        'user_id': 1,
+                        'repeat_transaction_id': None
                     },
                     {
                         'closing_balance': 15.0,
@@ -470,13 +471,15 @@ class TestGetBalances(TestCase):
                         'id': 2,
                         'index': 0,
                         'size': 5.0,
-                        'user_id': 1
+                        'user_id': 1,
+                        'repeat_transaction_id': None
                     }
                 ]
             }
         }
 
-        self.assertEqual(expected, response.json())
+        actual = response.json()
+        self.assertEqual(expected, actual)
 
     def test_repeating_transactions(self):
         user = User.objects.create_user(username="voong.david@gmail.com",
@@ -501,8 +504,10 @@ class TestGetBalances(TestCase):
         response = self.client.get('/get-balances', {'start': '2018-01-01', 'end': '2018-01-09'})
 
         expected = {
-            'data': {
-                'balances': [
+            'data':
+            {
+                'balances':
+                [
                     {'date': '2018-01-01', 'balance': 10.0},
                     {'date': '2018-01-02', 'balance': 30.0},
                     {'date': '2018-01-03', 'balance': 30.0},
@@ -513,15 +518,16 @@ class TestGetBalances(TestCase):
                     {'date': '2018-01-08', 'balance': 30.0},
                     {'date': '2018-01-09', 'balance': 50.0}
                 ],
-                'transactions': [
-                    {
-                        'closing_balance': 10.0,
-                        'date': '2018-01-01',
-                        'description': 'a',
-                        'id': 1,
-                        'index': 0,
-                        'size': 10.0,
-                        'user_id': 1
+                'transactions':
+                [
+                    {'closing_balance': 10.0,
+                     'date': '2018-01-01',
+                     'description': 'a',
+                     'id': 1,
+                     'index': 0,
+                     'repeat_transaction_id': None,
+                     'size': 10.0,
+                     'user_id': 1
                     },
                     {
                         'closing_balance': 30.0,
@@ -529,8 +535,8 @@ class TestGetBalances(TestCase):
                         'description': 'c',
                         'id': 2,
                         'index': 0,
-                        'size': 20.0,
-                        'user_id': 1
+                        'repeat_transaction_id': 1.0,
+                        'size': 20.0, 'user_id': 1
                     },
                     {
                         'closing_balance': 50.0,
@@ -538,6 +544,7 @@ class TestGetBalances(TestCase):
                         'description': 'c',
                         'id': 3,
                         'index': 0,
+                        'repeat_transaction_id': 1.0,
                         'size': 20.0,
                         'user_id': 1
                     }
@@ -545,7 +552,8 @@ class TestGetBalances(TestCase):
             }
         }
 
-        self.assertEqual(expected, response.json())
+        actual = response.json()
+        self.assertEqual(expected, actual)
             
 class TestGetRepeatTransactionDeletionPrompt(TestCase):
 

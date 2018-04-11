@@ -215,6 +215,9 @@ class Transaction:
         return self.balance_element.text
 
     def save(self):
+        # WebDriverWait(self.element, 5).until(
+        #     lambda x: self.save_button.is_displayed
+        # )
         self.save_button.click()
 
     def delete(self):

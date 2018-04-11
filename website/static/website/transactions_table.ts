@@ -17,7 +17,7 @@ function submit_delete(d){
 
     if(btn.attr('class').indexOf('delete-transaction-button') != -1){
 
-    	if(repeat_transaction != undefined){
+    	if(repeat_transaction != ''){
     	    d3.event.preventDefault();
     	    var prompt = $('#repeat-transaction-deletion-prompt');
     	    if(prompt.length === 0){
@@ -34,7 +34,7 @@ function submit_delete(d){
     } else if (btn.attr('class').indexOf('repeat-transaction-deletion-delete-button') != -1){
 	// submit normally
     } else if (btn.attr('class').indexOf('save-transaction-button') != -1) {
-    	if(repeat_transaction != undefined){
+    	if(repeat_transaction != ''){
     	    d3.event.preventDefault();
 	    var prompt = $('#repeat-transaction-update-prompt');
     	    if(prompt.length === 0){
