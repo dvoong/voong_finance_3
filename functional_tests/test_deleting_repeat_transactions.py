@@ -17,10 +17,13 @@ class RepeatTransactionDeletionPrompt:
 
         self.driver = driver
         self.element = driver.find_element_by_id(self.id)
-        self.select = Select(self.element.find_element_by_tag_name('select'))
+        id_ = 'repeat-transaction-deletion-delete-button'
+        self.submit_button = self.element.find_element_by_id(id_)
 
     def select(self, selection):
-        self.select.select_by_value(selection)
+        css_selector = 'input[name="delete_how"][id="{}"]'.format(selection)
+        element = self.element.find_element_by_css_selector(css_selector)
+        element.click()
 
     def submit(self):
         self.submit_button.click()
@@ -67,7 +70,7 @@ class TestRepeatTransactionDeletion(TestCase):
         )
 
         prompt = RepeatTransactionDeletionPrompt(self.driver)
-        prompt.select('delete_instance')
+        prompt.select('delete_only_this_transaction')
         prompt.submit()
 
         self.driver.get(url)
