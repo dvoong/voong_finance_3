@@ -309,8 +309,8 @@ def get_balances(request):
     if len(transactions):
         transactions['date'] = transactions['date'].dt.strftime('%Y-%m-%d')
 
-    print(balances)
-    print(transactions)
+    balances = balances.where((pd.notnull(balances)), None)
+    transactions = transactions.where((pd.notnull(transactions)), None)
     
     return JsonResponse(
         {

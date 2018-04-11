@@ -40,6 +40,9 @@ class TestRepeatTransactionDeletion(TestCase):
         welcome_page = WelcomePage(self.driver)
         welcome_page.login_user(email='voong.david@gmail.com', password='password')
 
+    def tearDown(self):
+        self.driver.close()
+        
     def test(self):
 
         home_page = HomePage(self.driver)
@@ -51,15 +54,11 @@ class TestRepeatTransactionDeletion(TestCase):
 
         url = '{}/home?start={}&end={}'.format(self.live_server_url, '2018-01-01', '2018-01-15')
         self.driver.get(url)
-        import time
-        time.sleep(10)
         home_page = HomePage(self.driver)
 
         t_list = home_page.transaction_list
         transactions = t_list.get_transactions()
 
-        import time
-        time.sleep(30)
         t = transactions[1]
         t.delete()
 
