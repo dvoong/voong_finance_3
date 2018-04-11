@@ -104,7 +104,6 @@ class Transaction(models.Model):
             t.save()
 
 def get_transactions(user, start, end):
-    
     return Transaction.objects.filter(user=user,
                                       date__gte=start,
                                       date__lte=end).order_by('date', 'index')

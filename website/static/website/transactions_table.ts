@@ -11,44 +11,45 @@ function attach_form_and_show_prompt(prompt, form){
 function submit_delete(d){
 
     var form = $(this);
-    var selector = `input[form="${form.attr("id")}"][name="repeat-transaction-id"]`;
+    var selector = `input[form="${form.attr("id")}"][name="repeat_transaction_id"]`;
     var repeat_transaction = $(selector).val();
     var btn = $(document.activeElement);
 
-    if(btn.attr('class').indexOf('delete-transaction-button') != -1){
+    if(btn.attr('class').indexOf('delete-transaction-button') != -1 && repeat_transaction != ''){
 
-    	if(repeat_transaction != ''){
-    	    d3.event.preventDefault();
-    	    var prompt = $('#repeat-transaction-deletion-prompt');
-    	    if(prompt.length === 0){
-    	    	$.get('/html-snippets/repeat-transaction-deletion-prompt', function(x){
-    	    	    $('body').append(x);
-    	    	    prompt = $('#repeat-transaction-deletion-prompt');
-    	    	    attach_form_and_show_prompt(prompt, form);
-    	    	});
-	    } else {
-    		attach_form_and_show_prompt(prompt, form);
-    	    }
+    	d3.event.preventDefault();
+    	var prompt = $('#repeat-transaction-deletion-prompt');
+    	if(prompt.length === 0){
+    	    $.get('/html-snippets/repeat-transaction-deletion-prompt', function(x){
+    	    	$('body').append(x);
+    	    	prompt = $('#repeat-transaction-deletion-prompt');
+    	    	attach_form_and_show_prompt(prompt, form);
+    	    });
+	} else {
+    	    attach_form_and_show_prompt(prompt, form);
     	}
 	
-    } else if (btn.attr('class').indexOf('repeat-transaction-deletion-delete-button') != -1){
-	// submit normally
-    } else if (btn.attr('class').indexOf('save-transaction-button') != -1) {
-    	if(repeat_transaction != ''){
-    	    d3.event.preventDefault();
-	    var prompt = $('#repeat-transaction-update-prompt');
-    	    if(prompt.length === 0){
-    		$.get('/html-snippets/repeat-transaction-update-prompt', function(x){
-    		    $('body').append(x);
+    } else if (btn.attr('class').indexOf('save-transaction-button') != -1 &&
+	       repeat_transaction != '') {
+    	d3.event.preventDefault();
+	var prompt = $('#repeat-transaction-update-prompt');
+    	if(prompt.length === 0){
+    	    $.get('/html-snippets/repeat-transaction-update-prompt', function(x){
+    		$('body').append(x);
     		    prompt = $('#repeat-transaction-update-prompt');
-    		    attach_form_and_show_prompt(prompt, form);
-    		});
-    	    } else {
     		attach_form_and_show_prompt(prompt, form);
-    	    }
+    	    });
+    	} else {
+    	    attach_form_and_show_prompt(prompt, form);
     	}
-    } else if (btn.attr('class').indexOf('repeat-transaction-update-update-button') != -1) {
-	// submit normally
+
+    } else {
+	var start = $("#date-selector #start-input").attr('value');
+	var end = $("#date-selector #end-input").attr('value');
+    
+	form.append(`<input name="start" value="${start}">`);
+	form.append(`<input name="end" value="${end}">`);
+
     }
 }
 
@@ -151,7 +152,7 @@ class TransactionsTable {
 
 	enter.append('input')
 	    .attr('class', 'repeat-transaction-id')
-	    .attr('name', 'repeat-transaction-id')
+	    .attr('name', 'repeat_transaction_id')
 	    .attr('type', 'hidden')
 	    .attr('form', function(d){return 'transaction-modify-form-' + d.id})
 	    .attr('value', function(d){return d.repeat_transaction_id});

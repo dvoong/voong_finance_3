@@ -194,6 +194,8 @@ def update_transaction(request):
     date = datetime.datetime.strptime(request.POST['date'], '%Y-%m-%d').date()
     size = float(request.POST['size'])
     description = request.POST['description']
+    start = request.POST['start']
+    end = request.POST['end']
 
     # generate repeat transactions
     repeat_transactions = RepeatTransaction.objects.filter(
@@ -256,7 +258,7 @@ def update_transaction(request):
             
     t.save()
     
-    return redirect('home')
+    return redirect('/home?start={}&end={}'.format(start, end))
 
 def modify_transaction(request):
     if request.POST['action'] == 'update':
@@ -265,21 +267,53 @@ def modify_transaction(request):
         return delete_transaction(request)
 
 def delete_transaction(request):
+    print(request.POST)
+
     user = request.user
     transaction_id = int(request.POST['id'])
+    date = request.POST['date']
+    delete_how = request.POST.get('delete_how', 'delete_only_this_transaction')
+    repeat_transaction_id = request.POST.get('repeat_transaction_id', None)
+    start = request.POST['start']
+    end = request.POST['end']
 
-    t = Transaction.objects.get(user=user, id=transaction_id)
+    if delete_how == 'delete_only_this_transaction':
 
-    from django.db.models import Q
+        t = Transaction.objects.get(user=user, id=transaction_id)
 
-    transactions_to_update = Transaction.objects.filter(Q(date__gt=t.date) | Q(date=t.date, index__gt=t.index), user=user)
-    for t_ in transactions_to_update:
-        t_.closing_balance -= t.size
-        t_.save()
+        transactions_to_update = Transaction.objects.filter(Q(date__gt=t.date) |
+                                                            Q(date=t.date, index__gt=t.index),
+                                                            user=user)
+        for t_ in transactions_to_update:
+            t_.closing_balance -= t.size
+            t_.save()
 
-    t.delete()
+        t.delete()
 
-    return redirect('home')
+    elif delete_how == 'delete_this_transaction_and_future_transactions':
+        t = Transaction.objects.get(user=user, id=transaction_id)
+        ts = Transaction.objects.filter(user=user,
+                                        repeat_transaction_id=int(repeat_transaction_id),
+                                        date__gte=date)
+        ts.delete()
+
+        transactions_to_update = Transaction.objects.filter(Q(date__gt=t.date) |
+                                                            Q(date=t.date, index__gt=t.index),
+                                                            user=user)
+
+        for t in transactions_to_update:
+            try:
+                last_transaction = Transaction.objects.filter(
+                    Q(date__lt=t.date) |
+                    Q(date__lte=t.date, index__lt=t.index),
+                    user=user).latest('date', 'index')
+                closing_balance = last_transaction.closing_balance + t.size
+            except Transaction.DoesNotExist:
+                closing_balance = self.size
+            t.closing_balance = closing_balance
+            t.save()
+        
+    return redirect('/home?start={}&end={}'.format(start, end))
 
 def sign_out(request):
     logout(request)
