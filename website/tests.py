@@ -289,7 +289,14 @@ class TestTransactionUpdate(TestCase):
         self.assertEqual(len(transactions), 1)
         t = transactions[0]
         transaction_id = t.id
-        self.client.post('/modify-transaction', {'date': '2018-01-02', 'size': '1000.00', 'description': 'pay day', 'id': str(transaction_id), 'action':'update'})
+        self.client.post('/modify-transaction',
+                         {
+                             'date': '2018-01-02',
+                             'size': '1000.00',
+                             'description': 'pay day',
+                             'id': str(transaction_id),
+                             'action':'update'
+                         })
         transactions = Transaction.objects.all()
         self.assertEqual(len(transactions), 1)
         t = transactions[0]

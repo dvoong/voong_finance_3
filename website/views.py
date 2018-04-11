@@ -194,8 +194,15 @@ def update_transaction(request):
     date = datetime.datetime.strptime(request.POST['date'], '%Y-%m-%d').date()
     size = float(request.POST['size'])
     description = request.POST['description']
-    start = request.POST['start']
-    end = request.POST['end']
+    today = datetime.date.today()
+    if 'start' in request.POST:
+        start = strptime(request.POST['start'], '%Y-%m-%d').date()
+    else:
+        start = today - datetime.timedelta(days=14)
+    if  'end' in request.POST:
+        end = strptime(request.POST['end'], '%Y-%m-%d').date()
+    else:
+        end = today + datetime.timedelta(days=14)
 
     # generate repeat transactions
     repeat_transactions = RepeatTransaction.objects.filter(
@@ -267,15 +274,21 @@ def modify_transaction(request):
         return delete_transaction(request)
 
 def delete_transaction(request):
-    print(request.POST)
 
     user = request.user
     transaction_id = int(request.POST['id'])
     date = request.POST['date']
     delete_how = request.POST.get('delete_how', 'delete_only_this_transaction')
     repeat_transaction_id = request.POST.get('repeat_transaction_id', None)
-    start = request.POST['start']
-    end = request.POST['end']
+    today = datetime.date.today()
+    if 'start' in request.POST:
+        start = strptime(request.POST['start'], '%Y-%m-%d').date()
+    else:
+        start = today - datetime.timedelta(days=14)
+    if  'end' in request.POST:
+        end = strptime(request.POST['end'], '%Y-%m-%d').date()
+    else:
+        end = today + datetime.timedelta(days=14)
 
     if delete_how == 'delete_only_this_transaction':
 
@@ -301,17 +314,21 @@ def delete_transaction(request):
                                                             Q(date=t.date, index__gt=t.index),
                                                             user=user)
 
-        for t in transactions_to_update:
+        for t_ in transactions_to_update:
             try:
                 last_transaction = Transaction.objects.filter(
-                    Q(date__lt=t.date) |
-                    Q(date__lte=t.date, index__lt=t.index),
+                    Q(date__lt=t_.date) |
+                    Q(date__lte=t_.date, index__lt=t_.index),
                     user=user).latest('date', 'index')
-                closing_balance = last_transaction.closing_balance + t.size
+                closing_balance = last_transaction.closing_balance + t_.size
             except Transaction.DoesNotExist:
                 closing_balance = self.size
-            t.closing_balance = closing_balance
-            t.save()
+            t_.closing_balance = closing_balance
+            t_.save()
+
+        rt = t.repeat_transaction
+        rt.end_date = t.date
+        rt.save()
         
     return redirect('/home?start={}&end={}'.format(start, end))
 

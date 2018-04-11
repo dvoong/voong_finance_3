@@ -145,7 +145,7 @@ class TestRepeatTransactionDeletion(TestCase):
 
         # test looking at future dates will not create anymore of these transactions
         # TODO
-        url = '{}/home?start={}&end={}'.format(self.live_server_url, '2018-01-01', '2018-01-15')
+        url = '{}/home?start={}&end={}'.format(self.live_server_url, '2018-01-01', '2018-01-22')
         self.driver.get(url)
         home_page = HomePage(self.driver)
 
