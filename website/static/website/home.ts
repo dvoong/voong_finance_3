@@ -1,5 +1,5 @@
 console.log('home.js');
-console.log('test7');
+console.log('test0');
 
 declare var balances: any[];
 

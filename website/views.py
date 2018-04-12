@@ -189,6 +189,9 @@ def create_transaction(request):
     return redirect('/home?start={}&end={}'.format(start, end))
 
 def update_transaction(request):
+    print('update_transaction')
+    print(request.POST)
+    
     user = request.user
     transaction_id = int(request.POST['id'])
     date = datetime.datetime.strptime(request.POST['date'], '%Y-%m-%d').date()
@@ -203,67 +206,115 @@ def update_transaction(request):
         end = strptime(request.POST['end'], '%Y-%m-%d').date()
     else:
         end = today + datetime.timedelta(days=14)
+    update_how = request.POST.get('update_how', 'update_only_this_transaction')
+    transaction = Transaction.objects.get(user=user, id=transaction_id)
+    repeat_transaction = transaction.repeat_transaction
+    only_date_change = transaction.date != date and \
+                                           transaction.description == description and \
+                                           transaction.size == size
+    if only_date_change:
+        update_how = 'update_only_this_transaction'
 
-    # generate repeat transactions
-    repeat_transactions = RepeatTransaction.objects.filter(
-        user=user,
-        start_date__lte=date)
+    print('only_date_change:', only_date_change)
+    
+    # update repeat_transaction?
+    if update_how == 'update_this_transaction_and_future_transactions':
+        repeat_transaction.size = size
+        repeat_transaction.description = description
+        repeat_transaction.save()
+
+    # transactions_to_update
+    if update_how == 'update_only_this_transaction':
+        ts = [transaction]
+    elif update_how == 'update_this_transaction_and_future_transactions':
+        ts = Transaction.objects.filter(user=user,
+                                        date__gte=transaction.date,
+                                        repeat_transaction=repeat_transaction)
+
+    for t in ts:
+        t.size = size
+        t.description = description
+        if only_date_change:
+            t.date = date
+        t.save()
+
+    # transactions_to_recalculate_closing_balance
+    first_t = min(ts, key=lambda t: (t.date, t.index))
+    ts_to_recalculate = Transaction.objects.filter(
+        Q(date__gt=t.date) | Q(date=first_t.date, index__gt=first_t.index),
+        user=user).order_by('date', 'index')
+
+    for t in ts_to_recalculate:
+        try:
+            last_transaction = Transaction.objects.filter(
+                Q(date__lt=t.date) |
+                Q(date__lte=t.date, index__lt=t.index),
+                user=user).latest('date', 'index')
+            closing_balance = last_transaction.closing_balance + t.size
+        except Transaction.DoesNotExist:
+            closing_balance = self.size
+        t.closing_balance = closing_balance
+        t.save()
         
-    for rt in repeat_transactions:
-        for t in rt.generate_next_transaction(date):
-            t.recalculate_closing_balances()
+    # # generate repeat transactions
+    # repeat_transactions = RepeatTransaction.objects.filter(
+    #     user=user,
+    #     start_date__lte=date)
+        
+    # for rt in repeat_transactions:
+    #     for t in rt.generate_next_transaction(date):
+    #         t.recalculate_closing_balances()
 
-    t = Transaction.objects.get(user=user, id=transaction_id)
-    old_date = t.date
-    old_size = t.size
-    old_index = t.index
+    # old_date = t.date
+    # old_size = t.size
+    # old_index = t.index
 
-    # update transaction
-    index = len(Transaction.objects.filter(user=user, date=date))
-    t.date = date
-    t.size = size
-    t.description = description
-    t.index = index
+    # # update transaction
+    # index = len(Transaction.objects.filter(user=user, date=date))
+    # t.date = date
+    # t.size = size
+    # t.description = description
+    # t.index = index
 
-    # update transactions between old and new dates (assuming transaction size has not changed)
-    if t.date < old_date: # moved back in time
-        transactions_to_update = Transaction.objects.filter(
-            user=user,
-            date__gt=t.date,
-            date__lt=old_date).exclude(id=transaction_id)
-        transactions_to_update_2 = Transaction.objects.filter(
-            user=user,
-            date=old_date,
-            index__lt=old_index).exclude(id=transaction_id)
-        transactions_to_update = list(transactions_to_update) + list(transactions_to_update_2)
-        for t_ in transactions_to_update:
-            t_.closing_balance += old_size
-            t.closing_balance -= t_.size
-            t_.save()
+    # # update transactions between old and new dates (assuming transaction size has not changed)
+    # if t.date < old_date: # moved back in time
+    #     transactions_to_update = Transaction.objects.filter(
+    #         user=user,
+    #         date__gt=t.date,
+    #         date__lt=old_date).exclude(id=transaction_id)
+    #     transactions_to_update_2 = Transaction.objects.filter(
+    #         user=user,
+    #         date=old_date,
+    #         index__lt=old_index).exclude(id=transaction_id)
+    #     transactions_to_update = list(transactions_to_update) + list(transactions_to_update_2)
+    #     for t_ in transactions_to_update:
+    #         t_.closing_balance += old_size
+    #         t.closing_balance -= t_.size
+    #         t_.save()
 
-    else: # moved forward in time
-        transactions_to_update = Transaction.objects.filter(
-            user=user, date__gt=old_date,
-            date__lte=t.date)
-        transactions_to_update_2 = Transaction.objects.filter(
-            user=user,
-            date=old_date,
-            index__gt=old_index)
-        transactions_to_update = list(transactions_to_update) + list(transactions_to_update_2)
-        for t_ in transactions_to_update:
-            t_.closing_balance -= old_size
-            t.closing_balance += t_.size
-            t_.save()
+    # else: # moved forward in time
+    #     transactions_to_update = Transaction.objects.filter(
+    #         user=user, date__gt=old_date,
+    #         date__lte=t.date)
+    #     transactions_to_update_2 = Transaction.objects.filter(
+    #         user=user,
+    #         date=old_date,
+    #         index__gt=old_index)
+    #     transactions_to_update = list(transactions_to_update) + list(transactions_to_update_2)
+    #     for t_ in transactions_to_update:
+    #         t_.closing_balance -= old_size
+    #         t.closing_balance += t_.size
+    #         t_.save()
 
-    # if transaction size has changed as well
-    if t.size != old_size:
-        t.closing_balance += t.size - old_size
-        transactions_to_update = Transaction.objects.filter(user=user, date__gt=t.date)
-        for t_ in transactions_to_update:
-            t_.closing_balance += t.size - old_size
-            t_.save()
+    # # if transaction size has changed as well
+    # if t.size != old_size:
+    #     t.closing_balance += t.size - old_size
+    #     transactions_to_update = Transaction.objects.filter(user=user, date__gt=t.date)
+    #     for t_ in transactions_to_update:
+    #         t_.closing_balance += t.size - old_size
+    #         t_.save()
             
-    t.save()
+    # t.save()
     
     return redirect('/home?start={}&end={}'.format(start, end))
 

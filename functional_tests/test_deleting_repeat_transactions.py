@@ -274,7 +274,6 @@ class TestRepeatTransactionUpdate(TestCase):
         t_list = home_page.transaction_list
         transactions = t_list.get_transactions()
 
-
         self.assertEqual(len(transactions), 4)
 
         t = transactions[0]
@@ -327,67 +326,152 @@ class TestRepeatTransactionUpdate(TestCase):
         self.assertEqual('£35.00', t.balance)
         self.assertEqual(t.description, 'a')
         
-    # def test_this_transaction_and_future_transactions_update(self):
+    def test_update_repeat_transaction_description_only(self):
 
-    #     url = '{}/home?start={}&end={}'.format(self.live_server_url, '2018-01-01', '2018-01-15')
-    #     self.driver.get(url)
-    #     home_page = HomePage(self.driver)
-    #     home_page.create_transaction(date=dt.date(2018, 1, 1),
-    #                                  size=10,
-    #                                  description='a',
-    #                                  repeats='weekly',
-    #                                  ends={'how': 'never'})
-    #     home_page.create_transaction(date=dt.date(2018, 1, 9),
-    #                                  size=5,
-    #                                  description='b')
+        url = '{}/home?start={}&end={}'.format(self.live_server_url, '2018-01-01', '2018-01-15')
+        self.driver.get(url)
+        home_page = HomePage(self.driver)
+        home_page.create_transaction(date=dt.date(2018, 1, 1),
+                                     size=10,
+                                     description='a',
+                                     repeats='weekly',
+                                     ends={'how': 'never'})
+        home_page.create_transaction(date=dt.date(2018, 1, 9),
+                                     size=5,
+                                     description='b')
 
-    #     url = '{}/home?start={}&end={}'.format(self.live_server_url, '2018-01-01', '2018-01-15')
-    #     self.driver.get(url)
-    #     home_page = HomePage(self.driver)
+        home_page = HomePage(self.driver)
 
-    #     t_list = home_page.transaction_list
-    #     transactions = t_list.get_transactions()
+        t_list = home_page.transaction_list
+        transactions = t_list.get_transactions()
 
-    #     t = transactions[1]
-    #     t.delete()
+        self.assertEqual(len(transactions), 4)
 
-    #     WebDriverWait(self.driver, 5).until(
-    #         EC.visibility_of_element_located((By.ID, 'repeat-transaction-update-prompt'))
-    #     )
+        t = transactions[0]
+        self.assertEqual(t.date, dt.date(2018, 1, 1))
+        self.assertEqual(t.description, 'a')
 
-    #     prompt = RepeatTransactionUpdatePrompt(self.driver)
-    #     prompt.select('update_this_transaction_and_future_transactions')
-    #     prompt.submit()
+        t = transactions[1]
+        self.assertEqual(t.date, dt.date(2018, 1, 8))
+        self.assertEqual(t.description, 'a')
 
-    #     self.driver.get(url)
-    #     home_page = HomePage(self.driver)
-    #     t_list = home_page.transaction_list
-    #     transactions = t_list.get_transactions()
+        t = transactions[1]
+        t.description = 'c'
+        t.save()
 
-    #     self.assertEqual(len(transactions), 2)
+        WebDriverWait(self.driver, 5).until(
+            EC.visibility_of_element_located((By.ID, 'repeat-transaction-update-prompt'))
+        )
 
-    #     t = transactions[0]
-    #     self.assertEqual(t.date, dt.date(2018, 1, 1))
+        prompt = RepeatTransactionUpdatePrompt(self.driver)
+        prompt.select('update_this_transaction_and_future_transactions')
+        prompt.submit()
+
+        home_page = HomePage(self.driver)
+        t_list = home_page.transaction_list
+        transactions = t_list.get_transactions()
+
+        self.assertEqual(len(transactions), 4)
+
+        t = transactions[0]
+        self.assertEqual(t.date, dt.date(2018, 1, 1))
         
-    #     t = transactions[1]
-    #     self.assertEqual(t.date, dt.date(2018, 1, 9))
-    #     self.assertEqual('£15.00', t.balance)
-
-    #     url = '{}/home?start={}&end={}'.format(self.live_server_url, '2018-01-01', '2018-01-22')
-    #     self.driver.get(url)
-    #     home_page = HomePage(self.driver)
-
-    #     t_list = home_page.transaction_list
-    #     transactions = t_list.get_transactions()
-
-    #     self.assertEqual(len(transactions), 2)
-
-    #     t = transactions[0]
-    #     self.assertEqual(t.date, dt.date(2018, 1, 1))
+        t = transactions[1]
+        self.assertEqual(t.date, dt.date(2018, 1, 8))
+        self.assertEqual('c', t.description)
         
-    #     t = transactions[1]
-    #     self.assertEqual(t.date, dt.date(2018, 1, 9))
-    #     self.assertEqual('£15.00', t.balance)
+        t = transactions[2]
+        self.assertEqual(t.date, dt.date(2018, 1, 9))
+        self.assertEqual('b', t.description)
+        
+        t = transactions[3]
+        self.assertEqual(t.date, dt.date(2018, 1, 15))
+        self.assertEqual('c', t.description)
+        self.assertEqual('£35.00', t.balance)
+
+        url = '{}/home?start={}&end={}'.format(self.live_server_url, '2018-01-01', '2018-01-22')
+        self.driver.get(url)
+        home_page = HomePage(self.driver)
+
+        t_list = home_page.transaction_list
+        transactions = t_list.get_transactions()
+
+        self.assertEqual(len(transactions), 5)
+
+        t = transactions[4]
+        self.assertEqual(t.date, dt.date(2018, 1, 22))
+        self.assertEqual('c', t.description)
+        self.assertEqual('£45.00', t.balance)
+ 
+    def test_update_repeat_transaction_date_only(self):
+
+        url = '{}/home?start={}&end={}'.format(self.live_server_url, '2018-01-01', '2018-01-15')
+        self.driver.get(url)
+        home_page = HomePage(self.driver)
+        home_page.create_transaction(date=dt.date(2018, 1, 1),
+                                     size=10,
+                                     description='a',
+                                     repeats='weekly',
+                                     ends={'how': 'never'})
+        home_page.create_transaction(date=dt.date(2018, 1, 9),
+                                     size=5,
+                                     description='b')
+
+        home_page = HomePage(self.driver)
+        t_list = home_page.transaction_list
+        transactions = t_list.get_transactions()
+
+        self.assertEqual(len(transactions), 4)
+
+        t = transactions[0]
+        self.assertEqual(t.date, dt.date(2018, 1, 1))
+        self.assertEqual(t.description, 'a')
+
+        t = transactions[1]
+        self.assertEqual(t.date, dt.date(2018, 1, 8))
+        self.assertEqual(t.description, 'a')
+
+        t = transactions[1]
+        t.date = dt.date(2018, 1, 7)
+        t.save()
+        
+        url = '{}/home?start={}&end={}'.format(self.live_server_url, '2018-01-01', '2018-01-15')
+        self.driver.get(url)
+        home_page = HomePage(self.driver)
+        t_list = home_page.transaction_list
+        transactions = t_list.get_transactions()
+
+        self.assertEqual(len(transactions), 4)
+
+        t = transactions[0]
+        self.assertEqual(t.date, dt.date(2018, 1, 1))
+        
+        t = transactions[1]
+        self.assertEqual(t.date, dt.date(2018, 1, 7))
+        self.assertEqual('a', t.description)
+        
+        t = transactions[2]
+        self.assertEqual(t.date, dt.date(2018, 1, 9))
+        self.assertEqual('b', t.description)
+        
+        t = transactions[3]
+        self.assertEqual(t.date, dt.date(2018, 1, 15))
+        self.assertEqual('a', t.description)
+        self.assertEqual('£35.00', t.balance)
+
+        url = '{}/home?start={}&end={}'.format(self.live_server_url, '2018-01-01', '2018-01-22')
+        self.driver.get(url)
+        home_page = HomePage(self.driver)
+
+        t_list = home_page.transaction_list
+        transactions = t_list.get_transactions()
+
+        self.assertEqual(len(transactions), 5)
+
+        t = transactions[4]
+        self.assertEqual(t.date, dt.date(2018, 1, 22))
+        self.assertEqual('a', t.description)
+        self.assertEqual('£45.00', t.balance)
         
     # def test_update_of_all_transactions_of_this_type(self):
 

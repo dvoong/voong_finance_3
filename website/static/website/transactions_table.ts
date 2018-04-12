@@ -14,6 +14,24 @@ function submit_delete(d){
     var selector = `input[form="${form.attr("id")}"][name="repeat_transaction_id"]`;
     var repeat_transaction = $(selector).val();
     var btn = $(document.activeElement);
+    var selector = `input[form="${form.attr("id")}"][name="date"]`;
+    var date = $(selector).val()
+    var selector = `input[form="${form.attr("id")}"][name="transaction_date_original"]`;
+    var original_date = $(selector).val()
+    var selector = `input[form="${form.attr("id")}"][name="size"]`;
+    var transaction_size = $(selector).val()
+    var selector = `input[form="${form.attr("id")}"][name="transaction_size_original"]`;
+    var original_transaction_size = $(selector).val()
+    var selector = `input[form="${form.attr("id")}"][name="description"]`;
+    var transaction_description = $(selector).val()
+    var selector = `input[form="${form.attr("id")}"][name="transaction_description_original"]`;
+    var original_transaction_description = $(selector).val()
+
+    var date_update_only = date != original_date &&
+	transaction_size == original_transaction_size &&
+	original_transaction_description == transaction_description;
+
+    console.log(date_update_only);
 
     if(btn.attr('class').indexOf('delete-transaction-button') != -1 && repeat_transaction != ''){
 
@@ -30,7 +48,8 @@ function submit_delete(d){
     	}
 	
     } else if (btn.attr('class').indexOf('save-transaction-button') != -1 &&
-	       repeat_transaction != '') {
+	       repeat_transaction != '' &&
+	       date_update_only != true) {
     	d3.event.preventDefault();
 	var prompt = $('#repeat-transaction-update-prompt');
     	if(prompt.length === 0){
@@ -85,37 +104,54 @@ class TransactionsTable {
 
 	form.on('submit', submit_delete);
 
-	enter.append('td')
-	    .attr('class', 'transaction-date')
-	    .append('input')
-	    .attr('class', 'date-input form-control')
+	var td = enter.append('td');
+
+	td.append('input')
+	    .attr('class', 'transaction-date date-input form-control')
 	    .attr('type', 'date')
 	    .attr('name', 'date')
 	    .attr('value', function(d){return d.date})
 	    .attr('form', function(d){return 'transaction-modify-form-' + d.id});
+	
+	td.append('input')
+	    .attr('hidden', true)
+	    .attr('name', 'transaction_date_original')
+	    .attr('value', function(d){return d.date})
+	    .attr('form', function(d){return 'transaction-modify-form-' + d.id});
 
-	enter.append('td')
-	    .attr('class', 'transaction-size')
-	    .append('input')
-	    .attr('class', 'transaction-size-input form-control')
+	var td = enter.append('td');
+	
+	td.append('input')
+	    .attr('class', 'transaction-size transaction-size-input form-control')
 	    .attr('type', 'number')
 	    .attr('step', '0.01')
 	    .attr('name', 'size')
 	    .attr('value', function(d){return d.size})
 	    .attr('form', function(d){return 'transaction-modify-form-' + d.id});
 
-	enter.append('td')
-	    .attr('class', 'transaction-description')
-	    .append('input')
-	    .attr('class', 'description-input form-control')
+	td.append('input')
+	    .attr('hidden', true)
+	    .attr('name', 'transaction_size_original')
+	    .attr('value', function(d){return d.size})
+	    .attr('form', function(d){return 'transaction-modify-form-' + d.id});
+
+	var td = enter.append('td');
+	
+	td.append('input')
+	    .attr('class', 'transaction-description description-input form-control')
 	    .attr('name', 'description')
 	    .attr('form', function(d){return 'transaction-modify-form-' + d.id})
 	    .attr('value', function(d){return d.description});
 
+	td.append('input')
+	    .attr('hidden', true)
+	    .attr('name', 'transaction_description_original')
+	    .attr('value', function(d){return d.description})
+	    .attr('form', function(d){return 'transaction-modify-form-' + d.id});
+
 	enter.append('td')
-	    .attr('class', 'transaction-balance')
 	    .append('span')
-	    .attr('class', 'balance-input form-control')
+	    .attr('class', 'transaction-balance balance-input form-control')
 	    .attr('name', 'balance')
 	    .attr('form', function(d){return 'transaction-modify-form-' + d.id})
 	    .html(function(d){
