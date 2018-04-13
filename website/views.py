@@ -220,9 +220,13 @@ def update_transaction(request):
     repeat_transaction.description = description
     repeat_transaction.save()
 
-    ts = Transaction.objects.filter(user=user,
-                                    date__gte=transaction.date,
-                                    repeat_transaction=repeat_transaction)
+    if update_how == 'update_this_transaction_and_future_transactions':
+        ts = Transaction.objects.filter(user=user,
+                                        date__gte=transaction.date,
+                                        repeat_transaction=repeat_transaction)
+    elif update_how == 'update_all_transactions_of_this_kind':
+        ts = Transaction.objects.filter(user=user,
+                                        repeat_transaction=repeat_transaction)
 
     for t in ts:
         t.size = size

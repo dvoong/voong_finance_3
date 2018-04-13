@@ -472,8 +472,6 @@ class TestRepeatTransactionUpdate(TestCase):
         self.assertEqual('a', t.description)
         self.assertEqual('£45.00', t.balance)
 
-    ## TODO: change date and description/size of repeat transaction simaltaneously
-        
     def test_date_and_description_changed(self):
 
         home_page = HomePage(self.driver)
@@ -535,60 +533,80 @@ class TestRepeatTransactionUpdate(TestCase):
         self.assertEqual('£35.00', t.balance)
         self.assertEqual(t.description, 'a')
         
-    # def test_update_of_all_transactions_of_this_type(self):
+    def test_update_repeat_transaction_description_only_all_transactions(self):
 
-    #     url = '{}/home?start={}&end={}'.format(self.live_server_url, '2018-01-01', '2018-01-15')
-    #     self.driver.get(url)
-    #     home_page = HomePage(self.driver)
-    #     home_page.create_transaction(date=dt.date(2018, 1, 1),
-    #                                  size=10,
-    #                                  description='a',
-    #                                  repeats='weekly',
-    #                                  ends={'how': 'never'})
-    #     home_page.create_transaction(date=dt.date(2018, 1, 9),
-    #                                  size=5,
-    #                                  description='b')
+        url = '{}/home?start={}&end={}'.format(self.live_server_url, '2018-01-01', '2018-01-15')
+        self.driver.get(url)
+        home_page = HomePage(self.driver)
+        home_page.create_transaction(date=dt.date(2018, 1, 1),
+                                     size=10,
+                                     description='a',
+                                     repeats='weekly',
+                                     ends={'how': 'never'})
+        home_page.create_transaction(date=dt.date(2018, 1, 9),
+                                     size=5,
+                                     description='b')
 
-    #     url = '{}/home?start={}&end={}'.format(self.live_server_url, '2018-01-01', '2018-01-15')
-    #     self.driver.get(url)
-    #     home_page = HomePage(self.driver)
+        home_page = HomePage(self.driver)
 
-    #     t_list = home_page.transaction_list
-    #     transactions = t_list.get_transactions()
+        t_list = home_page.transaction_list
+        transactions = t_list.get_transactions()
 
-    #     t = transactions[1]
-    #     t.delete()
+        self.assertEqual(len(transactions), 4)
 
-    #     WebDriverWait(self.driver, 5).until(
-    #         EC.visibility_of_element_located((By.ID, 'repeat-transaction-update-prompt'))
-    #     )
+        t = transactions[0]
+        self.assertEqual(t.date, dt.date(2018, 1, 1))
+        self.assertEqual(t.description, 'a')
 
-    #     prompt = RepeatTransactionUpdatePrompt(self.driver)
-    #     prompt.select('all_transactions_of_this_type')
-    #     prompt.submit()
+        t = transactions[1]
+        self.assertEqual(t.date, dt.date(2018, 1, 8))
+        self.assertEqual(t.description, 'a')
 
-    #     self.driver.get(url)
-    #     home_page = HomePage(self.driver)
-    #     t_list = home_page.transaction_list
-    #     transactions = t_list.get_transactions()
+        t = transactions[1]
+        t.description = 'c'
+        t.save()
 
-    #     self.assertEqual(len(transactions), 1)
+        WebDriverWait(self.driver, 5).until(
+            EC.visibility_of_element_located((By.ID, 'repeat-transaction-update-prompt'))
+        )
+
+        prompt = RepeatTransactionUpdatePrompt(self.driver)
+        prompt.select('update_all_transactions_of_this_kind')
+        prompt.submit()
+
+        home_page = HomePage(self.driver)
+        t_list = home_page.transaction_list
+        transactions = t_list.get_transactions()
+
+        self.assertEqual(len(transactions), 4)
+
+        t = transactions[0]
+        self.assertEqual(t.date, dt.date(2018, 1, 1))
+        self.assertEqual('c', t.description)
         
-    #     t = transactions[0]
-    #     self.assertEqual(t.date, dt.date(2018, 1, 9))
-    #     self.assertEqual(t.description, 'b')
-    #     self.assertEqual('£5.00', t.balance)
-
-    #     url = '{}/home?start={}&end={}'.format(self.live_server_url, '2018-01-01', '2018-01-22')
-    #     self.driver.get(url)
-    #     home_page = HomePage(self.driver)
-
-    #     t_list = home_page.transaction_list
-    #     transactions = t_list.get_transactions()
-
-    #     self.assertEqual(len(transactions), 1)
+        t = transactions[1]
+        self.assertEqual(t.date, dt.date(2018, 1, 8))
+        self.assertEqual('c', t.description)
         
-    #     t = transactions[0]
-    #     self.assertEqual(t.date, dt.date(2018, 1, 9))
-    #     self.assertEqual('£5.00', t.balance)
+        t = transactions[2]
+        self.assertEqual(t.date, dt.date(2018, 1, 9))
+        self.assertEqual('b', t.description)
         
+        t = transactions[3]
+        self.assertEqual(t.date, dt.date(2018, 1, 15))
+        self.assertEqual('c', t.description)
+        self.assertEqual('£35.00', t.balance)
+
+        url = '{}/home?start={}&end={}'.format(self.live_server_url, '2018-01-01', '2018-01-22')
+        self.driver.get(url)
+        home_page = HomePage(self.driver)
+
+        t_list = home_page.transaction_list
+        transactions = t_list.get_transactions()
+
+        self.assertEqual(len(transactions), 5)
+
+        t = transactions[4]
+        self.assertEqual(t.date, dt.date(2018, 1, 22))
+        self.assertEqual('c', t.description)
+        self.assertEqual('£45.00', t.balance)
