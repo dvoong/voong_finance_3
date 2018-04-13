@@ -27,11 +27,7 @@ function submit_delete(d){
     var selector = `input[form="${form.attr("id")}"][name="transaction_description_original"]`;
     var original_transaction_description = $(selector).val()
 
-    var date_update_only = date != original_date &&
-	transaction_size == original_transaction_size &&
-	original_transaction_description == transaction_description;
-
-    console.log(date_update_only);
+    var date_updated = date != original_date;
 
     if(btn.attr('class').indexOf('delete-transaction-button') != -1 && repeat_transaction != ''){
 
@@ -49,7 +45,7 @@ function submit_delete(d){
 	
     } else if (btn.attr('class').indexOf('save-transaction-button') != -1 &&
 	       repeat_transaction != '' &&
-	       date_update_only != true) {
+	       date_updated != true) {
     	d3.event.preventDefault();
 	var prompt = $('#repeat-transaction-update-prompt');
     	if(prompt.length === 0){

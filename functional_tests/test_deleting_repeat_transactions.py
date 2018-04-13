@@ -229,7 +229,6 @@ class RepeatTransactionUpdatePrompt:
         self.submit_button = self.element.find_element_by_id(id_)
 
     def select(self, selection):
-        print(self.element)
         css_selector = 'input[name="update_how"][value="{}"]'.format(selection)
         element = self.element.find_element_by_css_selector(css_selector)
         element.click()
@@ -472,6 +471,69 @@ class TestRepeatTransactionUpdate(TestCase):
         self.assertEqual(t.date, dt.date(2018, 1, 22))
         self.assertEqual('a', t.description)
         self.assertEqual('£45.00', t.balance)
+
+    ## TODO: change date and description/size of repeat transaction simaltaneously
+        
+    def test_date_and_description_changed(self):
+
+        home_page = HomePage(self.driver)
+        home_page.create_transaction(date=dt.date(2018, 1, 1),
+                                     size=10,
+                                     description='a',
+                                     repeats='weekly',
+                                     ends={'how': 'never'})
+        home_page.create_transaction(date=dt.date(2018, 1, 9),
+                                     size=5,
+                                     description='b')
+
+        url = '{}/home?start={}&end={}'.format(self.live_server_url, '2018-01-01', '2018-01-15')
+        self.driver.get(url)
+        home_page = HomePage(self.driver)
+
+        t_list = home_page.transaction_list
+        transactions = t_list.get_transactions()
+
+        self.assertEqual(len(transactions), 4)
+
+        t = transactions[0]
+        self.assertEqual(t.date, dt.date(2018, 1, 1))
+        self.assertEqual(t.description, 'a')
+
+        t = transactions[1]
+        self.assertEqual(t.date, dt.date(2018, 1, 8))
+        self.assertEqual(t.description, 'a')
+        
+        t = transactions[1]
+        t.date = dt.date(2018, 1, 7)
+        t.description = 'c'
+        t.save()
+        
+        self.driver.get(url)
+        home_page = HomePage(self.driver)
+        t_list = home_page.transaction_list
+        transactions = t_list.get_transactions()
+
+        self.assertEqual(len(transactions), 4)
+
+        t = transactions[0]
+        self.assertEqual(t.date, dt.date(2018, 1, 1))
+        self.assertEqual(t.description, 'a')
+        self.assertEqual('£10.00', t.balance)
+
+        t = transactions[1]
+        self.assertEqual(t.date, dt.date(2018, 1, 7))
+        self.assertEqual(t.description, 'c')
+        self.assertEqual('£20.00', t.balance)
+
+        t = transactions[2]
+        self.assertEqual(t.date, dt.date(2018, 1, 9))
+        self.assertEqual('£25.00', t.balance)
+        self.assertEqual(t.description, 'b')
+
+        t = transactions[3]
+        self.assertEqual(t.date, dt.date(2018, 1, 15))
+        self.assertEqual('£35.00', t.balance)
+        self.assertEqual(t.description, 'a')
         
     # def test_update_of_all_transactions_of_this_type(self):
 
