@@ -143,3 +143,4 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 STATIC_ROOT = '{}/static'.format(BASE_DIR)
+LOGIN_URL = '/welcome'

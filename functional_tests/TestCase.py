@@ -6,6 +6,9 @@ class TestCase(StaticLiveServerTestCase):
 
     def setUp(self):
         self.driver = Chrome()
+
+    def tearDown(self):
+        self.driver.close()
         
     # def tearDown(self):
     #     if hasattr(self, '_outcome'):  # Python 3.4+

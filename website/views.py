@@ -7,6 +7,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
 from website.models import Transaction, RepeatTransaction
 from django.db.models import Q
+from django.contrib.auth.decorators import login_required
 
 strptime = datetime.datetime.strptime
 
@@ -20,6 +21,7 @@ def index(request):
     else:
         return redirect('welcome')
 
+@login_required    
 def home(request):
     user = request.user
     today = datetime.date.today()
