@@ -8,6 +8,7 @@
     <link rel="icon" 
 	  type="image/x-icon"
 	  href="{% static 'website/favicon.ico' %}" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
   </head>
   
   <body>
@@ -50,22 +51,22 @@
     
     <div class="container">
 
-      <div class="row date-navigator-button-container">
+      <div class="row date-navigator-button-container" style="padding-bottom: 5">
 
 	<div class="col-sm">
-	  <form id="week-backward-form" action="/home" method="get">
+	  <form id="week-backward-form" action="/home" method="get" style="margin: 0">
 	    <input name="start" value="{{ start_minus_7|date:'Y-m-d' }}" hidden>
 	    <input name="end" value="{{ end_minus_7|date:'Y-m-d' }}" hidden>
 	    <button id="week-backward-button"
 		    type="submit"
 		    class="btn btn-primary date-navigator">
-	      Back 7 Days
+	      <i class="fa fa-angle-left" style="padding-right: 5px"></i> Back 7 Days
 	    </button>
 	  </form>
 	</div>
 	
 	<div class="col-sm">
-	  <form id="center-on-today-form">
+	  <form id="center-on-today-form" style="margin: 0">
 	    <input name="start" value="{{ center_on_today_start|date:'Y-m-d' }}" hidden>
 	    <input name="end" value="{{ center_on_today_end|date:'Y-m-d' }}" hidden>
 	    <button id="center-on-today-button"
@@ -78,12 +79,15 @@
 	</div>
 	
 	<div class="col-sm">
-	  <form id="week-forward-form" action="/home" method="get">
+	  <form id="week-forward-form" action="/home" method="get" style="margin: 0">
 	    <button id="week-forward-button"
 		    type="submit"
 		    class="btn btn-primary date-navigator">
-	      Forward 7 Days
+	      Forward 7 Days <i class="fa fa-angle-right" style="padding-left: 5px"></i>
 	    </button>
+
+	    
+	    
 	    <input name="start" value="{{ start_plus_7|date:'Y-m-d' }}" hidden>
 	    <input name="end" value="{{ end_plus_7|date:'Y-m-d' }}" hidden>
 	  </form>
@@ -91,8 +95,12 @@
 	
       </div>
       
-      <form id="date-selector" action="/home" method="get">
-	<h2>Select date range</h2>
+      <!-- <p>Select date range</p> -->
+      <form id="date-selector"
+	    class="form-inline justify-content-center"
+	    action="/home"
+	    method="get"
+	    style="margin-bottom: 0">
 	<div class="form-group row">
 	  <label for="start-input" class="col-sm-2 col-form-label">Start</label>
 	  <div class="col-sm-10">
@@ -115,12 +123,15 @@
 	</div>
 	<input type="submit" class="btn btn-primary" value="Submit">
       </form>
+      <center style="margin-bottom: 5">
+	<font size="2" style="opacity: 0.8">Select date range</font>
+      </center>
 
       <form id="transaction-form"
 	    class="form"
 	    action="/create-transaction"
 	    method="post"
-	    style="border: none";>{% csrf_token %}
+	    style="border: none" hidden>{% csrf_token %}
 	<input id="start-input"
 	       type="date"
 	       name="start"
