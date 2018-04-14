@@ -25,6 +25,8 @@ class LoginForm:
 
 class WelcomePage:
 
+    url = '/welcome'
+
     def __init__(self, driver):
         self.registration_form = RegistrationForm(driver)
         self.login_form = LoginForm(driver)

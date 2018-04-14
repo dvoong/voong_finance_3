@@ -3,6 +3,7 @@ from selenium.webdriver.support.ui import Select
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
+from .RepeatTransaction import RepeatTransaction
 
 strptime = datetime.datetime.strptime
 
@@ -53,6 +54,20 @@ class HomePage:
             EC.visibility_of_element_located((By.ID, 'repeat-transactions'))
         )
 
+    def show_transactions_view(self):
+        self.transactions_tab.click()
+        WebDriverWait(self.driver, 5).until(
+            EC.visibility_of_element_located((By.ID, 'transactions'))
+        )
+
+    def get_repeat_transactions(self):
+        rts = []
+        class_name = RepeatTransaction.CLASS_NAME
+        for e in self.driver.find_elements_by_css_selector('.{}'.format(class_name)):
+            rts.append(RepeatTransaction(e))
+        return rts
+                    
+
 class TransactionForm:
 
     def __init__(self, driver):
@@ -89,7 +104,6 @@ class TransactionForm:
             self.set_repeat_frequency(repeats)
             self.set_end_criteria(ends)
             self.repeat_options.submit()
-            # self.repeat_options.close()
 
     @property
     def date(self):

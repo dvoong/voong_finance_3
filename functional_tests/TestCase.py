@@ -1,6 +1,7 @@
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 from django.contrib.auth.models import User
 from selenium.webdriver import Chrome
+from functional_tests.welcome.WelcomePage import WelcomePage
 
 class TestCase(StaticLiveServerTestCase):
 
@@ -34,3 +35,9 @@ class TestCase(StaticLiveServerTestCase):
 
     def create_user(self, email, password):
         User.objects.create_user(username=email, email=email, password=password)        
+
+    def sign_in(self, email, password):
+        url = '{}{}'.format(self.live_server_url, WelcomePage.url)
+        self.driver.get(url)
+        welcome_page = WelcomePage(self.driver)
+        welcome_page.login_user(email, password)

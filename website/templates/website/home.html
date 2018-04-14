@@ -270,7 +270,7 @@
 	     class="nav-link"
 	     data-toggle="tab"
 	     href="#repeat-transactions">
-	    RepeatTransactions
+	    Repeat Transactions
 	  </a>
       	</li>
       </ul>
@@ -345,7 +345,7 @@
 	  <table class="table">
       	    <thead>
       	      <tr class="table-header">
-      		<th id="date-header">Date</th>
+      		<th id="date-header">Start Date</th>
       		<th id="transaction-size-header">Transaction Size</th>
       		<th id="description-header">Description</th>
 		<th id="repeats-header">Repeats</th>
@@ -355,13 +355,21 @@
 
 	    <tbody>
 	      {% for rt in repeat_transactions %}
-	      <tr id="rt.id" class="repeat-transaction-row">
-		<td>{{ rt.start_date|date:'Y-m-d' }}</td>
+	      <tr id="rt.id" class="repeat-transaction">
+		<td><input name="start_date"
+			   type="date"
+			   value="{{ rt.start_date|date:'Y-m-d' }}"></td>
 		{% load humanize %}
-		<td>£{{ rt.size|floatformat:2|intcomma }}</td>
-		<td>{{ rt.description }}</td>
-		<td>{{ rt.frequency }}</td>
-		<td>{% if rt.end_date is None %}never{% else %}{{ rt.end_date }}{% endif %}</td>
+		<td><input name="size"
+			   value="£{{ rt.size|floatformat:2|intcomma }}">
+		</td>
+		<td><input name="description" value="{{ rt.description }}"</td>
+		<td><input name="frequency" value="{{ rt.frequency }}"></td>
+		<td>
+		  <input
+		    name="ends"
+		    value="{% if rt.end_date is None %}never{% else %}{{ rt.end_date }}{% endif %}">
+		</td>
 	      </tr>
 	      {% endfor %}
 	    </tbody>

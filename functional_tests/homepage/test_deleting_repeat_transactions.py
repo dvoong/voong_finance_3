@@ -1,7 +1,7 @@
 import datetime as dt
 from functional_tests.TestCase import TestCase
-from functional_tests.HomePage import HomePage
-from functional_tests.WelcomePage import WelcomePage
+from functional_tests.homepage.HomePage import HomePage
+from functional_tests.welcome.WelcomePage import WelcomePage
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support.ui import Select
 from selenium.webdriver.support import expected_conditions as EC
