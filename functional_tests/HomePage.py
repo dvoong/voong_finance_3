@@ -82,13 +82,14 @@ class TransactionForm:
         if repeats == 'does_not_repeat':
             if self.repeat_checkbox.is_selected():
                 self.repeat_checkbox.click()
+            self.submit_button.click()
         else:
             if not self.repeat_checkbox.is_selected():
                 self.repeat_checkbox.click()
             self.set_repeat_frequency(repeats)
             self.set_end_criteria(ends)
-            self.repeat_options.close()
-        self.submit_button.click()
+            self.repeat_options.submit()
+            # self.repeat_options.close()
 
     @property
     def date(self):
@@ -260,6 +261,7 @@ class RepeatOptions:
         self.driver = driver
         self.element = driver.find_element_by_id('repeat-options-div')
         self.close_button = driver.find_element_by_id('repeat-options-close-button')
+        self.submit_button = driver.find_element_by_id('repeat-options-submit-button')
         self.ends_after_n_occurrences = self.element.find_element_by_id('ends-after-n-occurrences')
         self.n_occurrences_input =self.element.find_element_by_id('n-occurrences-input')
         self.ends_on_date = self.element.find_element_by_id('ends-on-date')
@@ -267,13 +269,13 @@ class RepeatOptions:
         self.never_ends = self.element.find_element_by_id('never-ends')
         self.frequency_input = Select(self.element.find_element_by_id('frequency-input'))
 
-    def close(self):
+    def submit(self):
         WebDriverWait(self.driver, 5).until(
-            EC.visibility_of_element_located((By.ID, "repeat-options-close-button"))
+            EC.visibility_of_element_located((By.ID, "repeat-options-submit-button"))
         )
-        self.close_button.click()
+        self.submit_button.click()
         WebDriverWait(self.driver, 5).until(
-            EC.invisibility_of_element_located((By.ID, "repeat-options-close-button"))
+            EC.invisibility_of_element_located((By.ID, "repeat-options-submit -button"))
         )
 
     def select(self, option):

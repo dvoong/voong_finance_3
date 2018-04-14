@@ -8,7 +8,8 @@
     <link rel="icon" 
 	  type="image/x-icon"
 	  href="{% static 'website/favicon.ico' %}" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet"
+	  href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
   </head>
   
   <body>
@@ -95,7 +96,6 @@
 	
       </div>
       
-      <!-- <p>Select date range</p> -->
       <form id="date-selector"
 	    class="form-inline justify-content-center"
 	    action="/home"
@@ -240,8 +240,16 @@
 	    <div class="modal-footer">
 	      <button id="repeat-options-close-button"
 		      type="button"
+		      class="btn btn-secondary"
+		      data-dismiss="modal">Cancel
+	      </button>
+	      <button id="repeat-options-submit-button"
+		      type="submit"
 		      class="btn btn-danger"
-		      data-dismiss="modal">Close</button>
+		      form="transaction-form">
+		Create transaction
+	      </button>
+	      
 	    </div>
 
 	  </div>

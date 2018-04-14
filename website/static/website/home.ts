@@ -1,5 +1,5 @@
 console.log('home.js');
-console.log('test0');
+console.log('test1');
 
 declare var balances: any[];
 
@@ -100,6 +100,10 @@ $(document).ready(function(){
 	}
 
 
+    });
+
+    $('#repeat-options-close-button').click(function(e){
+	$('#repeat-checkbox').prop('checked', false);
     });
 
     $('input:radio[name="end_condition"]').change(function(e){

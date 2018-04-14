@@ -264,8 +264,7 @@ class TestRepeatTransactions(TestCase):
         transaction_form.transaction_size = -10
         transaction_form.description = 'phone contract'
         transaction_form.repeat_checkbox.click()
-        transaction_form.repeat_options.close()
-        transaction_form.submit()
+        transaction_form.repeat_options.submit()
 
         homepage = HomePage(self.driver)
         transactions = homepage.transaction_list.get_transactions()
@@ -313,9 +312,7 @@ class TestCustomRepeatTransaction(TestCase):
         transaction_form.repeat_checkbox.click()
 
         repeat_options = transaction_form.repeat_options
-        repeat_options.close()
-        
-        transaction_form.submit()
+        repeat_options.submit()
         
         homepage = HomePage(self.driver)
         transactions = homepage.transaction_list.get_transactions()
@@ -358,9 +355,7 @@ class TestCustomRepeatTransaction(TestCase):
         repeat_options = transaction_form.repeat_options
         repeat_options.select('ends_after_#_occurrences')
         repeat_options.set_n_occurrences(2)
-        repeat_options.close()
-        
-        transaction_form.submit()
+        repeat_options.submit()
         
         homepage = HomePage(self.driver)
         transactions = homepage.transaction_list.get_transactions()
@@ -401,10 +396,8 @@ class TestCustomRepeatTransaction(TestCase):
         repeat_options.select('ends_on_date')
         repeat_options.set_frequency('monthly')
         repeat_options.set_end_date(end)
-        repeat_options.close()
+        repeat_options.submit()
 
-        transaction_form.submit()
-        
         homepage = HomePage(self.driver)
         transactions = homepage.transaction_list.get_transactions()
 
