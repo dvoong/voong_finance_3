@@ -9,6 +9,7 @@ from website.models import Transaction, RepeatTransaction
 from django.db.models import Q
 from django.contrib.auth.decorators import login_required
 
+import datetime as dt
 strptime = datetime.datetime.strptime
 
 # Create your views here.
@@ -451,3 +452,17 @@ def get_repeat_transaction_deletion_prompt(request):
 
 def get_repeat_transaction_update_prompt(request):
     return render(request, 'website/html_snippets/repeat_transaction_update_prompt.html')
+
+def update_repeat_transaction(request):
+    print(request.POST)
+    start = strptime(request.POST['start'], '%Y-%m-%d').date()
+    end = strptime(request.POST['end'], '%Y-%m-%d').date()
+    rt = RepeatTransaction.objects.get(user=request.user, id=request.POST['id'])
+    old_start_date = rt.start_date
+    rt.start_date = strptime(request.POST['start_date'], '%Y-%m-%d').date()
+    rt.save()
+
+    # create transactions from new start_date up to the old one
+    rt.generate_transactions(rt.start_date, old_start_date - dt.timedelta(days=1))
+    
+    return redirect('/home?start={start}&end={end}'.format(start=start, end=end))

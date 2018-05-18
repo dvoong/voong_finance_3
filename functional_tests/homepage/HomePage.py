@@ -4,6 +4,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 from .RepeatTransaction import RepeatTransaction
+from functional_tests.TestCase import wait_for
 
 strptime = datetime.datetime.strptime
 
@@ -64,8 +65,14 @@ class HomePage:
         rts = []
         class_name = RepeatTransaction.CLASS_NAME
         for e in self.driver.find_elements_by_css_selector('.{}'.format(class_name)):
-            rts.append(RepeatTransaction(e))
+            rts.append(RepeatTransaction(e, self.driver))
         return rts
+
+    def wait_for_repeat_transaction_prompt(self, timeout):
+        wait_for(RepeatTransaction.PROMPT_ID, driver=self.driver, timeout=timeout, by='id')
+
+    def get_transactions(self):
+        return self.transaction_list.get_transactions()
                     
 
 class TransactionForm:

@@ -2,6 +2,11 @@ from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 from django.contrib.auth.models import User
 from selenium.webdriver import Chrome
 from functional_tests.welcome.WelcomePage import WelcomePage
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.by import By
+
+DEFAULT_TIMEOUT = 5
 
 class TestCase(StaticLiveServerTestCase):
 
@@ -41,3 +46,14 @@ class TestCase(StaticLiveServerTestCase):
         self.driver.get(url)
         welcome_page = WelcomePage(self.driver)
         welcome_page.login_user(email, password)
+
+def wait_for(selector, driver, by='id', timeout=DEFAULT_TIMEOUT):
+    by = {
+        'id': By.ID
+    }
+    
+    WebDriverWait(driver, timeout).until(
+        EC.visibility_of_element_located((by, selector))
+    )
+    
+    

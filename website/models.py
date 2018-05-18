@@ -4,7 +4,9 @@ import numpy as np
 from django.db import models
 from django.contrib.auth.models import User
 from django.db.models import Q
-        
+
+import datetime as dt
+
 class RepeatTransaction(models.Model):
 
     REPEAT_STATUSES = (
@@ -23,7 +25,7 @@ class RepeatTransaction(models.Model):
     end_date = models.DateField(null=True)
 
     def generate_next_transaction(self, end):
-        
+
         if self.start_date > end:
             return
         
@@ -55,7 +57,7 @@ class RepeatTransaction(models.Model):
                             user=self.user,
                             date=date)),
                         repeat_transaction=self)
-                        
+
         while t.date <= end and (self.end_date is None or t.date <= self.end_date):
             self.previous_transaction_date = t.date
             self.save()
@@ -68,6 +70,49 @@ class RepeatTransaction(models.Model):
                             index=len(Transaction.objects.filter(user=self.user, date=date)),
                             repeat_transaction=self)
 
+    def generate_transactions(self, start, end):
+
+        try:
+            last_transaction = Transaction.objects.filter(
+                user=self.user,
+                date__lte=start
+            ).latest('date', 'index')
+            closing_balance = last_transaction.closing_balance
+        except Transaction.DoesNotExist:
+            closing_balance = 0
+
+        date = start
+
+        while date <= end:
+            t = Transaction.objects.create(
+                date=date,
+                size=self.size,
+                user=self.user,
+                index=len(Transaction.objects.filter(user=self.user, date=date)),
+                description=self.description,
+                repeat_transaction=self
+            )
+            if date == start:
+                t.closing_balance = closing_balance + self.size
+                closing_balance += self.size
+            t.save()
+            date = self.next_date(date)
+
+        for t in Transaction.objects.filter(date__gt=start).order_by('date', 'index'):
+            closing_balance = closing_balance + t.size
+            t.closing_balance = closing_balance
+            t.save()
+            
+    def next_date(self, date):
+        f = {
+            'daily': add_1day,
+            'weekly': add_7days,
+            'monthly': next_month,
+            'annually': next_year
+        }[self.frequency]
+        date = f(date)
+        return date
+            
 # Create your models here.
 class Transaction(models.Model):
     
@@ -187,4 +232,5 @@ def next_year(date):
         next_year = datetime.date(year, month, 1) - datetime.timedelta(days=1)
 
     return next_year
+    
     

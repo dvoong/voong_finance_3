@@ -36,11 +36,31 @@ class TestUpdateTransaction(TestCase):
         self.assertEqual(rt.frequency, 'weekly')
         self.assertEqual(rt.ends, 'never')
 
+        # change start date to a week earlier
         rt.start_date = dt.date(2017, 12, 25)
-
-        import time
-        time.sleep(5)
         rt.save()
 
-        self.assertTrue(False)
+        # payments will start a week earlier
+        # balance will be modified to reflect this
+        url = '{}/home?start=2017-12-25&end=2018-01-15'.format(self.live_server_url)
+        self.driver.get(url)
+        home_page = HomePage(self.driver)
+        transactions = home_page.get_transactions()
+        self.assertEqual(len(transactions), 4)
+        self.assertEqual(transactions[0].date, dt.date(2017, 12, 25))
+        self.assertEqual(transactions[0].balance, '£1.00')
+        self.assertEqual(transactions[1].date, dt.date(2018, 1, 1))
+        self.assertEqual(transactions[1].balance, '£2.00')
+
+        # change start date to a week later
+
+        # change size
+
+        # change description
+
+        # set an end criteria
+
+        # test payments with a specified end point
+        
+        self.assertTrue(False, 'TODO')
         

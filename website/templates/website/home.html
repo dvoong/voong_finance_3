@@ -355,22 +355,44 @@
 
 	    <tbody>
 	      {% for rt in repeat_transactions %}
-	      <tr id="rt.id" class="repeat-transaction">
-		<td><input name="start_date"
-			   type="date"
-			   value="{{ rt.start_date|date:'Y-m-d' }}"></td>
-		{% load humanize %}
-		<td><input name="size"
-			   value="£{{ rt.size|floatformat:2|intcomma }}">
-		</td>
-		<td><input name="description" value="{{ rt.description }}"</td>
-		<td><input name="frequency" value="{{ rt.frequency }}"></td>
-		<td>
-		  <input
-		    name="ends"
-		    value="{% if rt.end_date is None %}never{% else %}{{ rt.end_date }}{% endif %}">
-		</td>
-	      </tr>
+	      <form id="repeat-transaction-update-form-{{ rt.id }}"
+		    class="repeat-transaction-update-form"
+		    action="update-repeat-transaction"
+		    method="post">{% csrf_token %}
+		<input name="id" value="{{ rt.id }}" hidden>
+		<tr id="{{rt.id}}" class="repeat-transaction">
+		  <td><input name="start_date"
+			     type="date"
+			     value="{{ rt.start_date|date:'Y-m-d' }}"
+			     form="repeat-transaction-update-form-{{ rt.id }}">
+		  </td>
+		  {% load humanize %}
+		  <td>
+		    <input name="size"
+			   value="£{{ rt.size|floatformat:2|intcomma }}"
+			   form="repeat-transaction-update-form-{{ rt.id }}">
+		  </td>
+		  <td>
+		    <input name="description"
+			   value="{{ rt.description }}"
+			   form="repeat-transaction-update-form-{{ rt.id }}">
+		  </td>
+		  <td><input name="frequency"
+			     value="{{ rt.frequency }}"
+			     form="repeat-transaction-update-form-{{ rt.id }}">
+		  </td>
+		  <td>
+		    <input
+		      name="ends"
+		      value="{% if rt.end_date is None %}never{% else %}{{ rt.end_date }}{% endif %}">
+		  </td>
+		  <td>
+		    <button id="repeat-transaction-save-button-{{ rt.id }}">
+		      Save
+		    </button>
+		  </td>
+		</tr>
+	      </form>
 	      {% endfor %}
 	    </tbody>
 	    

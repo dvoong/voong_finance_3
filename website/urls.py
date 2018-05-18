@@ -33,4 +33,7 @@ urlpatterns = [
          views.get_repeat_transaction_update_prompt,
          name='get_repeat_transaction_update_prompt'),
     path('', views.index),
+    path('update-repeat-transaction',
+         views.update_repeat_transaction,
+         name='update_repeat_transaction'),
 ]

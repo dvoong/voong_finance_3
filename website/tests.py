@@ -7,6 +7,8 @@ from django.contrib.auth.models import User
 from django.contrib import auth
 from website.models import Transaction, RepeatTransaction
 
+import datetime as dt
+
 # Create your tests here.
 class TestIndex(TestCase):
 
@@ -571,3 +573,54 @@ class TestGetRepeatTransactionDeletionPrompt(TestCase):
 
     def test(self):
         response = self.client.get('/html-snippets/repeat-transaction-deletion-prompt')
+
+class TestUpdateRepeatTransaction(TestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.user = User.objects.create_user(username='voong.david@gmail.com',
+                                             email='voong.david@gmail.com',
+                                             password='password')
+        self.client.login(username='voong.david@gmail.com', password='password')
+        rt = RepeatTransaction.objects.create(
+            start_date=dt.date(2018, 1, 1),
+            size=1,
+            description='a',
+            user=self.user,
+            index=0,
+            frequency='weekly',
+            id=0
+        )
+
+        for t in rt.generate_next_transaction(end=dt.date(2018, 1, 22)):
+            t.save()
+
+    def test_url_resolution(self):
+        resolver = resolve('/update-repeat-transaction')
+        self.assertEqual(resolver.view_name, 'update_repeat_transaction')
+
+    def test(self):
+        data = {
+            'start': '2018-01-01',
+            'end': '2018-01-08',
+            'start_date': '2017-12-25',
+            'id': 0
+        }
+        response = self.client.post('/update-repeat-transaction', data)
+        self.assertRedirects(response, '/home?start=2018-01-01&end=2018-01-08')
+        rt = RepeatTransaction.objects.get(id=0)
+        self.assertEqual(rt.start_date, dt.date(2017, 12, 25))
+        self.assertEqual(rt.size, 1)
+        self.assertEqual(rt.description, 'a')
+
+        # creates new transactions
+        ts = Transaction.objects.filter(repeat_transaction=rt).order_by('date')
+        self.assertEqual(len(ts), 5)
+        self.assertEqual(ts[0].date, dt.date(2017, 12, 25))
+        self.assertEqual(ts[0].closing_balance, 1)
+        self.assertEqual(ts[1].date, dt.date(2018, 1, 1))
+        self.assertEqual(ts[1].closing_balance, 2)
+        self.assertEqual(ts[2].date, dt.date(2018, 1, 8))
+        self.assertEqual(ts[2].closing_balance, 3)
+        self.assertEqual(ts[3].date, dt.date(2018, 1, 15))
+        self.assertEqual(ts[3].closing_balance, 4)

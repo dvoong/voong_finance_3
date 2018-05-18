@@ -1,5 +1,5 @@
 console.log('home.js');
-console.log('test1');
+console.log('test6');
 
 declare var balances: any[];
 
@@ -117,6 +117,15 @@ $(document).ready(function(){
 	    $('#n-occurrences-input').prop('disabled', true);
 	    $('#ends-on-date-input').prop('disabled', true);
 	}
+    });
+
+    $('form.repeat-transaction-update-form').submit(function(e){
+	var form = $(this);
+	var start = $("#date-selector input[name='start']").val();
+	form.append(`<input name="start" value="${start}" hidden>`);
+	var end = $("#date-selector input[name='end']").val();
+	form.append(`<input name="end" value="${end}" hidden>`);
+
     });
 
 });

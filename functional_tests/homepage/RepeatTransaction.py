@@ -5,10 +5,16 @@ strptime = dt.datetime.strptime
 class RepeatTransaction:
 
     CLASS_NAME = 'repeat-transaction'
+    FORM_ID = 'repeat-transaction-update-form-{id}'
+    SAVE_BUTTON_ID = 'repeat-transaction-save-button-{id}'
 
-    def __init__(self, element):
+    def __init__(self, element, driver):
 
         self.element = element
+        self.driver = driver
+        self.id = int(self.element.get_attribute('id'))
+        self.form = self.driver.find_element_by_id(self.FORM_ID.format(id=self.id))
+        self.save_button = self.driver.find_element_by_id(self.SAVE_BUTTON_ID.format(id=self.id))
 
     @property
     def start_date(self):
@@ -53,4 +59,5 @@ class RepeatTransaction:
             date = strptime(value, '%Y-%m-%d').date()
             return date
 
-    
+    def save(self):
+        self.save_button.click()
