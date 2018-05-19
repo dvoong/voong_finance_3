@@ -458,8 +458,17 @@ def update_repeat_transaction(request):
     end = strptime(request.POST['end'], '%Y-%m-%d').date()
     rt = RepeatTransaction.objects.get(user=request.user, id=request.POST['id'])
     old_start_date = rt.start_date
+    old_size = rt.size
     rt.start_date = strptime(request.POST['start_date'], '%Y-%m-%d').date()
+    rt.description = request.POST['description']
+    rt.size = float(request.POST['size'].replace('£', ''))
     rt.save()
+
+    ts = Transaction.objects.filter(user=request.user, repeat_transaction=rt)
+    for t in ts:
+        t.description = rt.description
+        t.size = rt.size
+        t.save()
 
     if old_start_date > rt.start_date:
         # create transactions from new start_date up to the old one
@@ -477,12 +486,39 @@ def update_repeat_transaction(request):
         closing_balance = previous_transaction.closing_balance if previous_transaction else 0
         ts.delete()
 
-        later_transactions = earliest_transaction.get_later_transactions().order_by('date', 'index')
+
+        later_transactions = Transaction.objects.filter(
+            Q(date__gt=earliest_transaction.date) | Q(date=earliest_transaction.date,
+                                                      index__gte=earliest_transaction.index),
+            user=request.user
+        ).order_by('date', 'index')
+        
         for t in later_transactions:
             if t.date == earliest_transaction.date and t.index > earliest_transaction.index:
                 t.index -= 1
             t.closing_balance = closing_balance + t.size
             closing_balance = t.closing_balance
             t.save()
+
+    if old_size != rt.size:
+        
+        t = Transaction.objects.filter(
+            repeat_transaction=rt,
+            user=request.user
+        ).order_by('date', 'index').first()
+
+        previous_transaction = t.get_previous_transaction()
+        closing_balance = previous_transaction.closing_balance if previous_transaction else 0
+
+        ts = Transaction.objects.filter(
+            Q(date__gt=t.date) | Q(date=t.date, index__gte=t.index),
+            user=request.user
+        ).order_by('date', 'index')
+        
+        for t in ts:
+            t.closing_balance = closing_balance + t.size
+            closing_balance = t.closing_balance
+            t.save()
+
     
     return redirect('/home?start={start}&end={end}'.format(start=start, end=end))

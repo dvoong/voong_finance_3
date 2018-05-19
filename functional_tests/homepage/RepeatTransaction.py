@@ -37,11 +37,23 @@ class RepeatTransaction:
         value = float(value.replace('£', ''))
         return value
 
+    @size.setter
+    def size(self, size):
+        element = self.element.find_element_by_css_selector('input[name="size"]')
+        element.clear()
+        element.send_keys(size)
+
     @property
     def description(self):
         element = self.element.find_element_by_css_selector('input[name="description"]')
         value = element.get_attribute('value')
         return value
+
+    @description.setter
+    def description(self, description):
+        element = self.element.find_element_by_css_selector('input[name="description"]')
+        element.clear()
+        element.send_keys(description)
 
     @property
     def frequency(self):
