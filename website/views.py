@@ -454,7 +454,6 @@ def get_repeat_transaction_update_prompt(request):
     return render(request, 'website/html_snippets/repeat_transaction_update_prompt.html')
 
 def update_repeat_transaction(request):
-    print(request.POST)
     start = strptime(request.POST['start'], '%Y-%m-%d').date()
     end = strptime(request.POST['end'], '%Y-%m-%d').date()
     rt = RepeatTransaction.objects.get(user=request.user, id=request.POST['id'])
@@ -462,7 +461,28 @@ def update_repeat_transaction(request):
     rt.start_date = strptime(request.POST['start_date'], '%Y-%m-%d').date()
     rt.save()
 
-    # create transactions from new start_date up to the old one
-    rt.generate_transactions(rt.start_date, old_start_date - dt.timedelta(days=1))
+    if old_start_date > rt.start_date:
+        # create transactions from new start_date up to the old one
+        rt.generate_transactions(rt.start_date, old_start_date - dt.timedelta(days=1))
+    elif old_start_date < rt.start_date:
+        # repeat transaction moved forward, delete those earlier
+        ts = Transaction.objects.filter(
+            date__gte=old_start_date,
+            date__lt=rt.start_date,
+            repeat_transaction=rt,
+            user=request.user).order_by('date', 'index')
+
+        earliest_transaction = ts[0]
+        previous_transaction = ts[0].get_previous_transaction()
+        closing_balance = previous_transaction.closing_balance if previous_transaction else 0
+        ts.delete()
+
+        later_transactions = earliest_transaction.get_later_transactions().order_by('date', 'index')
+        for t in later_transactions:
+            if t.date == earliest_transaction.date and t.index > earliest_transaction.index:
+                t.index -= 1
+            t.closing_balance = closing_balance + t.size
+            closing_balance = t.closing_balance
+            t.save()
     
     return redirect('/home?start={start}&end={end}'.format(start=start, end=end))

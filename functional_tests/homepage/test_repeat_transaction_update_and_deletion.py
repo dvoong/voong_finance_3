@@ -11,7 +11,7 @@ class TestCase(TestCase):
 
 class TestUpdateTransaction(TestCase):
 
-    def test(self):
+    def test_make_transaction_earlier(self):
 
         url = '{}/home?start=2018-01-01&end=2018-01-15'.format(self.live_server_url)
         self.driver.get(url)
@@ -51,6 +51,49 @@ class TestUpdateTransaction(TestCase):
         self.assertEqual(transactions[0].balance, '£1.00')
         self.assertEqual(transactions[1].date, dt.date(2018, 1, 1))
         self.assertEqual(transactions[1].balance, '£2.00')
+
+    def test_make_transaction_later(self):
+
+        url = '{}/home?start=2018-01-01&end=2018-01-22'.format(self.live_server_url)
+        self.driver.get(url)
+        
+        home_page = HomePage(self.driver)
+        home_page.create_transaction(
+            date=dt.date(2018, 1, 1),
+            size=1,
+            description='a',
+            repeats='weekly',
+            ends={'how': 'never'})
+                                     
+        home_page.show_repeat_transactions_view()
+
+        repeat_transactions = home_page.get_repeat_transactions()
+        self.assertEqual(len(repeat_transactions), 1)
+
+        rt = repeat_transactions[0]
+        self.assertEqual(rt.start_date, dt.date(2018, 1, 1))
+        self.assertEqual(rt.size, 1)
+        self.assertEqual(rt.description, 'a')
+        self.assertEqual(rt.frequency, 'weekly')
+        self.assertEqual(rt.ends, 'never')
+
+        # change start date to a week later
+        rt.start_date = dt.date(2018, 1, 8)
+        rt.save()
+
+        # payments will start a week later
+        # balance will be modified to reflect this
+        url = '{}/home?start=2018-01-01&end=2018-01-22'.format(self.live_server_url)
+        self.driver.get(url)
+        home_page = HomePage(self.driver)
+        transactions = home_page.get_transactions()
+        self.assertEqual(len(transactions), 3)
+        self.assertEqual(transactions[0].date, dt.date(2018, 1, 8))
+        self.assertEqual(transactions[0].balance, '£1.00')
+        self.assertEqual(transactions[1].date, dt.date(2018, 1, 15))
+        self.assertEqual(transactions[1].balance, '£2.00')
+        self.assertEqual(transactions[2].date, dt.date(2018, 1, 22))
+        self.assertEqual(transactions[2].balance, '£3.00')
 
         # change start date to a week later
 

@@ -599,7 +599,7 @@ class TestUpdateRepeatTransaction(TestCase):
         resolver = resolve('/update-repeat-transaction')
         self.assertEqual(resolver.view_name, 'update_repeat_transaction')
 
-    def test(self):
+    def test_make_transaction_earlier(self):
         data = {
             'start': '2018-01-01',
             'end': '2018-01-08',
@@ -624,3 +624,28 @@ class TestUpdateRepeatTransaction(TestCase):
         self.assertEqual(ts[2].closing_balance, 3)
         self.assertEqual(ts[3].date, dt.date(2018, 1, 15))
         self.assertEqual(ts[3].closing_balance, 4)
+
+    def test_make_transaction_later(self):
+        data = {
+            'start': '2018-01-01',
+            'end': '2018-01-08',
+            'start_date': '2018-01-08',
+            'id': 0
+        }
+        response = self.client.post('/update-repeat-transaction', data)
+        self.assertRedirects(response, '/home?start=2018-01-01&end=2018-01-08')
+        rt = RepeatTransaction.objects.get(id=0)
+        self.assertEqual(rt.start_date, dt.date(2018, 1, 8))
+        self.assertEqual(rt.size, 1)
+        self.assertEqual(rt.description, 'a')
+
+        # deletes old transactions
+        ts = Transaction.objects.filter(repeat_transaction=rt).order_by('date')
+        self.assertEqual(len(ts), 3)
+        self.assertEqual(ts[0].date, dt.date(2018, 1, 8))
+        self.assertEqual(ts[0].closing_balance, 1)
+        self.assertEqual(ts[1].date, dt.date(2018, 1, 15))
+        self.assertEqual(ts[1].closing_balance, 2)
+        self.assertEqual(ts[2].date, dt.date(2018, 1, 22))
+        self.assertEqual(ts[2].closing_balance, 3)
+        

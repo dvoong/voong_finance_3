@@ -148,6 +148,24 @@ class Transaction(models.Model):
             t.closing_balance += self.size
             t.save()
 
+    def get_previous_transaction(self):
+
+        try:
+            last_transaction = Transaction.objects.filter(
+                Q(date__lt=self.date) | Q(date=self.date, index__lt=self.index),
+                user=self.user
+            ).latest('date', 'index')
+            return last_transaction
+        except Transaction.DoesNotExist:
+            return None
+
+    def get_later_transactions(self):
+
+        return Transaction.objects.filter(
+            Q(date__gt=self.date) | Q(date=self.date, index__gt=self.index),
+            user=self.user
+        )
+
 def get_transactions(user, start, end):
     return Transaction.objects.filter(user=user,
                                       date__gte=start,
