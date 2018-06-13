@@ -346,15 +346,20 @@ class RepeatTransactionsList:
 
     @property
     def items(self):
-        rows = self.table.find_elements_by_css_selector('.repeat-transaction-row')
+        rows = self.table.find_elements_by_css_selector('.repeat-transaction')
         items = []
         for row in rows:
             tds = row.find_elements_by_tag_name('td')
-            date = strptime(tds[0].get_attribute('innerHTML'), '%Y-%m-%d').date()
-            size = float(tds[1].get_attribute('innerHTML').replace('£', ''))
-            description = tds[2].get_attribute('innerHTML')
-            repeats = tds[3].get_attribute('innerHTML')
-            ends = tds[4].get_attribute('innerHTML')
+            date_input = tds[0].find_element_by_tag_name('input')
+            date = strptime(date_input.get_attribute('value'), '%Y-%m-%d').date()
+            size_input = tds[1].find_element_by_tag_name('input')
+            size = float(size_input.get_attribute('value').replace('£', ''))
+            description_input = tds[2].find_element_by_tag_name('input')
+            description = description_input.get_attribute('value')
+            repeats_input = tds[3].find_element_by_tag_name('input')
+            repeats = repeats_input.get_attribute('value')
+            ends_input = tds[4].find_element_by_tag_name('input')
+            ends = ends_input.get_attribute('value')
             items.append((date, size, description, repeats, ends))
         return items
     

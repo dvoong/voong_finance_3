@@ -33,7 +33,6 @@ class RepeatTransaction:
     def size(self):
         element = self.element.find_element_by_css_selector('input[name="size"]')
         value = element.get_attribute('value')
-        print(value)
         value = float(value.replace('£', ''))
         return value
 
