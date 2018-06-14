@@ -360,6 +360,14 @@ class RepeatTransactionsList:
             repeats = repeats_input.get_attribute('value')
             ends_input = tds[4].find_element_by_tag_name('input')
             ends = ends_input.get_attribute('value')
-            items.append((date, size, description, repeats, ends))
+            repeat_transaction = {
+                'date': date,
+                'size': size,
+                'description': description,
+                'repeats': repeats,
+                'ends': ends
+            }
+
+            items.append(repeat_transaction)
         return items
     

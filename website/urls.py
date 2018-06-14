@@ -36,4 +36,5 @@ urlpatterns = [
     path('update-repeat-transaction',
          views.update_repeat_transaction,
          name='update_repeat_transaction'),
+    path('verify-email', views.verify_email, name='verify_email'),
 ]

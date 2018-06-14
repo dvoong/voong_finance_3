@@ -5,11 +5,13 @@ from django.shortcuts import render, redirect
 from django.http import HttpResponse, JsonResponse
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login, logout
-from website.models import Transaction, RepeatTransaction
 from django.db.models import Q
 from django.contrib.auth.decorators import login_required
-
+from django.core.mail import send_mail
+from django.contrib.sites.shortcuts import get_current_site
+from website.models import Transaction, RepeatTransaction
 import datetime as dt
+
 strptime = datetime.datetime.strptime
 
 # Create your views here.
@@ -70,8 +72,21 @@ def register(request):
     email = request.POST['email']
     password = request.POST['password']
     user = User.objects.create_user(username=email, email=email, password=password)
-    login(request, user)
-    return redirect('home')
+    user.is_active = False
+    user.save()
+    # login(request, user)
+
+    subject = 'Verify your email'
+    current_site = get_current_site(request)
+    domain = current_site.domain
+    body = 'This is a test message sent to {}.\nhttp://{}/activate'.format(email, domain)
+    send_mail(subject, body, 'registration@voong-finance.co.uk', [email, ])
+
+    return redirect('verify_email')
+    # return redirect('home') # TODO
+
+def verify_email(request):
+    return render(request, 'website/verify-email.html')
 
 def login_view(request):
     email = request.POST['email']

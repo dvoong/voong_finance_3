@@ -1,8 +1,16 @@
-from functional_tests.WelcomePage import RegistrationForm, LoginForm
-from functional_tests.HomePage import HomePage
+from django.core import mail
+from functional_tests.welcome.WelcomePage import RegistrationForm, LoginForm
+from functional_tests.homepage.HomePage import HomePage
 from functional_tests.TestCase import TestCase
 
 class TestRegistration(TestCase):
+
+    def get_registration_link_from_email(self, email):
+        body = email.body
+        url = '{}/activate'.format(self.live_server_url)
+        filtered_rows = list(filter(lambda x: x.startswith(url), body.split('\n')))
+        assert len(filtered_rows) == 1, filtered_rows
+        return filtered_rows[0]
 
     def test(self):
         self.driver.get(self.live_server_url)
@@ -18,4 +26,20 @@ class TestRegistration(TestCase):
 
         registration_form.submit_button.click()
 
-        homepage = HomePage(self.driver)
+        self.assertEqual(self.driver.current_url, '{}/verify-email'.format(self.live_server_url))
+        self.assertEqual(len(mail.outbox), 1, mail.outbox)
+        email = mail.outbox[0]
+        print(dir(email))
+        print(email.body)
+        self.assertEqual(email.recipients(), ['voong.david@gmail.com'])
+        self.assertEqual(email.subject, 'Verify your email')
+        self.assertEqual(email.from_email, 'registration@voong-finance.co.uk')
+
+        # user clicks on registration link
+        registration_link = self.get_registration_link_from_email(email)
+        self.driver.get(registration_link)
+
+        self.assertEqual(self.driver.current_url, '{}/home'.format(self.live_server_url))
+        
+
+    

@@ -58,6 +58,40 @@ class TestRegistration(TestCase):
         self.client.post('/register', {'email': 'voong.david@gmail.com', 'password': 'password'})
         user = User.objects.get(username='voong.david@gmail.com')
 
+    def test_redirects_to_verify_email(self):
+        data = {'email': 'voong.david@gmail.com', 'password': 'password'}
+        response = self.client.post('/register', data)
+        self.assertRedirects(response, '/verify-email')
+
+    def test_account_is_inactive_if_email_not_verified(self):
+        data = {'email': 'voong.david@gmail.com', 'password': 'password'}
+        response = self.client.post('/register', data)
+        user = User.objects.get(username='voong.david@gmail.com')
+        self.assertFalse(user.is_active)
+
+class TestVerifyEmail(TestCase):
+
+    def test_url_resolution(self):
+        resolver = resolve('/verify-email')
+        self.assertEqual(resolver.view_name, 'verify_email')
+
+    def test_renders_template(self):
+        response = self.client.get('/verify-email')
+        self.assertTemplateUsed(response, 'website/verify-email.html')
+
+class TestActivate(TestCase):
+
+    def test_url_resolution(self):
+        resolver = resolve('/activate')
+        self.assertEqual(resolver.view_name, 'activate')
+
+    def test_valid_token_logs_user_in_and_redirects_to_home(self):
+        token = 'todo'
+        user_id = 'todo'
+        response = self.client.get('/activate/{}/{}'.format(user_id, token))
+        # self.assertTrue(response.user.logged_in)
+        self.assertRedirects('/home')
+        
 class TestLogin(TestCase):
 
     def setUp(self):
@@ -147,16 +181,6 @@ class TestHome(TestCase):
         actual = response.context['transactions']
         
         self.assertEqual(actual, expected)
-
-class TestRegistration(TestCase):
-
-    def test_url_resolution(self):
-        resolver = resolve('/register')
-        self.assertEqual(resolver.view_name, 'register')
-    
-    def test_register_new_user(self):
-        self.client.post('/register', {'email': 'voong.david@gmail.com', 'password': 'password'})
-        user = User.objects.get(username='voong.david@gmail.com')
 
 class TestCreateTransaction(TestCase):
 

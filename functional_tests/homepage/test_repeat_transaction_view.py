@@ -22,10 +22,13 @@ class TestRepeatTransactionTab(TestCase):
                                      ends={'how': 'never'})
 
         home_page.show_repeat_transactions_view()
-        home_page.repeat_transactions_list.assert_in(
-            date=dt.date(2018, 1, 1),
-            size=10,
-            description='a',
-            repeats='weekly',
-            ends='never')
+
+        repeat_transaction = {
+            'date': dt.date(2018, 1, 1),
+            'size': 10,
+            'description': 'a',
+            'repeats': 'weekly',
+            'ends': 'never'
+        }
         
+        self.assertIn(repeat_transaction, home_page.repeat_transactions_list.items)

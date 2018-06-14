@@ -1,6 +1,6 @@
 from functional_tests.TestCase import TestCase
-from functional_tests.HomePage import HomePage
-from functional_tests.WelcomePage import LoginForm, RegistrationForm
+from functional_tests.homepage.HomePage import HomePage
+from functional_tests.welcome.WelcomePage import LoginForm, RegistrationForm
 
 class TestLogin(TestCase):
 
