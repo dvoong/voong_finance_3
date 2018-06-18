@@ -82,15 +82,36 @@ class TestVerifyEmail(TestCase):
 class TestActivate(TestCase):
 
     def test_url_resolution(self):
-        resolver = resolve('/activate')
-        self.assertEqual(resolver.view_name, 'activate')
 
+        resolver = resolve('/activate/uid/token')
+        self.assertEqual(resolver.view_name, 'activate')
+        
     def test_valid_token_logs_user_in_and_redirects_to_home(self):
-        token = 'todo'
-        user_id = 'todo'
+        user = User.objects.create_user(
+            username='voong.david@gmail.com',
+            email='voong.david@gmail.com',
+            password='password')
+        user.is_active = False
+        user.save()
+
+        from django.contrib.auth.tokens import PasswordResetTokenGenerator
+        from django.utils import six
+        class TokenGenerator(PasswordResetTokenGenerator):
+            def _make_hash_value(self, user, timestamp):
+                return (
+                    six.text_type(user.pk) + six.text_type(timestamp) +
+                    six.text_type(user.is_active)
+                )
+        token = TokenGenerator().make_token(user)
+        from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+        from django.utils.encoding import force_bytes, force_text
+        user_id = force_text(urlsafe_base64_encode(force_bytes(user.pk)))
         response = self.client.get('/activate/{}/{}'.format(user_id, token))
         # self.assertTrue(response.user.logged_in)
-        self.assertRedirects('/home')
+        user = User.objects.get(username='voong.david@gmail.com')
+        self.assertEqual(int(self.client.session['_auth_user_id']), user.pk)
+        self.assertRedirects(response, '/home')
+        self.assertTrue(user.is_active)
         
 class TestLogin(TestCase):
 

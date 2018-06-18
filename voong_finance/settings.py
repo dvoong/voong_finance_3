@@ -144,3 +144,10 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATIC_ROOT = '{}/static'.format(BASE_DIR)
 LOGIN_URL = '/welcome'
+
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+EMAIL_USE_TLS = True
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_HOST_USER = os.environ.get('VOONG_FINANCE_EMAIL_HOST_USER', 'youremail@gmail.com')
+EMAIL_HOST_PASSWORD = os.environ.get('VOONG_FINANCE_EMAIL_HOST_PASSWORD', 'yourpassword')
+EMAIL_PORT = 587

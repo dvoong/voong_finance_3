@@ -73,17 +73,63 @@ def register(request):
     password = request.POST['password']
     user = User.objects.create_user(username=email, email=email, password=password)
     user.is_active = False
-    user.save()
     # login(request, user)
 
     subject = 'Verify your email'
     current_site = get_current_site(request)
     domain = current_site.domain
-    body = 'This is a test message sent to {}.\nhttp://{}/activate'.format(email, domain)
+
+    from django.contrib.auth.tokens import PasswordResetTokenGenerator
+    from django.utils import six
+    class TokenGenerator(PasswordResetTokenGenerator):
+        def _make_hash_value(self, user, timestamp):
+            return (
+                six.text_type(user.pk) + six.text_type(timestamp) +
+                six.text_type(user.is_active)
+            )
+
+    # TODO
+    from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+    from django.utils.encoding import force_bytes, force_text
+
+    # TODO
+    account_activation_token = TokenGenerator()
+    body = 'This is a test message sent to {}.\nhttp://{}/activate/{}/{}'.format(email, domain, force_text(urlsafe_base64_encode(force_bytes(user.pk))), account_activation_token.make_token(user))
     send_mail(subject, body, 'registration@voong-finance.co.uk', [email, ])
 
+    user.save()
+    
     return redirect('verify_email')
-    # return redirect('home') # TODO
+
+# TODO
+from django.utils.encoding import force_bytes, force_text
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+
+def activate(request, uidb64, token):
+
+    from django.contrib.auth.tokens import PasswordResetTokenGenerator
+    from django.utils import six
+    class TokenGenerator(PasswordResetTokenGenerator):
+        def _make_hash_value(self, user, timestamp):
+            return (
+                six.text_type(user.pk) + six.text_type(timestamp) +
+                six.text_type(user.is_active)
+            )
+    account_activation_token = TokenGenerator()
+
+    try:
+        uid = force_text(urlsafe_base64_decode(uidb64))
+        user = User.objects.get(pk=uid)
+    except(TypeError, ValueError, OverflowError, User.DoesNotExist) as e:
+        user = None
+    if user is not None and account_activation_token.check_token(user, token):
+        user.is_active = True
+        user.save()
+        login(request, user)
+        return redirect('home')
+        # return HttpResponse('Thank you for your email confirmation. Now you can login your account.')
+    else:
+        return HttpResponse('Activation link is invalid!')
 
 def verify_email(request):
     return render(request, 'website/verify-email.html')

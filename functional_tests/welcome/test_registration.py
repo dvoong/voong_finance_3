@@ -29,8 +29,6 @@ class TestRegistration(TestCase):
         self.assertEqual(self.driver.current_url, '{}/verify-email'.format(self.live_server_url))
         self.assertEqual(len(mail.outbox), 1, mail.outbox)
         email = mail.outbox[0]
-        print(dir(email))
-        print(email.body)
         self.assertEqual(email.recipients(), ['voong.david@gmail.com'])
         self.assertEqual(email.subject, 'Verify your email')
         self.assertEqual(email.from_email, 'registration@voong-finance.co.uk')

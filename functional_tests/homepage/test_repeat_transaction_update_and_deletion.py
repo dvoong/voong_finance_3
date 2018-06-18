@@ -1,3 +1,4 @@
+import unittest
 import datetime as dt
 from functional_tests.TestCase import TestCase
 from functional_tests.homepage.HomePage import HomePage
@@ -94,6 +95,7 @@ class TestUpdateTransaction(TestCase):
         self.assertEqual(transactions[2].date, dt.date(2018, 1, 22))
         self.assertEqual(transactions[2].balance, '£3.00')
 
+    @unittest.skip("demonstrating skipping")
     def test_change_size(self):
 
         # change size

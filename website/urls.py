@@ -37,4 +37,6 @@ urlpatterns = [
          views.update_repeat_transaction,
          name='update_repeat_transaction'),
     path('verify-email', views.verify_email, name='verify_email'),
+    path('activate/<uidb64>/<token>', views.activate, name='activate')
+         
 ]
