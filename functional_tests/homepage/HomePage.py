@@ -29,7 +29,7 @@ class HomePage:
         self.transaction_form.create_transaction(*args, **kwargs)
         if update == True:
             self.__init__(self.driver)
-
+            
     def move_date_range_forward(self, days=7):
         if days == 7:
             self.week_forward_button.click()
@@ -73,7 +73,9 @@ class HomePage:
 
     def get_transactions(self):
         return self.transaction_list.get_transactions()
-                    
+
+    def reload(self):
+        self.__init__(self.driver)
 
 class TransactionForm:
 
@@ -92,12 +94,14 @@ class TransactionForm:
         self.repeat_checkbox = driver.find_element_by_id('repeat-checkbox')
         self.repeat_options = RepeatOptions(self.driver)
 
-    def create_transaction(self,
-                           date,
-                           size,
-                           description="",
-                           repeats='does_not_repeat',
-                           ends=None):
+    def create_transaction(
+            self,
+            date,
+            size,
+            description="",
+            repeats='does_not_repeat',
+            ends=None):
+        
         self.date = date
         self.transaction_size_input.send_keys(size)
         self.description_input.send_keys(description)
@@ -370,4 +374,3 @@ class RepeatTransactionsList:
 
             items.append(repeat_transaction)
         return items
-    

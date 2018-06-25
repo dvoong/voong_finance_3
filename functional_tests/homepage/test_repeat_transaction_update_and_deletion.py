@@ -24,6 +24,12 @@ class TestUpdateTransaction(TestCase):
             description='a',
             repeats='weekly',
             ends={'how': 'never'})
+
+        home_page.create_transaction(
+            date=dt.date(2018, 1, 1),
+            size = 2,
+            description='b',
+        )
                                      
         home_page.show_repeat_transactions_view()
 
@@ -47,11 +53,21 @@ class TestUpdateTransaction(TestCase):
         self.driver.get(url)
         home_page = HomePage(self.driver)
         transactions = home_page.get_transactions()
-        self.assertEqual(len(transactions), 4)
-        self.assertEqual(transactions[0].date, dt.date(2017, 12, 25))
-        self.assertEqual(transactions[0].balance, '£1.00')
-        self.assertEqual(transactions[1].date, dt.date(2018, 1, 1))
-        self.assertEqual(transactions[1].balance, '£2.00')
+        self.assertEqual(len(transactions), 5)
+        
+        expected = [
+            (dt.date(2017, 12, 25), 1, 'a', '£1.00'),
+            (dt.date(2018, 1, 1), 1, 'a', '£2.00'),
+            (dt.date(2018, 1, 1), 2, 'b', '£4.00'),
+            (dt.date(2018, 1, 8), 1, 'a', '£5.00'),
+            (dt.date(2018, 1, 15), 1, 'a', '£6.00')
+        ]
+
+        for t, exp in zip(transactions, expected):
+            self.assertEqual(
+                (t.date, t.size, t.description, t.balance),
+                exp
+            )
 
     def test_make_transaction_later(self):
 
@@ -95,11 +111,7 @@ class TestUpdateTransaction(TestCase):
         self.assertEqual(transactions[2].date, dt.date(2018, 1, 22))
         self.assertEqual(transactions[2].balance, '£3.00')
 
-    @unittest.skip("demonstrating skipping")
     def test_change_size(self):
-
-        # change size
-        # change description
 
         url = '{}/home?start=2018-01-01&end=2018-01-22'.format(self.live_server_url)
         self.driver.get(url)
@@ -124,33 +136,31 @@ class TestUpdateTransaction(TestCase):
         self.assertEqual(rt.frequency, 'weekly')
         self.assertEqual(rt.ends, 'never')
 
-        # change start date to a week later
+        # change size
         rt.size = 2
-        rt.description = 'b'
         rt.save()
 
-        # change start date to a week later
-        url = '{}/home?start=2018-01-01&end=2018-01-22'.format(self.live_server_url)
-        self.driver.get(url)
-        home_page = HomePage(self.driver)
+        home_page.reload()
+
         transactions = home_page.get_transactions()
         self.assertEqual(len(transactions), 4)
-        self.assertEqual(transactions[0].date, dt.date(2018, 1, 1))
-        self.assertEqual(transactions[0].description, 'b')
-        self.assertEqual(transactions[0].balance, '£2.00')
-        self.assertEqual(transactions[1].date, dt.date(2018, 1, 8))
-        self.assertEqual(transactions[1].description, 'b')
-        self.assertEqual(transactions[1].balance, '£4.00')
-        self.assertEqual(transactions[2].date, dt.date(2018, 1, 15))
-        self.assertEqual(transactions[2].description, 'b')
-        self.assertEqual(transactions[2].balance, '£6.00')
-        self.assertEqual(transactions[3].date, dt.date(2018, 1, 22))
-        self.assertEqual(transactions[3].description, 'b')
-        self.assertEqual(transactions[3].balance, '£8.00')
+        expected = [
+            (dt.date(2018, 1, 1), 'a', 2, '£2.00'),
+            (dt.date(2018, 1, 8), 'a', 2, '£4.00'),
+            (dt.date(2018, 1, 15), 'a', 2, '£6.00'),
+            (dt.date(2018, 1, 22), 'a', 2, '£8.00')
+        ]
+        for t, exp in zip(transactions, expected):
+            self.assertEqual(
+                (t.date, t.description, t.size, t.balance),
+                exp
+            )
 
-        # set an end criteria
+    def test_change_description(self):
+        pass
+        # # set an end criteria
 
-        # test payments with a specified end point
+        # # test payments with a specified end point
         
-        self.assertTrue(False, 'TODO')
+        # self.assertTrue(False, 'TODO')
         

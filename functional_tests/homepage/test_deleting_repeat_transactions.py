@@ -183,7 +183,7 @@ class TestRepeatTransactionDeletion(TestCase):
         t = transactions[1]
         t.delete()
 
-        WebDriverWait(self.driver, 5).until(
+        WebDriverWait(self.driver, 10).until(
             EC.visibility_of_element_located((By.ID, 'repeat-transaction-deletion-prompt'))
         )
 
