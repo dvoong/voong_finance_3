@@ -62,13 +62,19 @@ class RepeatTransaction:
 
     @property
     def ends(self):
-        element = self.element.find_element_by_css_selector('input[name="ends"]')
+        element = self.element.find_element_by_css_selector('input[name="end_date"]')
         value = element.get_attribute('value')
         if value == 'never':
             return value
         else:
             date = strptime(value, '%Y-%m-%d').date()
             return date
+
+    @ends.setter
+    def ends(self, ends):
+        element = self.element.find_element_by_css_selector('input[name="end_date"]')
+        element.clear()
+        element.send_keys(ends.isoformat())
 
     def save(self):
         self.save_button.click()

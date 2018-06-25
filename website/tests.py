@@ -637,7 +637,10 @@ class TestUpdateRepeatTransaction(TestCase):
             id=0
         )
 
+        closing_balance = 0
         for t in rt.generate_next_transaction(end=dt.date(2018, 1, 22)):
+            closing_balance += t.size
+            t.closing_balance = closing_balance
             t.save()
 
     def test_url_resolution(self):
@@ -650,6 +653,7 @@ class TestUpdateRepeatTransaction(TestCase):
             'end': '2018-01-08',
             'size': 1,
             'description': 'a',
+            'end_date': 'never',
             'start_date': '2017-12-25',
             'id': 0
         }
@@ -679,6 +683,7 @@ class TestUpdateRepeatTransaction(TestCase):
             'start_date': '2018-01-08',
             'size': 1,
             'description': 'a',
+            'end_date': 'never',
             'id': 0
         }
         response = self.client.post('/update-repeat-transaction', data)
@@ -706,6 +711,7 @@ class TestUpdateRepeatTransaction(TestCase):
             'start_date': '2018-01-01',
             'size': 2,
             'description': 'b',
+            'end_date': 'never',
             'id': 0
         }
         
@@ -730,3 +736,33 @@ class TestUpdateRepeatTransaction(TestCase):
         self.assertEqual(ts[3].date, dt.date(2018, 1, 22))
         self.assertEqual(ts[3].description, 'b')
         self.assertEqual(ts[3].closing_balance, 8)
+
+    def test_change_ends(self):
+
+        data = {
+            'start': '2018-01-01',
+            'end': '2018-01-22',
+            'start_date': '2018-01-01',
+            'size': 1,
+            'description': 'a',
+            'end_date': '2018-01-15', # change end date
+            'id': 0
+        }
+
+        response = self.client.post('/update-repeat-transaction', data)
+
+        rt = RepeatTransaction.objects.get(id=0)
+        self.assertEqual(rt.end_date, dt.date(2018, 1, 15))
+
+        transactions = Transaction.objects.filter(user=self.user, repeat_transaction=0)
+        expected = [
+            (dt.date(2018, 1, 1), 1, 'a', 1),
+            (dt.date(2018, 1, 8), 1, 'a', 2),
+            (dt.date(2018, 1, 15), 1, 'a', 3),
+
+        ]
+
+        self.assertEqual(len(transactions), len(expected))
+        for t, exp in zip(transactions, expected):
+            self.assertEqual((t.date, t.size, t.description, t.closing_balance), exp)
+        
