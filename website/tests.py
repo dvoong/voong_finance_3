@@ -766,3 +766,58 @@ class TestUpdateRepeatTransaction(TestCase):
         for t, exp in zip(transactions, expected):
             self.assertEqual((t.date, t.size, t.description, t.closing_balance), exp)
         
+
+    def test_change_start_date_to_a_different_day(self):
+
+        data = {
+            'start': '2018-01-01',
+            'end': '2018-01-22',
+            'start_date': '2018-01-02',
+            'size': 1,
+            'description': 'a',
+            'id': 0
+        }
+
+        response = self.client.post('/update-repeat-transaction', data)
+
+        rt = RepeatTransaction.objects.get(id=0)
+
+        transactions = Transaction.objects.filter(user=self.user, repeat_transaction=0)
+        expected = [
+            (dt.date(2018, 1, 2), 1, 'a', 1),
+            (dt.date(2018, 1, 9), 1, 'a', 2),
+            (dt.date(2018, 1, 16), 1, 'a', 3),
+
+        ]
+
+        self.assertEqual(len(transactions), len(expected))
+        for t, exp in zip(transactions, expected):
+            self.assertEqual((t.date, t.size, t.description, t.closing_balance), exp)
+        
+    def test_modify_end_date(self):
+
+        data = {
+            'end_date': 'never',
+            'id': 0
+        }
+
+        response = self.client.post('/update-repeat-transaction', data)
+        rt = RepeatTransaction.objects.get(id=0)
+        self.assertEqual(rt.end_date, None)
+
+    def test_start_defaults(self):
+
+        data = {
+            'end_date': 'never',
+            'id': 0
+        }
+
+        response = self.client.post('/update-repeat-transaction', data)
+        rt = RepeatTransaction.objects.get(id=0)
+        self.assertEqual(rt.start_date, dt.date(2018, 1, 1))
+        self.assertEqual(rt.size, 1)
+        self.assertEqual(rt.description, 'a')
+        start = dt.date.today() - dt.timedelta(days=14)
+        end = dt.date.today() + dt.timedelta(days=14)
+        url = '/home?start={start}&end={end}'.format(start=start, end=end)
+        self.assertRedirects(response, url)

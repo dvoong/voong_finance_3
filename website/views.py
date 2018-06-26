@@ -11,6 +11,7 @@ from django.core.mail import send_mail
 from django.contrib.sites.shortcuts import get_current_site
 from website.models import Transaction, RepeatTransaction
 import datetime as dt
+from voong_finance.utils import iso_to_date
 
 strptime = datetime.datetime.strptime
 
@@ -514,20 +515,74 @@ def get_repeat_transaction_deletion_prompt(request):
 def get_repeat_transaction_update_prompt(request):
     return render(request, 'website/html_snippets/repeat_transaction_update_prompt.html')
 
+def get_date(request, name, fall_back):
+    if name in request.POST:
+        try:
+            return iso_to_date(request.POST[name])
+        except ValueError:
+            raise Exception('Invalid {} date: {}'.format(name, request.POST[name]))
+    else:
+        return fall_back
+
+class ArgParser:
+
+    def __init__(self):
+        self.arg_schema = {}
+
+    def add(self, name, conversion_function=str, default=None, required=False):
+        self.arg_schema[name] = {
+            'conversion_function': conversion_function,
+            'default': default,
+            'required': required
+        }
+    
+    def parse_args(self, request, method):
+        args = {}
+        request_args = getattr(request, method)
+        for arg, schema in self.arg_schema.items():
+            if arg not in request_args and schema['required'] == True:
+                raise Exception('Missing required argument, {}'.format(arg))
+            elif arg not in request_args:
+                args[arg] = schema['default']
+            else:
+                args[arg] = schema['conversion_function'](request_args[arg])
+        return args
+    
 def update_repeat_transaction(request):
-    start = strptime(request.POST['start'], '%Y-%m-%d').date()
-    end = strptime(request.POST['end'], '%Y-%m-%d').date()
-    rt = RepeatTransaction.objects.get(user=request.user, id=request.POST['id'])
+
+    repeat_transaction_id = int(request.POST['id'])
+    rt = RepeatTransaction.objects.get(user=request.user, id=repeat_transaction_id)
+    
+    def convert_end_date(end_date):
+        if end_date.lower() == 'never':
+            return None
+        else:
+            return iso_to_date(end_date)
+    
+    arg_parser = ArgParser()
+    arg_parser.add('start', iso_to_date, dt.date.today() - dt.timedelta(days=14))
+    arg_parser.add('end', iso_to_date, dt.date.today() + dt.timedelta(days=14))
+    arg_parser.add('start_date', iso_to_date, rt.start_date)
+    arg_parser.add('end_date', convert_end_date, rt.end_date)
+    arg_parser.add('size', float, rt.size)
+    arg_parser.add('description', str, rt.description)
+    args = arg_parser.parse_args(request, 'POST')
+    
+    start = args['start']
+    end = args['end']
+    start_date = args['start_date']
+    end_date = args['end_date']
+    size = args['size']
+    description = args['description']
+    
     old_start_date = rt.start_date
     old_size = rt.size
     old_end_date = rt.end_date
 
     # update repeat transaction
-    rt.start_date = strptime(request.POST['start_date'], '%Y-%m-%d').date()
-    rt.description = request.POST['description']
-    rt.size = float(request.POST['size'].replace('£', ''))
-    end_date = request.POST.get('end_date', rt.end_date)
-    end_date = end_date if end_date.lower() != 'never' else None
+    rt.start_date = start_date
+    rt.description = description 
+    rt.size = size
     rt.end_date = end_date
     rt.save()
 
