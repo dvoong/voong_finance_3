@@ -9,9 +9,14 @@ from django.db.models import Q
 from django.contrib.auth.decorators import login_required
 from django.core.mail import send_mail
 from django.contrib.sites.shortcuts import get_current_site
+from django.views import View
+from django.utils.encoding import force_bytes, force_text
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from website.models import Transaction, RepeatTransaction
 import datetime as dt
 from voong_finance.utils import iso_to_date
+from voong_finance.utils.argparse import ArgParser
+from voong_finance.utils import TokenGenerator
 
 strptime = datetime.datetime.strptime
 
@@ -27,17 +32,18 @@ def index(request):
 
 @login_required    
 def home(request):
+
     user = request.user
     today = datetime.date.today()
-    if 'start' in request.GET:
-        start = strptime(request.GET['start'], '%Y-%m-%d').date()
-    else:
-        start = today - datetime.timedelta(days=14)
-    if  'end' in request.GET:
-        end = strptime(request.GET['end'], '%Y-%m-%d').date()
-    else:
-        end = today + datetime.timedelta(days=14)
 
+    argparser = ArgParser()
+    argparser.add('start', iso_to_date, today - datetime.timedelta(days=14))
+    argparser.add('end', iso_to_date, today + datetime.timedelta(days=14))
+    args = argparser.parse_args(request, 'GET')
+
+    start = args['start']
+    end = args['end']
+    
     days = (end - start).days
     center_on_today_start = today - datetime.timedelta(days=days//2)
     center_on_today_end = today + datetime.timedelta(days=days - days//2)
@@ -69,53 +75,43 @@ def home(request):
 def welcome(request):
     return render(request, 'website/welcome.html')
 
-def register(request):
-    email = request.POST['email']
-    password = request.POST['password']
-    user = User.objects.create_user(username=email, email=email, password=password)
-    user.is_active = False
-    # login(request, user)
+class RegisterView(View):
 
-    subject = 'Verify your email'
-    current_site = get_current_site(request)
-    domain = current_site.domain
+    @staticmethod
+    def send_email_verification_email(request, email, user):
+        subject = 'Verify your email'
+        current_site = get_current_site(request)
+        domain = current_site.domain
+        
+        account_activation_token = TokenGenerator()
+        body = 'This is a test message sent to {}.\nhttp://{}/activate/{}/{}'.format(
+            email,
+            domain,
+            force_text(urlsafe_base64_encode(force_bytes(user.pk))),
+            account_activation_token.make_token(user)
+        )
+        send_mail(subject, body, 'registration@voong-finance.co.uk', [email, ])
 
-    from django.contrib.auth.tokens import PasswordResetTokenGenerator
-    from django.utils import six
-    class TokenGenerator(PasswordResetTokenGenerator):
-        def _make_hash_value(self, user, timestamp):
-            return (
-                six.text_type(user.pk) + six.text_type(timestamp) +
-                six.text_type(user.is_active)
-            )
+    def post(self, request):
 
-    # TODO
-    from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
-    from django.utils.encoding import force_bytes, force_text
-
-    # TODO
-    account_activation_token = TokenGenerator()
-    body = 'This is a test message sent to {}.\nhttp://{}/activate/{}/{}'.format(email, domain, force_text(urlsafe_base64_encode(force_bytes(user.pk))), account_activation_token.make_token(user))
-    send_mail(subject, body, 'registration@voong-finance.co.uk', [email, ])
-
-    user.save()
+        argparser = ArgParser()
+        argparser.add('email', required=True)
+        argparser.add('password', required=True)
+        args = argparser.parse_args(request, 'POST')
     
-    return redirect('verify_email')
+        email = args['email']
+        password = args['password']
+    
+        user = User.objects.create_user(username=email, email=email, password=password)
+        user.is_active = False
 
-# TODO
-from django.utils.encoding import force_bytes, force_text
-from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+        self.send_email_verification_email(request, email, user)
+
+        user.save()
+        return redirect('verify_email')
 
 def activate(request, uidb64, token):
 
-    from django.contrib.auth.tokens import PasswordResetTokenGenerator
-    from django.utils import six
-    class TokenGenerator(PasswordResetTokenGenerator):
-        def _make_hash_value(self, user, timestamp):
-            return (
-                six.text_type(user.pk) + six.text_type(timestamp) +
-                six.text_type(user.is_active)
-            )
     account_activation_token = TokenGenerator()
 
     try:
@@ -128,7 +124,6 @@ def activate(request, uidb64, token):
         user.save()
         login(request, user)
         return redirect('home')
-        # return HttpResponse('Thank you for your email confirmation. Now you can login your account.')
     else:
         return HttpResponse('Activation link is invalid!')
 
@@ -515,39 +510,6 @@ def get_repeat_transaction_deletion_prompt(request):
 def get_repeat_transaction_update_prompt(request):
     return render(request, 'website/html_snippets/repeat_transaction_update_prompt.html')
 
-def get_date(request, name, fall_back):
-    if name in request.POST:
-        try:
-            return iso_to_date(request.POST[name])
-        except ValueError:
-            raise Exception('Invalid {} date: {}'.format(name, request.POST[name]))
-    else:
-        return fall_back
-
-class ArgParser:
-
-    def __init__(self):
-        self.arg_schema = {}
-
-    def add(self, name, conversion_function=str, default=None, required=False):
-        self.arg_schema[name] = {
-            'conversion_function': conversion_function,
-            'default': default,
-            'required': required
-        }
-    
-    def parse_args(self, request, method):
-        args = {}
-        request_args = getattr(request, method)
-        for arg, schema in self.arg_schema.items():
-            if arg not in request_args and schema['required'] == True:
-                raise Exception('Missing required argument, {}'.format(arg))
-            elif arg not in request_args:
-                args[arg] = schema['default']
-            else:
-                args[arg] = schema['conversion_function'](request_args[arg])
-        return args
-    
 def update_repeat_transaction(request):
 
     repeat_transaction_id = int(request.POST['id'])
@@ -564,7 +526,7 @@ def update_repeat_transaction(request):
     arg_parser.add('end', iso_to_date, dt.date.today() + dt.timedelta(days=14))
     arg_parser.add('start_date', iso_to_date, rt.start_date)
     arg_parser.add('end_date', convert_end_date, rt.end_date)
-    arg_parser.add('size', float, rt.size)
+    arg_parser.add('size', lambda x: float(x.replace('£', '')), rt.size)
     arg_parser.add('description', str, rt.description)
     args = arg_parser.parse_args(request, 'POST')
     
@@ -584,69 +546,11 @@ def update_repeat_transaction(request):
     rt.description = description 
     rt.size = size
     rt.end_date = end_date
+    rt.previous_transaction_date = None
     rt.save()
 
-    # update transactions generated by repeat transaction
+    # delete previous transactions
     ts = Transaction.objects.filter(user=request.user, repeat_transaction=rt)
-    for t in ts:
-        t.description = rt.description
-        t.size = rt.size
-        t.save()
+    ts.delete()
 
-    if old_start_date > rt.start_date:
-        # create transactions from new start_date up to the old one
-        rt.generate_transactions(rt.start_date, old_start_date - dt.timedelta(days=1))
-    elif old_start_date < rt.start_date:
-        # repeat transaction moved forward, delete those earlier
-        ts = Transaction.objects.filter(
-            date__gte=old_start_date,
-            date__lt=rt.start_date,
-            repeat_transaction=rt,
-            user=request.user).order_by('date', 'index')
-
-        earliest_transaction = ts[0]
-        previous_transaction = ts[0].get_previous_transaction()
-        closing_balance = previous_transaction.closing_balance if previous_transaction else 0
-        ts.delete()
-
-        later_transactions = Transaction.objects.filter(
-            Q(date__gt=earliest_transaction.date) | Q(date=earliest_transaction.date,
-                                                      index__gte=earliest_transaction.index),
-            user=request.user
-        ).order_by('date', 'index')
-        
-        for t in later_transactions:
-            if t.date == earliest_transaction.date and t.index > earliest_transaction.index:
-                t.index -= 1
-            t.closing_balance = closing_balance + t.size
-            closing_balance = t.closing_balance
-            t.save()
-
-    if old_size != rt.size:
-        
-        t = Transaction.objects.filter(
-            repeat_transaction=rt,
-            user=request.user
-        ).order_by('date', 'index').first()
-
-        previous_transaction = t.get_previous_transaction()
-        closing_balance = previous_transaction.closing_balance if previous_transaction else 0
-
-        ts = Transaction.objects.filter(
-            Q(date__gt=t.date) | Q(date=t.date, index__gte=t.index),
-            user=request.user
-        ).order_by('date', 'index')
-        
-        for t in ts:
-            t.closing_balance = closing_balance + t.size
-            closing_balance = t.closing_balance
-            t.save()
-
-    if rt.end_date != None and (old_end_date is None or rt.end_date < old_end_date):
-        Transaction.objects.filter(
-            user=request.user,
-            repeat_transaction=rt,
-            date__gt=rt.end_date
-        ).delete()
-    
     return redirect('/home?start={start}&end={end}'.format(start=start, end=end))

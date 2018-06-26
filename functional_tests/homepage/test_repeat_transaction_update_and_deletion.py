@@ -118,10 +118,10 @@ class TestUpdateTransaction(TestCase):
         self.home_page.reload()
 
         expected = [
-            (dt.date(2018, 1, 1), 'b', 1, '£1.00'),
-            (dt.date(2018, 1, 8), 'b', 1, '£2.00'),
-            (dt.date(2018, 1, 15), 'b', 1, '£3.00'),
-            (dt.date(2018, 1, 22), 'b', 1, '£4.00')
+            (dt.date(2018, 1, 1), 1, 'b', '£1.00'),
+            (dt.date(2018, 1, 8), 1, 'b', '£2.00'),
+            (dt.date(2018, 1, 15), 1, 'b', '£3.00'),
+            (dt.date(2018, 1, 22), 1, 'b', '£4.00')
         ]
 
         self.check_transactions(expected)
@@ -131,20 +131,15 @@ class TestUpdateTransaction(TestCase):
         # change size
         rt = self.repeat_transaction
         rt.ends = dt.date(2018, 1, 15)
-        import time
-        time.sleep(10)
         rt.save()
 
         self.home_page.reload()
 
         expected = [
-            (dt.date(2018, 1, 1), 'b', 1, '£1.00'),
-            (dt.date(2018, 1, 8), 'b', 1, '£2.00'),
-            (dt.date(2018, 1, 15), 'b', 1, '£3.00'),
+            (dt.date(2018, 1, 1), 1, 'a', '£1.00'),
+            (dt.date(2018, 1, 8), 1, 'a', '£2.00'),
+            (dt.date(2018, 1, 15), 1, 'a', '£3.00'),
         ]
-
-        import time
-        time.sleep(10)
 
         self.check_transactions(expected)
 

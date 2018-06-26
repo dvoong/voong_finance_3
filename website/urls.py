@@ -20,7 +20,7 @@ from . import views
 urlpatterns = [
     path('home', views.home, name='home'),
     path('welcome', views.welcome, name='welcome'),
-    path('register', views.register, name='register'),
+    path('register', views.RegisterView.as_view(), name='register'),
     path('login', views.login_view, name='login'),
     path('create-transaction', views.create_transaction, name='create_transaction'),
     path('modify-transaction', views.modify_transaction, name='modify_transaction'),
