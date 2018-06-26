@@ -142,10 +142,4 @@ class TestUpdateTransaction(TestCase):
         ]
 
         self.check_transactions(expected)
-
-        # # set an end criteria
-
-        # # test payments with a specified end point
-        
-        # self.assertTrue(False, 'TODO')
         
