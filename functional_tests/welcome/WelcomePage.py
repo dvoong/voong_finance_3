@@ -15,6 +15,7 @@ class LoginForm:
         self.element = driver.find_element_by_id('login-form')
         self.email_input = self.element.find_element_by_id('email-input')
         self.password_input = self.element.find_element_by_id('password-input')
+        self.forgot_password_link = self.element.find_element_by_id('forgot-password-link')
         self.submit_button = self.element.find_element_by_id('submit-button')
 
     def login_user(self, email, password):
@@ -23,6 +24,9 @@ class LoginForm:
         self.password_input.send_keys(password)
         self.submit_button.click()
 
+    def click_forgot_password(self):
+        self.forgot_password_link.click()
+        
 class WelcomePage:
 
     url = '/welcome'

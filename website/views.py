@@ -420,6 +420,10 @@ def delete_transaction(request):
                                         date__gte=date)
         ts.delete()
 
+        ts = Transaction.objects.filter(user=user,
+                                        repeat_transaction_id=int(repeat_transaction_id)
+        )
+        
         transactions_to_update = Transaction.objects.filter(Q(date__gt=t.date) |
                                                             Q(date=t.date, index__gt=t.index),
                                                             user=user)
@@ -439,6 +443,9 @@ def delete_transaction(request):
         rt = t.repeat_transaction
         rt.end_date = t.date
         rt.save()
+
+        if(len(ts) == 0):
+            RepeatTransaction.objects.get(id=int(repeat_transaction_id)).delete()
 
     elif delete_how == 'all_transactions_of_this_type':
         t = Transaction.objects.get(user=user, id=transaction_id)

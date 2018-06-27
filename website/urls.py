@@ -15,6 +15,7 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from django.contrib.auth import views as auth_views
 from . import views
 
 urlpatterns = [
@@ -37,6 +38,12 @@ urlpatterns = [
          views.update_repeat_transaction,
          name='update_repeat_transaction'),
     path('verify-email', views.verify_email, name='verify_email'),
-    path('activate/<uidb64>/<token>', views.activate, name='activate')
-         
+    path('activate/<uidb64>/<token>', views.activate, name='activate'),
+    path(
+        'reset-password',
+        auth_views.PasswordResetView.as_view(
+            template_name='website/password_reset.html'
+        )
+    ),
+
 ]
