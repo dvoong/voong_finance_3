@@ -215,6 +215,9 @@ class TestRepeatTransactionDeletion(TestCase):
         t = transactions[0]
         self.assertEqual(t.date, dt.date(2018, 1, 9))
         self.assertEqual('£5.00', t.balance)
+
+        rts = home_page.get_repeat_transactions()
+        self.assertEqual(len(rts), 0)
         
 
 class RepeatTransactionUpdatePrompt:

@@ -442,16 +442,8 @@ def delete_transaction(request):
 
     elif delete_how == 'all_transactions_of_this_type':
         t = Transaction.objects.get(user=user, id=transaction_id)
-
         rt = t.repeat_transaction
-        rt.end_date = t.date
-        rt.save()
-
-        ts = Transaction.objects.filter(
-            user=user,
-            repeat_transaction_id=int(repeat_transaction_id))
-
-        ts.delete()
+        rt.delete()
 
         transactions_to_update = Transaction.objects.filter(
             date__gte=rt.start_date,

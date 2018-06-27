@@ -814,3 +814,43 @@ class TestUpdateRepeatTransaction(TestCase):
         end = dt.date.today() + dt.timedelta(days=14)
         url = '/home?start={start}&end={end}'.format(start=start, end=end)
         self.assertRedirects(response, url)
+
+class TestDeleteTransaction(TestCase):
+
+    def setUp(self):
+        super().setUp()
+        self.user = User.objects.create_user(username='voong.david@gmail.com',
+                                             email='voong.david@gmail.com',
+                                             password='password')
+        self.client.login(username='voong.david@gmail.com', password='password')
+        rt = RepeatTransaction.objects.create(
+            start_date=dt.date(2018, 1, 1),
+            size=1,
+            description='a',
+            user=self.user,
+            index=0,
+            frequency='weekly',
+            id=0
+        )
+
+        closing_balance = 0
+        for t in rt.generate_next_transaction(end=dt.date(2018, 1, 22)):
+            closing_balance += t.size
+            t.closing_balance = closing_balance
+            t.save()
+
+    def test_delete_all_transactions_of_this_type(self):
+
+        data = {
+            'id': '1',
+            'date': '2018-01-08', #only need this for deleting future transactions,
+            'delete_how': 'all_transactions_of_this_type',
+            'repeat_transaction_id': '0',
+            'action': 'delete'
+        }
+        
+        response = self.client.post('/modify-transaction', data)
+
+        self.assertEqual(len(RepeatTransaction.objects.filter(user=self.user)), 0)
+        self.assertEqual(len(Transaction.objects.filter(user=self.user)), 0)
+        
