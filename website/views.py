@@ -17,6 +17,7 @@ import datetime as dt
 from voong_finance.utils import iso_to_date
 from voong_finance.utils.argparse import ArgParser
 from voong_finance.utils import TokenGenerator
+from django.contrib.auth import views as auth_views
 
 strptime = datetime.datetime.strptime
 
@@ -553,3 +554,9 @@ def update_repeat_transaction(request):
     ts.delete()
 
     return redirect('/home?start={start}&end={end}'.format(start=start, end=end))
+
+class PasswordResetConfirmView(auth_views.PasswordResetConfirmView):
+
+    def post(self, request):
+
+        return HttpResponse('hi')

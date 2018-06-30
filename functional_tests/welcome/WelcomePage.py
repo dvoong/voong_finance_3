@@ -26,6 +26,17 @@ class LoginForm:
 
     def click_forgot_password(self):
         self.forgot_password_link.click()
+
+    def input_email(self, email):
+        self.email_input.clear()
+        self.email_input.send_keys(email)
+
+    def input_password(self, password):
+        self.password_input.clear()
+        self.password_input.send_keys(password)
+
+    def submit(self):
+        self.submit_button.click()
         
 class WelcomePage:
 

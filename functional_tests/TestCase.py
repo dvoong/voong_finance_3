@@ -1,5 +1,6 @@
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 from django.contrib.auth.models import User
+from django.test.utils import override_settings
 from selenium.webdriver import Chrome
 from functional_tests.welcome.WelcomePage import WelcomePage
 from selenium.webdriver.support.ui import WebDriverWait
@@ -8,6 +9,7 @@ from selenium.webdriver.common.by import By
 
 DEFAULT_TIMEOUT = 5
 
+@override_settings(DEBUG=True)
 class TestCase(StaticLiveServerTestCase):
 
     def setUp(self):
