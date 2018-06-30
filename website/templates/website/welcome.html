@@ -1,124 +1,92 @@
-<html>
+{% extends "website/base.html" %}
 
-  <head>
-    <title>Welcome</title>
-    {% load custom_template_tags %}
-    {% load static %}
-    <link rel="stylesheet" href="{% static 'website/bootstrap.min.css' %}">
-    <link rel="stylesheet" href="{% static 'website/styles.css' %}">
-    <link rel="icon" 
-	  type="image/x-icon"
-	  href="{% static 'website/favicon.ico' %}" />
-  </head>
-  
-  <body>
+{% load custom_template_tags %}
 
-    <div class="container">
-      <nav id="menu"
-	   class="navbar navbar-dark navbar-expand-lg"
-	   style="background-color: indianred;">
-	<a class="navbar-brand" href="/">Voong Finance</a>
-	<button class="navbar-toggler"
-		type="button"
-		data-toggle="collapse"
-		data-target="#navbarSupportedContent"
-		aria-controls="navbarSupportedContent"
-		aria-expanded="false"
-		aria-label="Toggle navigation">
-	  <span class="navbar-toggler-icon"></span>
-	</button>
+{% block title %}Welcome{% endblock %}
 
-	<div class="collapse navbar-collapse" id="navbarSupportedContent">
-	  <ul class="navbar-nav mr-auto">
-	  </ul>
+{% block body %}
+{{ block.super }}
+<div class="container">
+
+  <div class="row">
+
+    <!-- Registration Section -->
+    <div class="col-sm">
+      <h2 class="text-align-center">Register</h2>
+      <form id="registration-form"
+	    class="form"
+	    action="/register"
+	    method="post">{% csrf_token %}
+	<div class="form-group">
+	  <label for="email-input">Email address</label>
+	  <input type="email"
+		 name="email"
+		 class="form-control"
+		 id="email-input"
+		 aria-describedby="emailHelp"
+		 placeholder="Enter email"
+		 required >
 	</div>
-      </nav>
+	<div class="form-group">
+	  <label for="password-input">Password</label>
+	  <input id="password-input"
+		 name="password"
+		 type="password"
+		 class="form-control"
+		 placeholder="Password"
+		 required >
+	</div>	    
+	<div class="form-group">
+	  <label for="password-input">Re-enter password</label>
+	  <input id="password-check-input"
+		 name="password-check"
+		 type="password"
+		 class="form-control"
+		 placeholder="Re-enter password"
+		 required >
+	</div>	    
+	<input id="submit-button" class="btn btn-primary btn--width-100" type="submit">
+      </form>
+    </div>
 
-      <div class="row">
-
-	<div class="col-sm">
-	  <h2 class="text-align-center">Register</h2>
-	  <form id="registration-form"
-		class="form"
-		action="/register"
-		method="post">{% csrf_token %}
-	    <div class="form-group">
-	      <label for="email-input">Email address</label>
-	      <input type="email"
-		     name="email"
-		     class="form-control"
-		     id="email-input"
-		     aria-describedby="emailHelp"
-		     placeholder="Enter email"
-		     required >
-	      <!-- <small id="emailHelp" -->
-	      <!-- 	     class="form-text text-muted"> -->
-	      <!-- 	We'll never share your email with anyone else. -->
-	      <!-- </small> -->
-	    </div>
-	    <div class="form-group">
-	      <label for="password-input">Password</label>
-	      <input id="password-input"
-		     name="password"
-		     type="password"
-		     class="form-control"
-		     placeholder="Password"
-		     required >
-	    </div>	    
-	    <div class="form-group">
-	      <label for="password-input">Re-enter password</label>
-	      <input id="password-check-input"
-		     name="password-check"
-		     type="password"
-		     class="form-control"
-		     placeholder="Re-enter password"
-		     required >
-	    </div>	    
-	    <!-- <input id="email-input" name="email"> -->
-	    <!-- <input id="password-input" name="password"> -->
-	    <!-- <input id="password-check-input" name="password_check"> -->
-	    <input id="submit-button" class="btn btn-primary btn--width-100" type="submit">
-	  </form>
+    <!-- Login Section -->
+    <div class="col-sm">
+      <h2 class="text-align-center">Log in</h2>
+      <form id="login-form"
+	    class="form"
+	    action="/login"
+	    method="post">{% csrf_token %}
+	<div class="form-group">
+	  <label for="email-input">Email address</label>	      
+	  <input id="email-input"
+		 name="email"
+		 type="email"
+		 class="form-control"
+		 placeholder="Enter email"
+		 required >
+	</div>
+	<div class="form-group">
+	  <label for="password-input">Password</label>
+	  <input id="password-input"
+		 name="password"
+		 type="password"
+		 class="form-control"
+		 placeholder="Enter password"
+		 required >
 	</div>
 
-	<div class="col-sm">
-	  <h2 class="text-align-center">Log in</h2>
-	  <form id="login-form"
-		class="form"
-		action="/login"
-		method="post">{% csrf_token %}
-	    <div class="form-group">
-	      <label for="email-input">Email address</label>	      
-	      <input id="email-input"
-		     name="email"
-		     type="email"
-		     class="form-control"
-		     placeholder="Enter email"
-		     required >
-	    </div>
-	    <div class="form-group">
-	      <label for="password-input">Password</label>
-	      <input id="password-input"
-		     name="password"
-		     type="password"
-		     class="form-control"
-		     placeholder="Enter password"
-		     required >
-	    </div>
-
-	    <div class="form-group">
-	      <a id="forgot-password-link" href="/request-password-reset">
-		Forgot password
-	      </a>
-	    </div>
-	    
-	    <input id="submit-button" class="btn btn-primary" type="submit">
-	  </form>
+	<div class="form-group">
+	  <a id="forgot-password-link" href="/request-password-reset">
+	    Forgot password
+	  </a>
 	</div>
 	
-      </div>
-      
+	<input id="submit-button" class="btn btn-primary" type="submit">
+      </form>
     </div>
     
-  </body>
-</html>
+  </div>
+  
+</div>
+
+{% endblock %}

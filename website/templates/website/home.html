@@ -1,428 +1,399 @@
-<html>
-  <head>
-    <title></title>
-    {% load custom_template_tags %}
-    {% load static %}
-    <link rel="stylesheet" href="{% static 'website/bootstrap.min.css' %}">
-    <link rel="stylesheet" href="{% static 'website/styles.css' %}">
-    <link rel="icon" 
-	  type="image/x-icon"
-	  href="{% static 'website/favicon.ico' %}" />
-    <link rel="stylesheet"
-	  href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
-  </head>
-  
-  <body>
+{% extends "website/base.html" %}
 
-    <nav id="menu"
-	 class="navbar navbar-dark navbar-expand-lg"
-	 style="background-color: indianred;">
-      <a class="navbar-brand" href="#">Voong Finance</a>
-      <button class="navbar-toggler"
-	      type="button"
-	      data-toggle="collapse"
-	      data-target="#navbarSupportedContent"
-	      aria-controls="navbarSupportedContent"
-	      aria-expanded="false"
-	      aria-label="Toggle navigation">
-	<span class="navbar-toggler-icon"></span>
-      </button>
+{% block title %}Home{% endblock %}
 
-      <div class="collapse navbar-collapse" id="navbarSupportedContent">
-	<ul class="navbar-nav mr-auto">
-	  <li class="nav-item active">
-            <a class="nav-link" href="/">Home <span class="sr-only">(current)</span></a>
-	  </li>
-	  <li class="nav-item">
-            <a id="sign-out" class="nav-link" href="sign-out">Sign Out</a>
-	  </li>
-	</ul>
-      </div>
-    </nav>
+{% block head %}
+{{ block.super }}
+{% load custom_template_tags %}
+{% load static %}
+<link rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+{% endblock %} <!-- head -->
 
-    <div id="balance-chart">
-      <svg id="canvas">
-	<g id="x-axis"></g>
-	<g id="y-axis"></g>
-	<g id="plot-area"></g>
-      </svg>
-    </div>
+{% block body %}
+{{ block.super }}
+<div id="balance-chart">
+  <svg id="canvas">
+    <g id="x-axis"></g>
+    <g id="y-axis"></g>
+    <g id="plot-area"></g>
+  </svg>
+</div>
 
-    <div id="tooltip" class="chart-tooltip" style="opacity: 0;"></div>
-    
-    <div class="container">
+<div id="tooltip" class="chart-tooltip" style="opacity: 0;"></div>
 
-      <div class="row date-navigator-button-container" style="padding-bottom: 5">
+<div class="container">
 
-	<div class="col-sm">
-	  <form id="week-backward-form" action="/home" method="get" style="margin: 0">
-	    <input name="start" value="{{ start_minus_7|date:'Y-m-d' }}" hidden>
-	    <input name="end" value="{{ end_minus_7|date:'Y-m-d' }}" hidden>
-	    <button id="week-backward-button"
-		    type="submit"
-		    class="btn btn-primary date-navigator">
-	      <i class="fa fa-angle-left" style="padding-right: 5px"></i> Back 7 Days
-	    </button>
-	  </form>
-	</div>
-	
-	<div class="col-sm">
-	  <form id="center-on-today-form" style="margin: 0">
-	    <input name="start" value="{{ center_on_today_start|date:'Y-m-d' }}" hidden>
-	    <input name="end" value="{{ center_on_today_end|date:'Y-m-d' }}" hidden>
-	    <button id="center-on-today-button"
-		    type="submit"
-		    class="btn btn-primary date-navigator">
-	      Today
-	    </button>
-	    
-	  </form>
-	</div>
-	
-	<div class="col-sm">
-	  <form id="week-forward-form" action="/home" method="get" style="margin: 0">
-	    <button id="week-forward-button"
-		    type="submit"
-		    class="btn btn-primary date-navigator">
-	      Forward 7 Days <i class="fa fa-angle-right" style="padding-left: 5px"></i>
-	    </button>
+  <div class="row date-navigator-button-container" style="padding-bottom: 5">
 
-	    
-	    
-	    <input name="start" value="{{ start_plus_7|date:'Y-m-d' }}" hidden>
-	    <input name="end" value="{{ end_plus_7|date:'Y-m-d' }}" hidden>
-	  </form>
-	</div>
-	
-      </div>
-      
-      <form id="date-selector"
-	    class="form-inline justify-content-center"
-	    action="/home"
-	    method="get"
-	    style="margin-bottom: 0">
-	<div class="form-group row">
-	  <label for="start-input" class="col-sm-2 col-form-label">Start</label>
-	  <div class="col-sm-10">
-	    <input id="start-input"
-		   type="date"
-		   name="start"
-		   class="form-control"
-		   value="{{start|date:'Y-m-d'}}">
-	  </div>
-	</div>
-	<div class="form-group row">
-	  <label for="end-input" class="col-sm-2 col-form-label">End</label>
-	  <div class="col-sm-10">
-	    <input id="end-input"
-		   type="date"
-		   name="end"
-		   class="form-control"
-		   value="{{end|date:'Y-m-d'}}">
-	  </div>
-	</div>
-	<input type="submit" class="btn btn-primary" value="Submit">
+    <div class="col-sm">
+      <form id="week-backward-form" action="/home" method="get" style="margin: 0">
+	<input name="start" value="{{ start_minus_7|date:'Y-m-d' }}" hidden>
+	<input name="end" value="{{ end_minus_7|date:'Y-m-d' }}" hidden>
+	<button id="week-backward-button"
+		type="submit"
+		class="btn btn-primary date-navigator">
+	  <i class="fa fa-angle-left" style="padding-right: 5px"></i> Back 7 Days
+	</button>
       </form>
-      <center style="margin-bottom: 5">
-	<font size="2" style="opacity: 0.8">Select date range</font>
-      </center>
+    </div>
+    
+    <div class="col-sm">
+      <form id="center-on-today-form" style="margin: 0">
+	<input name="start" value="{{ center_on_today_start|date:'Y-m-d' }}" hidden>
+	<input name="end" value="{{ center_on_today_end|date:'Y-m-d' }}" hidden>
+	<button id="center-on-today-button"
+		type="submit"
+		class="btn btn-primary date-navigator">
+	  Today
+	</button>
+	
+      </form>
+    </div>
+    
+    <div class="col-sm">
+      <form id="week-forward-form" action="/home" method="get" style="margin: 0">
+	<button id="week-forward-button"
+		type="submit"
+		class="btn btn-primary date-navigator">
+	  Forward 7 Days <i class="fa fa-angle-right" style="padding-left: 5px"></i>
+	</button>
 
-      <form id="transaction-form"
-	    class="form"
-	    action="/create-transaction"
-	    method="post"
-	    style="border: none" hidden>{% csrf_token %}
+	
+	
+	<input name="start" value="{{ start_plus_7|date:'Y-m-d' }}" hidden>
+	<input name="end" value="{{ end_plus_7|date:'Y-m-d' }}" hidden>
+      </form>
+    </div>
+    
+  </div>
+  
+  <form id="date-selector"
+	class="form-inline justify-content-center"
+	action="/home"
+	method="get"
+	style="margin-bottom: 0">
+    <div class="form-group row">
+      <label for="start-input" class="col-sm-2 col-form-label">Start</label>
+      <div class="col-sm-10">
 	<input id="start-input"
 	       type="date"
 	       name="start"
 	       class="form-control"
-	       value="{{start|date:'Y-m-d'}}"
-	       hidden>
+	       value="{{start|date:'Y-m-d'}}">
+      </div>
+    </div>
+    <div class="form-group row">
+      <label for="end-input" class="col-sm-2 col-form-label">End</label>
+      <div class="col-sm-10">
 	<input id="end-input"
 	       type="date"
 	       name="end"
 	       class="form-control"
-	       value="{{end|date:'Y-m-d'}}"
-	       hidden>
-	
-      </form>
-
-      <!-- The Modal -->
-      <div class="modal fade" id="repeat-options-modal">
-	<div class="modal-dialog">
-	  <div class="modal-content">
-	    
-	    <!-- Modal Header -->
-	    <div class="modal-header">
-	      <h4 class="modal-title">Reapeat transaction ends</h4>
-	      <button type="button" class="close" data-dismiss="modal">&times;</button>
-	    </div>
-
-	    <!-- Modal body -->
-	    <div id="repeat-options-div" class="modal-body">
-
-	      <select
-		id="frequency-input"
-		class="dropdown"
-		form="transaction-form"
-		name="frequency"> todo
-		<option value="daily">Daily</option>
-		<option value="weekly" selected>Weekly</option>
-		<option value="monthly">Monthly</option>
-		<option value="yearly">Yearly</option>
-	      </select>
-	      
-	      <div class="for-check row" style="padding: 5px 5px 5px 15px">
-		<div class="col-sm-6">
-		  <input class="form-check-input"
-			 type="radio"
-			 id="never-ends"
-			 name="end_condition"
-			 value="never_ends"
-			 form="transaction-form"
-			 checked>
-		  <label class="form-check-label" for="never-ends">
-		    Never ends
-		  </label>
-		</div>
-	      </div>
-
-	      <div class="for-check row" style="padding: 5px 5px 5px 15px">
-		<div class="col-sm-6">
-		  <input class="form-check-input"
-		    	 type="radio"
-			 name="end_condition"
-			 value="n_occurrences"
-		    	 id="ends-after-n-occurrences"
-			 form="transaction-form">
-		  <label class="form-check-label" for="ends-after-n-occurrences">
-		    Ends after # transactions
-		  </label>
-		</div>
-		<div class="col-sm-6">
-		  <input id="n-occurrences-input"
-			 class="form-control"
-			 type="number"
-			 step="1"
-			 value="1"
-			 name="n_occurrences"
-			 form="transaction-form"
-			 disabled>
-		</div>
-	      </div>
-	      
-	      <div class="for-check row" style="padding: 5px 5px 5px 15px">
-		<div class="col-sm-6">
-		  <input class="form-check-input"
-			 type="radio"
-			 id="ends-on-date"
-			 name="end_condition"
-			 value="ends_on_date"
-			 form="transaction-form">
-		  <label class="form-check-label" for="ends-on-date">
-		    Ends on
-		  </label>
-		</div>
-		<div class="col-sm-6">
-		  <input id="ends-on-date-input"
-			 class="form-control"
-			 type="date"
-			 value="{{today|date:'Y-m-d'}}"
-			 name="end_date"
-			 form="transaction-form"
-			 disabled>
-		</div>
-	      </div>
-	      
-	    </div>
-
-	    <!-- Modal footer -->
-	    <div class="modal-footer">
-	      <button id="repeat-options-close-button"
-		      type="button"
-		      class="btn btn-secondary"
-		      data-dismiss="modal">Cancel
-	      </button>
-	      <button id="repeat-options-submit-button"
-		      type="submit"
-		      class="btn btn-danger"
-		      form="transaction-form">
-		Create transaction
-	      </button>
-	      
-	    </div>
-
-	  </div>
-	</div>
+	       value="{{end|date:'Y-m-d'}}">
       </div>
+    </div>
+    <input type="submit" class="btn btn-primary" value="Submit">
+  </form>
+  <center style="margin-bottom: 5">
+    <font size="2" style="opacity: 0.8">Select date range</font>
+  </center>
 
-      <ul class="nav nav-tabs" role="tablist">
-      	<li class="nav-item">
-      	  <a id="transactions-tab"
-	     class="nav-link active"
-	     data-toggle="tab"
-	     href="#transactions">
-	    Transactions
-	  </a>
-      	</li>
-      	<li class="nav-item">
-      	  <a id="repeat-transactions-tab"
-	     class="nav-link"
-	     data-toggle="tab"
-	     href="#repeat-transactions">
-	    Repeat Transactions
-	  </a>
-      	</li>
-      </ul>
-
-      <div class="tab-content" style="min-height: 500px">
-
-      	<div id="transactions"
-      	     class="container tab-pane active">
-      	  <table id="transaction-list" class="table">
-      	    <thead>
-      	      <tr class="table-header">
-      		<th id="date-header">Date</th>
-      		<th id="transaction-size-header">Transaction Size</th>
-      		<th id="description-header">Description</th>
-      		<th id="closing-balance-header" colspan="3">Balance</th>
-      	      </tr>
-      	    </thead>
-	    
-      	    <tbody>
-      	      <tr>
-      		<td>
-      	  	  <input id="date-input"
-      	  		 type="date"
-      	  		 name="date"
-      	  		 class="form-control"
-      	  		 value="{{today|date:'Y-m-d'}}"
-      	  		 form="transaction-form">
-      		</td>
-      		<td>
-      		  <input id="transaction-size-input"
-      	  		 type="number" step="0.01"
-      	  		 name="size"
-      	  		 class="form-control"
-      	  		 form="transaction-form" required>
-      		</td>
-      		<td>
-      	  	  <input id="description-input"
-      	  		 name="description"
-      	  		 class="form-control"
-      	  		 form="transaction-form">
-      		</td>
-      		<td></td>
-      		<td colspan="2">
-      	  	  <input id="submit-button"
-      	  		 type="submit"
-      	  		 class="btn btn-primary"
-      	  		 style="width: 100%"
-      	  		 value="Create Transaction"
-      	  		 form="transaction-form">
-		  
-      		  <div class="form-check">
-      		    <input class="form-check-input"
-      			   type="checkbox"
-      			   value="repeats"
-      			   name="repeat_status"
-      			   id="repeat-checkbox"
-      			   form="transaction-form">
-      		    <label class="form-check-label" for="repeat-checkbox">
-      		      Repeats
-      		    </label>
-
-      		  </div>
-		  
-      		</td>
-      	      </tr>
-      	    </tbody>
-      	  </table>
-      	</div>
-
-      	<div id="repeat-transactions"
-      	     class="tab-pane container fade">
-	  <table class="table">
-      	    <thead>
-      	      <tr class="table-header">
-      		<th id="date-header">Start Date</th>
-      		<th id="transaction-size-header">Transaction Size</th>
-      		<th id="description-header">Description</th>
-		<th id="repeats-header">Repeats</th>
-		<th id="ends-header">Ends</th>
-      	      </tr>
-      	    </thead>
-
-	    <tbody>
-	      {% for rt in repeat_transactions %}
-	      <form id="repeat-transaction-update-form-{{ rt.id }}"
-		    class="repeat-transaction-update-form"
-		    action="update-repeat-transaction"
-		    method="post">{% csrf_token %}
-		<input name="id" value="{{ rt.id }}" hidden>
-		<tr id="{{rt.id}}" class="repeat-transaction">
-		  <td><input name="start_date"
-			     type="date"
-			     value="{{ rt.start_date|date:'Y-m-d' }}"
-			     form="repeat-transaction-update-form-{{ rt.id }}">
-		  </td>
-		  {% load humanize %}
-		  <td>
-		    <input name="size"
-			   value="£{{ rt.size|floatformat:2|intcomma }}"
-			   form="repeat-transaction-update-form-{{ rt.id }}">
-		  </td>
-		  <td>
-		    <input name="description"
-			   value="{{ rt.description }}"
-			   form="repeat-transaction-update-form-{{ rt.id }}">
-		  </td>
-		  <td><input name="frequency"
-			     value="{{ rt.frequency }}"
-			     form="repeat-transaction-update-form-{{ rt.id }}">
-		  </td>
-		  <td>
-		    <input
-		      name="end_date"
-		      value="{% if rt.end_date is None %}never{% else %}{{ rt.end_date }}{% endif %}">
-		  </td>
-		  <td>
-		    <button id="repeat-transaction-save-button-{{ rt.id }}">
-		      Save
-		    </button>
-		  </td>
-		</tr>
-	      </form>
-	      {% endfor %}
-	    </tbody>
-	    
-	  </table>
-      	</div>
-
-      </div>
-      
-    </div> <!-- main container -->
-
-    <script>
-      transactions = {{ transactions | safe }};
-    </script>
-
-    <script>
-      balances = [
-      {% for b in balances %}
-      {
-      date: "{{b.date}}",
-      balance: {{b.balance}},
-      },
-      {% endfor %}
-      ]
-    </script>
-
-    <script>
-      csrf_token = '{{ csrf_token }}'
-    </script>
-
-    <script src="{% static "website/home.js" %}" type="text/javascript"></script>
+  <form id="transaction-form"
+	class="form"
+	action="/create-transaction"
+	method="post"
+	style="border: none" hidden>{% csrf_token %}
+    <input id="start-input"
+	   type="date"
+	   name="start"
+	   class="form-control"
+	   value="{{start|date:'Y-m-d'}}"
+	   hidden>
+    <input id="end-input"
+	   type="date"
+	   name="end"
+	   class="form-control"
+	   value="{{end|date:'Y-m-d'}}"
+	   hidden>
     
-  </body>
-</html>
+  </form>
+
+  <!-- The Modal -->
+  <div class="modal fade" id="repeat-options-modal">
+    <div class="modal-dialog">
+      <div class="modal-content">
+	
+	<!-- Modal Header -->
+	<div class="modal-header">
+	  <h4 class="modal-title">Reapeat transaction ends</h4>
+	  <button type="button" class="close" data-dismiss="modal">&times;</button>
+	</div>
+
+	<!-- Modal body -->
+	<div id="repeat-options-div" class="modal-body">
+
+	  <select
+	    id="frequency-input"
+	    class="dropdown"
+	    form="transaction-form"
+	    name="frequency"> todo
+	    <option value="daily">Daily</option>
+	    <option value="weekly" selected>Weekly</option>
+	    <option value="monthly">Monthly</option>
+	    <option value="yearly">Yearly</option>
+	  </select>
+	  
+	  <div class="for-check row" style="padding: 5px 5px 5px 15px">
+	    <div class="col-sm-6">
+	      <input class="form-check-input"
+		     type="radio"
+		     id="never-ends"
+		     name="end_condition"
+		     value="never_ends"
+		     form="transaction-form"
+		     checked>
+	      <label class="form-check-label" for="never-ends">
+		Never ends
+	      </label>
+	    </div>
+	  </div>
+
+	  <div class="for-check row" style="padding: 5px 5px 5px 15px">
+	    <div class="col-sm-6">
+	      <input class="form-check-input"
+		     type="radio"
+		     name="end_condition"
+		     value="n_occurrences"
+		     id="ends-after-n-occurrences"
+		     form="transaction-form">
+	      <label class="form-check-label" for="ends-after-n-occurrences">
+		Ends after # transactions
+	      </label>
+	    </div>
+	    <div class="col-sm-6">
+	      <input id="n-occurrences-input"
+		     class="form-control"
+		     type="number"
+		     step="1"
+		     value="1"
+		     name="n_occurrences"
+		     form="transaction-form"
+		     disabled>
+	    </div>
+	  </div>
+	  
+	  <div class="for-check row" style="padding: 5px 5px 5px 15px">
+	    <div class="col-sm-6">
+	      <input class="form-check-input"
+		     type="radio"
+		     id="ends-on-date"
+		     name="end_condition"
+		     value="ends_on_date"
+		     form="transaction-form">
+	      <label class="form-check-label" for="ends-on-date">
+		Ends on
+	      </label>
+	    </div>
+	    <div class="col-sm-6">
+	      <input id="ends-on-date-input"
+		     class="form-control"
+		     type="date"
+		     value="{{today|date:'Y-m-d'}}"
+		     name="end_date"
+		     form="transaction-form"
+		     disabled>
+	    </div>
+	  </div>
+	  
+	</div>
+
+	<!-- Modal footer -->
+	<div class="modal-footer">
+	  <button id="repeat-options-close-button"
+		  type="button"
+		  class="btn btn-secondary"
+		  data-dismiss="modal">Cancel
+	  </button>
+	  <button id="repeat-options-submit-button"
+		  type="submit"
+		  class="btn btn-danger"
+		  form="transaction-form">
+	    Create transaction
+	  </button>
+	  
+	</div>
+
+      </div>
+    </div>
+  </div>
+
+  <ul class="nav nav-tabs" role="tablist">
+    <li class="nav-item">
+      <a id="transactions-tab"
+	 class="nav-link active"
+	 data-toggle="tab"
+	 href="#transactions">
+	Transactions
+      </a>
+    </li>
+    <li class="nav-item">
+      <a id="repeat-transactions-tab"
+	 class="nav-link"
+	 data-toggle="tab"
+	 href="#repeat-transactions">
+	Repeat Transactions
+      </a>
+    </li>
+  </ul>
+
+  <div class="tab-content" style="min-height: 500px">
+
+    <div id="transactions"
+      	 class="container tab-pane active">
+      <table id="transaction-list" class="table">
+      	<thead>
+      	  <tr class="table-header">
+      	    <th id="date-header">Date</th>
+      	    <th id="transaction-size-header">Transaction Size</th>
+      	    <th id="description-header">Description</th>
+      	    <th id="closing-balance-header" colspan="3">Balance</th>
+      	  </tr>
+      	</thead>
+	
+      	<tbody>
+      	  <tr>
+      	    <td>
+      	      <input id="date-input"
+      	  	     type="date"
+      	  	     name="date"
+      	  	     class="form-control"
+      	  	     value="{{today|date:'Y-m-d'}}"
+      	  	     form="transaction-form">
+      	    </td>
+      	    <td>
+      	      <input id="transaction-size-input"
+      	  	     type="number" step="0.01"
+      	  	     name="size"
+      	  	     class="form-control"
+      	  	     form="transaction-form" required>
+      	    </td>
+      	    <td>
+      	      <input id="description-input"
+      	  	     name="description"
+      	  	     class="form-control"
+      	  	     form="transaction-form">
+      	    </td>
+      	    <td></td>
+      	    <td colspan="2">
+      	      <input id="submit-button"
+      	  	     type="submit"
+      	  	     class="btn btn-primary"
+      	  	     style="width: 100%"
+      	  	     value="Create Transaction"
+      	  	     form="transaction-form">
+	      
+      	      <div class="form-check">
+      		<input class="form-check-input"
+      		       type="checkbox"
+      		       value="repeats"
+      		       name="repeat_status"
+      		       id="repeat-checkbox"
+      		       form="transaction-form">
+      		<label class="form-check-label" for="repeat-checkbox">
+      		  Repeats
+      		</label>
+
+      	      </div>
+	      
+      	    </td>
+      	  </tr>
+      	</tbody>
+      </table>
+    </div>
+
+    <div id="repeat-transactions"
+      	 class="tab-pane container fade">
+      <table class="table">
+      	<thead>
+      	  <tr class="table-header">
+      	    <th id="date-header">Start Date</th>
+      	    <th id="transaction-size-header">Transaction Size</th>
+      	    <th id="description-header">Description</th>
+	    <th id="repeats-header">Repeats</th>
+	    <th id="ends-header">Ends</th>
+      	  </tr>
+      	</thead>
+
+	<tbody>
+	  {% for rt in repeat_transactions %}
+	  <form id="repeat-transaction-update-form-{{ rt.id }}"
+		class="repeat-transaction-update-form"
+		action="update-repeat-transaction"
+		method="post">{% csrf_token %}
+	    <input name="id" value="{{ rt.id }}" hidden>
+	    <tr id="{{rt.id}}" class="repeat-transaction">
+	      <td><input name="start_date"
+			 type="date"
+			 value="{{ rt.start_date|date:'Y-m-d' }}"
+			 form="repeat-transaction-update-form-{{ rt.id }}">
+	      </td>
+	      {% load humanize %}
+	      <td>
+		<input name="size"
+		       value="£{{ rt.size|floatformat:2|intcomma }}"
+		       form="repeat-transaction-update-form-{{ rt.id }}">
+	      </td>
+	      <td>
+		<input name="description"
+		       value="{{ rt.description }}"
+		       form="repeat-transaction-update-form-{{ rt.id }}">
+	      </td>
+	      <td><input name="frequency"
+			 value="{{ rt.frequency }}"
+			 form="repeat-transaction-update-form-{{ rt.id }}">
+	      </td>
+	      <td>
+		<input
+		  name="end_date"
+		  value="{% if rt.end_date is None %}never{% else %}{{ rt.end_date }}{% endif %}">
+	      </td>
+	      <td>
+		<button id="repeat-transaction-save-button-{{ rt.id }}">
+		  Save
+		</button>
+	      </td>
+	    </tr>
+	  </form>
+	  {% endfor %}
+	</tbody>
+	
+      </table>
+    </div>
+
+  </div>
+  
+</div> <!-- main container -->
+
+<script>
+  transactions = {{ transactions | safe }};
+</script>
+
+<script>
+  balances = [
+  {% for b in balances %}
+  {
+  date: "{{b.date}}",
+  balance: {{b.balance}},
+  },
+  {% endfor %}
+  ]
+</script>
+
+<script>
+  csrf_token = '{{ csrf_token }}'
+</script>
+
+<script src="{% static "website/home.js" %}" type="text/javascript"></script>
+
+{% endblock %}

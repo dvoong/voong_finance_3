@@ -70,6 +70,7 @@ def home(request):
         'center_on_today_start': center_on_today_start,
         'center_on_today_end': center_on_today_end,
         'repeat_transactions': repeat_transactions,
+        'authenticated': request.user.is_authenticated
     }
     return render(request, 'website/home.html', template_kwargs)
 
