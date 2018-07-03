@@ -70,3 +70,7 @@ button.date-navigator {
     stroke-width:2;
     stroke:#FFBE33;
 }
+
+.errorlist {
+    color: red;
+}
