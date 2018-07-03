@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     'website',
     'mod_wsgi.server',
     'django.contrib.humanize',
+    'widget_tweaks',
 ]
 
 MIDDLEWARE = [

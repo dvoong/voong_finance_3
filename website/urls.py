@@ -39,6 +39,7 @@ urlpatterns = [
          name='update_repeat_transaction'),
     path('verify-email', views.verify_email, name='verify_email'),
     path('activate/<uidb64>/<token>', views.activate, name='activate'),
+
     path(
         'request-password-reset',
         auth_views.PasswordResetView.as_view(
@@ -46,16 +47,21 @@ urlpatterns = [
             from_email='admin@voong-finance.co.uk'
         )
     ),
+
     path(
         'reset-password/<uidb64>/<token>',
         auth_views.PasswordResetConfirmView.as_view(
+            template_name='website/password_reset_confirm.html'
         ),
         name='password_reset_confirm'
     ),
+
     path('reset-password-done',
-         auth_views.PasswordResetDoneView.as_view(),
+         # auth_views.PasswordResetDoneView.as_view(),
+         auth_views.PasswordResetDoneView.as_view(template_name='website/reset_password_done.html'),
          name='password_reset_done'
     ),
+
     path('reset-password-complete',
          auth_views.PasswordResetCompleteView.as_view(),
          name='password_reset_complete'
