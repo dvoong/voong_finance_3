@@ -353,8 +353,8 @@ class TestCustomRepeatTransaction(TestCase):
         transaction_form.repeat_checkbox.click()
 
         repeat_options = transaction_form.repeat_options
-        repeat_options.select('ends_after_#_occurrences')
-        repeat_options.set_n_occurrences(2)
+        repeat_options.select('ends_after_#_transactions')
+        repeat_options.set_n_transactions(2)
         repeat_options.submit()
         
         homepage = HomePage(self.driver)
@@ -395,7 +395,10 @@ class TestCustomRepeatTransaction(TestCase):
         repeat_options = transaction_form.repeat_options
         repeat_options.select('ends_on_date')
         repeat_options.set_frequency('monthly')
+        import time
+        time.sleep(10)
         repeat_options.set_end_date(end)
+        time.sleep(10)
         repeat_options.submit()
 
         homepage = HomePage(self.driver)

@@ -217,7 +217,7 @@ class TestCreateTransaction(TestCase):
 
     def test(self):
         self.client.post('/create-transaction',
-                         {'date': '2018-01-01', 'size': 1000, 'description': 'pay day'})
+                         {'date': '2018-01-01', 'transaction_size': 1000, 'description': 'pay day'})
         transactions = Transaction.objects.all()
         self.assertEqual(len(transactions), 1)
         t = transactions[0]
@@ -233,8 +233,14 @@ class TestCreateTransaction(TestCase):
                                    user=self.user,
                                    closing_balance=100,
                                    index=0)
-        self.client.post('/create-transaction',
-                         {'date': '2018-01-01', 'size': 1000, 'description': 'pay day'})
+        self.client.post(
+            '/create-transaction',
+            {
+                'date': '2018-01-01',
+                'transaction_size': 1000,
+                'description': 'pay day'
+            }
+        )
         transactions = Transaction.objects.all().order_by('date')
         self.assertEqual(len(transactions), 2)
 
@@ -259,8 +265,14 @@ class TestCreateTransaction(TestCase):
                                    user=self.user,
                                    closing_balance=100,
                                    index=0)
-        self.client.post('/create-transaction',
-                         {'date': '2018-01-02', 'size': 1000, 'description': 'pay day'})
+        self.client.post(
+            '/create-transaction',
+            {
+                'date': '2018-01-02',
+                'transaction_size': 1000,
+                'description': 'pay day'
+            }
+        )
         transactions = Transaction.objects.all().order_by('date', 'index')
         self.assertEqual(len(transactions), 2)
 
@@ -283,12 +295,12 @@ class TestCreateTransaction(TestCase):
         self.client.post('/create-transaction',
                          {
                              'date': '2018-01-01',
-                             'size': 1,
+                             'transaction_size': 1,
                              'description': 'a',
                              'frequency': 'weekly',
-                             'repeat_status': 'repeats',
-                             'end_condition': 'n_occurrences',
-                             'n_occurrences': 2
+                             'repeats': 'repeats',
+                             'ends_how': 'n_transactions',
+                             'n_transactions': 2
                          }
         )
 
@@ -331,7 +343,7 @@ class TestTransactionUpdate(TestCase):
 
     def test(self):
         self.client.post('/create-transaction',
-                         {'date': '2018-01-01', 'size': '1000.00', 'description': 'pay day'})
+                         {'date': '2018-01-01', 'transaction_size': '1000.00', 'description': 'pay day'})
         transactions = Transaction.objects.all()
         self.assertEqual(len(transactions), 1)
         t = transactions[0]
@@ -651,7 +663,7 @@ class TestUpdateRepeatTransaction(TestCase):
         data = {
             'start': '2018-01-01',
             'end': '2018-01-08',
-            'size': 1,
+            'transaction_size': 1,
             'description': 'a',
             'end_date': 'never',
             'start_date': '2017-12-25',
@@ -679,7 +691,7 @@ class TestUpdateRepeatTransaction(TestCase):
             'start': '2018-01-01',
             'end': '2018-01-08',
             'start_date': '2018-01-08',
-            'size': 1,
+            'transaction_size': 1,
             'description': 'a',
             'end_date': 'never',
             'id': 0

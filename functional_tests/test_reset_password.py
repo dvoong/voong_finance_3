@@ -46,7 +46,7 @@ class ResetPasswordForm:
             'input[name="new_password2"]'
         )
         self.submit_button = self.driver.find_element_by_css_selector(
-            'input[type="submit"]'
+            'button[type="submit"]'
         )        
 
     def input_password(self, password):

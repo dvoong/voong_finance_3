@@ -24,7 +24,7 @@ class TestUpdateTransaction(TestCase):
             size=1,
             description='a',
             repeats='weekly',
-            ends={'how': 'never'})
+            ends={'how': 'never_ends'})
                                      
         home_page.show_repeat_transactions_view()
 
@@ -123,7 +123,7 @@ class TestUpdateTransaction(TestCase):
             (dt.date(2018, 1, 15), 1, 'b', '£3.00'),
             (dt.date(2018, 1, 22), 1, 'b', '£4.00')
         ]
-
+        
         self.check_transactions(expected)
 
     def test_change_end_criteria(self):

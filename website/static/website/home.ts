@@ -1,5 +1,5 @@
 console.log('home.js');
-console.log('test6');
+console.log('test10');
 
 declare var balances: any[];
 
@@ -98,23 +98,21 @@ $(document).ready(function(){
 	} else {
 	    $(this).val('does_not_repeat');
 	}
-
-
     });
 
     $('#repeat-options-close-button').click(function(e){
 	$('#repeat-checkbox').prop('checked', false);
     });
 
-    $('input:radio[name="end_condition"]').change(function(e){
-	if($(this).attr('id') == 'ends-after-n-occurrences'){
-	    $('#n-occurrences-input').prop('disabled', false);
+    $('input:radio[name="ends_how"]').change(function(e){
+	if($(this).attr('id') == 'ends-after-n-transactions'){
+	    $('#n-transactions-input').prop('disabled', false);
 	    $('#ends-on-date-input').prop('disabled', true);
 	} else if ($(this).attr('id') == 'ends-on-date'){
-	    $('#n-occurrences-input').prop('disabled', true);
+	    $('#n-transactions-input').prop('disabled', true);
 	    $('#ends-on-date-input').prop('disabled', false);
 	} else {
-	    $('#n-occurrences-input').prop('disabled', true);
+	    $('#n-transactions-input').prop('disabled', true);
 	    $('#ends-on-date-input').prop('disabled', true);
 	}
     });
@@ -126,6 +124,14 @@ $(document).ready(function(){
 	var end = $("#date-selector input[name='end']").val();
 	form.append(`<input name="end" value="${end}" hidden>`);
 
+    });
+
+    $('form#transaction-form').submit(function(e){
+	var form = $(this);
+	var start = $("#date-selector input[name='start']").val();
+	form.append(`<input name="start" value="${start}" hidden>`);
+	var end = $("#date-selector input[name='end']").val();
+	form.append(`<input name="end" value="${end}" hidden>`);
     });
 
 });

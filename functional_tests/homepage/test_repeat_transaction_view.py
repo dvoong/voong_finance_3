@@ -19,7 +19,7 @@ class TestRepeatTransactionTab(TestCase):
                                      size=10,
                                      description='a',
                                      repeats='weekly',
-                                     ends={'how': 'never'})
+                                     ends={'how': 'never_ends'})
 
         home_page.show_repeat_transactions_view()
 

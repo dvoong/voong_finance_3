@@ -17,6 +17,7 @@ import datetime as dt
 from voong_finance.utils import iso_to_date
 from voong_finance.utils.argparse import ArgParser
 from voong_finance.utils import TokenGenerator
+from website import forms
 from django.contrib.auth import views as auth_views
 
 strptime = datetime.datetime.strptime
@@ -70,7 +71,8 @@ def home(request):
         'center_on_today_start': center_on_today_start,
         'center_on_today_end': center_on_today_end,
         'repeat_transactions': repeat_transactions,
-        'authenticated': request.user.is_authenticated
+        'authenticated': request.user.is_authenticated,
+        'new_transaction_form': forms.NewTransactionForm(auto_id="%s")
     }
     return render(request, 'website/home.html', template_kwargs)
 
@@ -145,10 +147,10 @@ def login_view(request):
 def create_transaction(request):
     date = strptime(request.POST['date'], '%Y-%m-%d').date()
     user = request.user
-    size = float(request.POST['size'])
+    size = float(request.POST['transaction_size'])
     description = request.POST['description']
     index = len(Transaction.objects.filter(user=request.user, date=date))
-    repeat_status = request.POST.get('repeat_status', 'does_not_repeat')
+    repeat_status = request.POST.get('repeats', 'does_not_repeat')
     frequency = request.POST.get('frequency', None)
     today = datetime.date.today()
     if 'start' in request.POST:
@@ -182,8 +184,8 @@ def create_transaction(request):
         t.recalculate_closing_balances()
         
     else:
-        end_condition = request.POST.get('end_condition', 'never_ends')
-        if end_condition  == 'never_ends':
+        ends_how = request.POST.get('ends_how', 'never_ends')
+        if ends_how  == 'never_ends':
             RepeatTransaction.objects.create(
                 start_date=date,
                 size=size,
@@ -192,19 +194,19 @@ def create_transaction(request):
                 index=0,
                 frequency=frequency
             )
-        elif end_condition == 'n_occurrences':
+        elif ends_how == 'n_transactions':
             
-            def get_end_date(start, frequency, occurrences):
+            def get_end_date(start, frequency, n_transactions):
                 if frequency == 'daily':
-                    return start + datetime.timedelta(days=occurrences - 1)
+                    return start + datetime.timedelta(days=n_transactions - 1)
                 elif frequency == 'weekly':
-                    return start + datetime.timedelta(days=7*(occurrences - 1))
+                    return start + datetime.timedelta(days=7*(n_transactions - 1))
                 elif frequency == 'monthly':
                     month_start = start.month
-                    month_end = (month_start + (occurrences - 1)) % 12
+                    month_end = (month_start + (n_transactions - 1)) % 12
                     month_end = 12 if month_end == 0 else month_end
 
-                    months_remainder = occurrences - (12 - month_start + 1)
+                    months_remainder = n_transactions - (12 - month_start + 1)
                     months_remainder = max(0, months_remainder)
                     year_end += ((months_remainder > 0) * 12 + months_remainder) // 12
 
@@ -219,10 +221,10 @@ def create_transaction(request):
                         x = datetime.date(year_end, month_end, 1)
                         return x - datetime.timedelta(days=1)
 
-            occurrences = int(request.POST['n_occurrences'])
+            n_transactions = int(request.POST['n_transactions'])
             
             end_date = get_end_date(date,
-                                    occurrences=occurrences,
+                                    n_transactions=n_transactions,
                                     frequency=frequency)
 
             RepeatTransaction.objects.create(
@@ -235,7 +237,7 @@ def create_transaction(request):
                 end_date=end_date
             )
 
-        elif end_condition == 'ends_on_date':
+        elif ends_how == 'ends_on_date':
 
             RepeatTransaction.objects.create(
                 start_date=date,

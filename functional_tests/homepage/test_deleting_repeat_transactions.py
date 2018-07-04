@@ -53,7 +53,7 @@ class TestRepeatTransactionDeletion(TestCase):
                                      size=10,
                                      description='a',
                                      repeats='weekly',
-                                     ends={'how': 'never'})
+                                     ends={'how': 'never_ends'})
         home_page.create_transaction(date=dt.date(2018, 1, 9),
                                      size=5,
                                      description='b')
@@ -106,7 +106,7 @@ class TestRepeatTransactionDeletion(TestCase):
                                      size=10,
                                      description='a',
                                      repeats='weekly',
-                                     ends={'how': 'never'})
+                                     ends={'how': 'never_ends'})
         home_page.create_transaction(date=dt.date(2018, 1, 9),
                                      size=5,
                                      description='b')
@@ -168,7 +168,7 @@ class TestRepeatTransactionDeletion(TestCase):
                                      size=10,
                                      description='a',
                                      repeats='weekly',
-                                     ends={'how': 'never'})
+                                     ends={'how': 'never_ends'})
         home_page.create_transaction(date=dt.date(2018, 1, 9),
                                      size=5,
                                      description='b')
@@ -264,7 +264,7 @@ class TestRepeatTransactionUpdate(TestCase):
                                      size=10,
                                      description='a',
                                      repeats='weekly',
-                                     ends={'how': 'never'})
+                                     ends={'how': 'never_ends'})
         home_page.create_transaction(date=dt.date(2018, 1, 9),
                                      size=5,
                                      description='b')
@@ -337,7 +337,7 @@ class TestRepeatTransactionUpdate(TestCase):
                                      size=10,
                                      description='a',
                                      repeats='weekly',
-                                     ends={'how': 'never'})
+                                     ends={'how': 'never_ends'})
         home_page.create_transaction(date=dt.date(2018, 1, 9),
                                      size=5,
                                      description='b')
@@ -414,7 +414,7 @@ class TestRepeatTransactionUpdate(TestCase):
                                      size=10,
                                      description='a',
                                      repeats='weekly',
-                                     ends={'how': 'never'})
+                                     ends={'how': 'never_ends'})
         home_page.create_transaction(date=dt.date(2018, 1, 9),
                                      size=5,
                                      description='b')
@@ -482,7 +482,7 @@ class TestRepeatTransactionUpdate(TestCase):
                                      size=10,
                                      description='a',
                                      repeats='weekly',
-                                     ends={'how': 'never'})
+                                     ends={'how': 'never_ends'})
         home_page.create_transaction(date=dt.date(2018, 1, 9),
                                      size=5,
                                      description='b')
@@ -545,7 +545,7 @@ class TestRepeatTransactionUpdate(TestCase):
                                      size=10,
                                      description='a',
                                      repeats='weekly',
-                                     ends={'how': 'never'})
+                                     ends={'how': 'never_ends'})
         home_page.create_transaction(date=dt.date(2018, 1, 9),
                                      size=5,
                                      description='b')

@@ -287,8 +287,8 @@ class RepeatOptions:
         self.element = driver.find_element_by_id('repeat-options-div')
         self.close_button = driver.find_element_by_id('repeat-options-close-button')
         self.submit_button = driver.find_element_by_id('repeat-options-submit-button')
-        self.ends_after_n_occurrences = self.element.find_element_by_id('ends-after-n-occurrences')
-        self.n_occurrences_input =self.element.find_element_by_id('n-occurrences-input')
+        self.ends_after_n_transactions = self.element.find_element_by_id('ends-after-n-transactions')
+        self.n_transactions_input =self.element.find_element_by_id('n-transactions-input')
         self.ends_on_date = self.element.find_element_by_id('ends-on-date')
         self.end_date_input = self.element.find_element_by_id('ends-on-date-input')
         self.never_ends = self.element.find_element_by_id('never-ends')
@@ -305,18 +305,18 @@ class RepeatOptions:
 
     def select(self, option):
         WebDriverWait(self.driver, 5).until(
-            EC.visibility_of_element_located((By.ID, 'ends-after-n-occurrences'))
+            EC.visibility_of_element_located((By.ID, 'ends-after-n-transactions'))
         )
-        if option == 'ends_after_#_occurrences':
-            self.ends_after_n_occurrences.click()
+        if option == 'ends_after_#_transactions':
+            self.ends_after_n_transactions.click()
         elif option == 'ends_on_date':
             self.ends_on_date.click()
         elif option == 'never':
             self.never_ends.click()
 
-    def set_n_occurrences(self, occurrences):
-        self.n_occurrences_input.clear()
-        self.n_occurrences_input.send_keys(occurrences)
+    def set_n_transactions(self, transactions):
+        self.n_transactions_input.clear()
+        self.n_transactions_input.send_keys(transactions)
         
     def set_end_date(self, date):
         keys = '{:02d}{:02d}{}'.format(date.day, date.month, date.year)        
@@ -327,10 +327,10 @@ class RepeatOptions:
 
     def set_end_criteria(self, ends):
         self.select(ends['how'])
-        if ends['how'] == 'never':
+        if ends['how'] == 'never_ends':
             pass
-        elif ends['how'] == 'ends_after_#_occurrences':
-            self.set_n_occurrences(ends['when'])
+        elif ends['how'] == 'ends_after_#_transactions':
+            self.set_n_transactions(ends['when'])
         elif ends['how'] == 'ends_on_date':
             self.set_end_date(ends['when'])
         else:
