@@ -82,7 +82,7 @@ The `-p` option is to allow you local machine to interact with the application i
 
 ## Testing
 
-You will need to download the Chrome driver for Selenium, find this on the internet.
+You will need to download the Chrome driver for Selenium, http://chromedriver.chromium.org/downloads.
 
 Use the following command to run all tests.
 
