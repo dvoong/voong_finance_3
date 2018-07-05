@@ -1,12 +1,11 @@
 console.log('home.js');
-console.log('test10');
+console.log('test7');
 
+declare var $;
+declare var d3;
 declare var balances: any[];
-
-var $ = require("jquery");
-global.jQuery = require("jQuery");
-var d3 = require("d3");
-require('bootstrap');
+declare var global;
+declare var transactions: any[];
 
 import { BalanceChart } from "./balance_chart";
 import { TransactionsTable } from "./transactions_table";

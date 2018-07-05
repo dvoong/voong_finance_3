@@ -1,5 +1,4 @@
-var d3 = require("d3");
-//declare var d3: any;
+declare var d3;
 //declare var tooltips: any;
 
 import { Canvas } from "./canvas";

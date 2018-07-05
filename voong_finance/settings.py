@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     'mod_wsgi.server',
     'django.contrib.humanize',
     'widget_tweaks',
+    'livereload',
 ]
 
 MIDDLEWARE = [
@@ -60,6 +61,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'livereload.middleware.LiveReloadScript',
 ]
 
 ROOT_URLCONF = 'voong_finance.urls'
@@ -146,9 +148,13 @@ STATIC_URL = '/static/'
 STATIC_ROOT = '{}/static'.format(BASE_DIR)
 LOGIN_URL = '/welcome'
 
+
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 EMAIL_USE_TLS = True
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_HOST_USER = os.environ.get('VOONG_FINANCE_EMAIL_HOST_USER', 'youremail@gmail.com')
 EMAIL_HOST_PASSWORD = os.environ.get('VOONG_FINANCE_EMAIL_HOST_PASSWORD', 'yourpassword')
 EMAIL_PORT = 587
+
+EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
+EMAIL_FILE_PATH = '/tmp/app-messages' # change this to a proper location

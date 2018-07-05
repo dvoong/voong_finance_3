@@ -1,5 +1,6 @@
-var d3 = require("d3");
-var $ = require("jquery");
+declare var $;
+declare var csrf_token;
+declare var d3;
 
 function attach_form_and_show_prompt(prompt, form){
     // attach appropriate transaction modification form to the prompt inputs

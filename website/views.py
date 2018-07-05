@@ -34,7 +34,8 @@ def index(request):
 
 @login_required    
 def home(request):
-
+    print('HOME')
+    
     user = request.user
     today = datetime.date.today()
 
