@@ -59,9 +59,14 @@ To check it is working use the command,
 
 and then go to http://localhost:8000 in your web browser. To run the django application kill the previous command and then use the command,
 
-`python manage.py runmodwsgi`
+`python manage.py collectstatic`
 
-which again you can check is working properly using your web browser. Note: This method does not serve static files so the application may not work as intended. I haven't figured out how to do this yet but will update the readme once I have.
+followed by
+
+`python manage.py runmodwsgi --reload-on-changes`
+
+which again you can check is working properly using your web browser. This method using the `mod_wsgi-express` approach together with django to automatically manage the staticfiles, https://pypi.org/project/mod_wsgi/
+
 
 #### 3. Running the application within a Docker container
 Using a docker container to run the application is one of the best ways to remove any dependence on your own local environment and hence gives a good representation of how the application will look when it is deployed into production. To run the application you will first need to build a Docker image, in the project directory use the following command,
@@ -73,6 +78,7 @@ which will build the image based on the instructions found in the `Dockerfile` w
 `docker run -p 8000:80 voong_finance`
 
 The `-p` option is to allow you local machine to interact with the application in the Docker container, the port you use on your local machine is optional. Again to check this is working as intended, go to http://localhost:8000 in your web browser.
+
 
 ## Testing
 
