@@ -9,18 +9,10 @@ RUN pip3 install --upgrade pip
 RUN pip3 install mod_wsgi==4.*
 RUN pip3 install django==2.*
 RUN pip3 install pandas==0.*
-RUN apt-get install -y default-libmysqlclient-dev
-RUN pip3 install mysqlclient==1.*
 RUN pip3 install django-widget-tweaks
 RUN pip3 install django-livereload-server
+RUN pip3 install psycopg2-binary
 
-COPY . /home/www-data/voong_finance
-WORKDIR /home/www-data/voong_finance
-RUN python3 manage.py makemigrations
-RUN python3 manage.py migrate
-RUN python3 manage.py collectstatic
-RUN chown -R www-data:www-data /home/www-data
+ADD . /code/
+WORKDIR /code
 
-EXPOSE 80
-
-CMD ["python3", "manage.py", "runmodwsgi", "--user=www-data", "--group=www-data", "--port=80"]
