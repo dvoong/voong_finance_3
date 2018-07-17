@@ -7,10 +7,9 @@ services:
     build: .
     command: ./docker-entrypoint.sh
     environment:
+      - DJANGO_SETTINGS_MODULE=voong_finance.settings.production
       - PYTHONPATH=/code
-    volumes:
-      - .:/code
     ports:
-      - "8000:80"
+      - "80:80"
     depends_on:
       - db
