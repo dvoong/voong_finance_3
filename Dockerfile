@@ -12,6 +12,7 @@ RUN pip3 install pandas==0.*
 RUN pip3 install django-widget-tweaks
 RUN pip3 install django-livereload-server
 RUN pip3 install psycopg2-binary
+RUN pip3 install python-decouple
 
 ADD . /code/
 WORKDIR /code

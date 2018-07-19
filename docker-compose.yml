@@ -7,6 +7,7 @@ services:
     build: .
     command: ./docker-entrypoint.sh
     environment:
+      - DJANGO_SETTINGS_MODULE=voong_finance.settings.production
       - PYTHONPATH=/code
     volumes:
       - .:/code
