@@ -329,6 +329,53 @@ class TestCreateTransaction(TestCase):
         self.assertEqual(t.closing_balance, 2)
         self.assertEqual(t.index, 0)
 
+    def test_create_monthly_repeat_transaction_ends_on_n_occurrences(self):
+        
+        self.client.post('/create-transaction',
+                         {
+                             'date': '2018-01-01',
+                             'transaction_size': 1,
+                             'description': 'a',
+                             'frequency': 'monthly',
+                             'repeats': 'repeats',
+                             'ends_how': 'n_transactions',
+                             'n_transactions': 3
+                         }
+        )
+        
+
+        self.client.get('/home', {'start': '2018-01-01', 'end': '2018-03-15'})
+
+        repeat_transactions = RepeatTransaction.objects.all()
+        self.assertEqual(len(repeat_transactions), 1)
+
+        r = repeat_transactions[0]
+        self.assertEqual(r.end_date, datetime.date(2018, 3, 1))
+        
+        transactions = Transaction.objects.all().order_by('date', 'index')
+        self.assertEqual(len(transactions), 3)
+        
+        t = transactions[0]
+        self.assertEqual(t.date, datetime.date(2018, 1, 1))
+        self.assertEqual(t.size, 1)
+        self.assertEqual(t.description, 'a')
+        self.assertEqual(t.closing_balance, 1)
+        self.assertEqual(t.index, 0)
+
+        t = transactions[1]
+        self.assertEqual(t.date, datetime.date(2018, 2, 1))
+        self.assertEqual(t.size, 1)
+        self.assertEqual(t.description, 'a')
+        self.assertEqual(t.closing_balance, 2)
+        self.assertEqual(t.index, 0)
+
+        t = transactions[2]
+        self.assertEqual(t.date, datetime.date(2018, 3, 1))
+        self.assertEqual(t.size, 1)
+        self.assertEqual(t.description, 'a')
+        self.assertEqual(t.closing_balance, 3)
+        self.assertEqual(t.index, 0)
+
 class TestTransactionUpdate(TestCase):
 
     def setUp(self):

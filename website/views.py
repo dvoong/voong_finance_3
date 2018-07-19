@@ -203,22 +203,14 @@ def create_transaction(request):
                 elif frequency == 'weekly':
                     return start + datetime.timedelta(days=7*(n_transactions - 1))
                 elif frequency == 'monthly':
-                    month_start = start.month
-                    month_end = (month_start + (n_transactions - 1)) % 12
+
+                    end = start
+                    year_end = start.year + (start.month - 1 + n_transactions) // 12
+                    month_end = (start.month - 1 + n_transactions) % 12
                     month_end = 12 if month_end == 0 else month_end
-
-                    months_remainder = n_transactions - (12 - month_start + 1)
-                    months_remainder = max(0, months_remainder)
-                    year_end += ((months_remainder > 0) * 12 + months_remainder) // 12
-
                     try:
                         return datetime.date(year_end, month_end, start.day)
                     except ValueError:
-                        if month_end == 12:
-                            month_end = 1
-                            year_end += 1
-                        else:
-                            month_end += 1
                         x = datetime.date(year_end, month_end, 1)
                         return x - datetime.timedelta(days=1)
 
