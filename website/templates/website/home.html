@@ -354,7 +354,8 @@
 	      <td>
 		<input
 		  name="end_date"
-		  value="{% if rt.end_date is None %}never{% else %}{{ rt.end_date }}{% endif %}">
+		  type="date"
+		  value="{% if rt.end_date is None %}never{% else %}{{rt.end_date|date:'Y-m-d'}}{% endif %}">
 	      </td>
 	      <td>
 		<button id="repeat-transaction-save-button-{{ rt.id }}">

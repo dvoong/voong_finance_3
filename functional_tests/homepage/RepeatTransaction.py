@@ -33,7 +33,7 @@ class RepeatTransaction:
     def size(self):
         element = self.element.find_element_by_css_selector('input[name="size"]')
         value = element.get_attribute('value')
-        value = float(value.replace('£', ''))
+        value = float(value.replace('£', '').replace(',', ''))
         return value
 
     @size.setter
@@ -64,8 +64,8 @@ class RepeatTransaction:
     def ends(self):
         element = self.element.find_element_by_css_selector('input[name="end_date"]')
         value = element.get_attribute('value')
-        if value == 'never':
-            return value
+        if value == '':
+            return 'never'
         else:
             date = strptime(value, '%Y-%m-%d').date()
             return date
@@ -73,8 +73,8 @@ class RepeatTransaction:
     @ends.setter
     def ends(self, ends):
         element = self.element.find_element_by_css_selector('input[name="end_date"]')
-        element.clear()
-        element.send_keys(ends.isoformat())
+        keys = '{:02d}{:02d}{}'.format(ends.day, ends.month, ends.year)        
+        element.send_keys(keys)
 
     def save(self):
         self.save_button.click()

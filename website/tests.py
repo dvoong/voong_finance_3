@@ -712,7 +712,7 @@ class TestUpdateRepeatTransaction(TestCase):
             'end': '2018-01-08',
             'transaction_size': 1,
             'description': 'a',
-            'end_date': 'never',
+            'end_date': '',
             'start_date': '2017-12-25',
             'id': 0
         }
@@ -740,7 +740,7 @@ class TestUpdateRepeatTransaction(TestCase):
             'start_date': '2018-01-08',
             'transaction_size': 1,
             'description': 'a',
-            'end_date': 'never',
+            'end_date': '',
             'id': 0
         }
         response = self.client.post('/update-repeat-transaction', data, follow=True)
@@ -763,7 +763,7 @@ class TestUpdateRepeatTransaction(TestCase):
             'start_date': '2018-01-01',
             'size': 2,
             'description': 'b',
-            'end_date': 'never',
+            'end_date': '',
             'id': 0
         }
         
@@ -849,7 +849,7 @@ class TestUpdateRepeatTransaction(TestCase):
     def test_modify_end_date(self):
 
         data = {
-            'end_date': 'never',
+            'end_date': '',
             'id': 0
         }
 
@@ -860,7 +860,7 @@ class TestUpdateRepeatTransaction(TestCase):
     def test_start_defaults(self):
 
         data = {
-            'end_date': 'never',
+            'end_date': '',
             'id': 0
         }
 

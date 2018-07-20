@@ -400,6 +400,8 @@ class TestRepeatTransactionUpdate(TestCase):
 
         self.assertEqual(len(transactions), 5)
 
+        import time
+        time.sleep(10)
         t = transactions[4]
         self.assertEqual(t.date, dt.date(2018, 1, 22))
         self.assertEqual('c', t.description)

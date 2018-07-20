@@ -34,7 +34,6 @@ def index(request):
 
 @login_required    
 def home(request):
-    print('HOME')
     
     user = request.user
     today = datetime.date.today()
@@ -512,7 +511,7 @@ def update_repeat_transaction(request):
     rt = RepeatTransaction.objects.get(user=request.user, id=repeat_transaction_id)
     
     def convert_end_date(end_date):
-        if end_date.lower() == 'never':
+        if end_date.lower() == '':
             return None
         else:
             return iso_to_date(end_date)
@@ -522,7 +521,7 @@ def update_repeat_transaction(request):
     arg_parser.add('end', iso_to_date, dt.date.today() + dt.timedelta(days=14))
     arg_parser.add('start_date', iso_to_date, rt.start_date)
     arg_parser.add('end_date', convert_end_date, rt.end_date)
-    arg_parser.add('size', lambda x: float(x.replace('£', '')), rt.size)
+    arg_parser.add('size', lambda x: float(x.replace('£', '').replace(',', '')), rt.size)
     arg_parser.add('description', str, rt.description)
     args = arg_parser.parse_args(request, 'POST')
     

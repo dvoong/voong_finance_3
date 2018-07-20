@@ -28,7 +28,7 @@ class TestRepeatTransactionTab(TestCase):
             'size': 10,
             'description': 'a',
             'repeats': 'weekly',
-            'ends': 'never'
+            'ends': ''
         }
         
         self.assertIn(repeat_transaction, home_page.repeat_transactions_list.items)
