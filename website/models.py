@@ -148,7 +148,9 @@ class Transaction(models.Model):
             user=self.user
         ).order_by('date', 'index')
         for t in transactions:
-            t.closing_balance += self.size
+            # t.closing_balance += self.size
+            t.closing_balance = closing_balance + t.size
+            closing_balance += t.size
             t.save()
 
     def get_previous_transaction(self):
