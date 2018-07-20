@@ -143,7 +143,10 @@ class Transaction(models.Model):
         self.save()
             
         # update future transactions
-        transactions = Transaction.objects.filter(date__gt=self.date, user=self.user)
+        transactions = Transaction.objects.filter(
+            date__gt=self.date,
+            user=self.user
+        ).order_by('date', 'index')
         for t in transactions:
             t.closing_balance += self.size
             t.save()
@@ -164,6 +167,17 @@ class Transaction(models.Model):
         return Transaction.objects.filter(
             Q(date__gt=self.date) | Q(date=self.date, index__gt=self.index),
             user=self.user
+        )
+
+    def __str__(self):
+        return str(
+            (
+                ('date', self.date),
+                ('index', self.index),
+                ('size', self.size),
+                ('balance', self.closing_balance),
+                ('description', self.description),
+            )
         )
 
 def get_transactions(user, start, end):
