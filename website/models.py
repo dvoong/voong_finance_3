@@ -67,7 +67,7 @@ class RepeatTransaction(models.Model):
                             size=self.size,
                             description=self.description,
                             user=self.user,
-                            index=len(Transaction.objects.filter(user=self.user, date=date)),
+                            # index=len(Transaction.objects.filter(user=self.user, date=date)),
                             repeat_transaction=self)
 
     def generate_transactions(self, start, end):
@@ -189,12 +189,53 @@ def get_transactions(user, start, end):
                                
 def get_balances(user, start, end):
 
-    repeat_transactions = RepeatTransaction.objects.filter(user=user,
-                                                           start_date__lte=end)
+    repeat_transactions = RepeatTransaction.objects.filter(
+        user=user,
+        start_date__lte=end
+    )
+
+    generated_transactions = []
         
     for rt in repeat_transactions:
         for t in rt.generate_next_transaction(end):
-            t.recalculate_closing_balances()
+            generated_transactions.append(t)
+            # t.recalculate_closing_balances()
+
+    generated_transactions = sorted(generated_transactions, key=lambda t: t.date)
+            
+    if len(generated_transactions):
+        t_first = generated_transactions[0]
+        t_first.index = len(Transaction.objects.filter(user=user, date=t_first.date))
+
+        if len(generated_transactions) > 1:
+            for i in range(len(generated_transactions) - 1):
+                t1 = generated_transactions[i]
+                t2 = generated_transactions[i+1]
+                if t1.date == t2.date:
+                    t2.index = t1.index + 1
+                else:
+                    t2.index = len(Transaction.objects.filter(user=user, date=t2.date))
+
+        transactions = list(Transaction.objects.filter(user=user, date__gt=t_first.date))
+        transactions = transactions + generated_transactions
+        transactions = sorted(transactions, key=lambda t: (t.date, t.index))
+        
+        try:
+            last_transaction = Transaction.objects.filter(
+                user=user,
+                date__lte=t_first.date
+            ).latest(
+                'date',
+                'index'
+            )
+            closing_balance = last_transaction.closing_balance
+        except Transaction.DoesNotExist:
+            closing_balance = 0
+
+        for t in transactions:
+            closing_balance += t.size
+            t.closing_balance = closing_balance
+            t.save()
 
     dates = pd.DataFrame(pd.date_range(start, end), columns=['date'])
     balances = dates

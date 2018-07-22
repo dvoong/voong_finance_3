@@ -149,7 +149,6 @@ def create_transaction(request):
     user = request.user
     size = float(request.POST['transaction_size'])
     description = request.POST['description']
-    index = len(Transaction.objects.filter(user=request.user, date=date))
     repeat_status = request.POST.get('repeats', 'does_not_repeat')
     frequency = request.POST.get('frequency', None)
     today = datetime.date.today()
@@ -165,23 +164,84 @@ def create_transaction(request):
     if repeat_status == 'does_not_repeat':
 
         # generate repeat transactions
+        # repeat_transactions = RepeatTransaction.objects.filter(
+        #     user=user,
+        #     start_date__lte=end)
+        
+        # for rt in repeat_transactions:
+        #     for t in rt.generate_next_transaction(end):
+        #         t.recalculate_closing_balances()
+
+        #######
+
         repeat_transactions = RepeatTransaction.objects.filter(
             user=user,
-            start_date__lte=end)
+            start_date__lte=end
+        )
+
+        generated_transactions = []
         
         for rt in repeat_transactions:
             for t in rt.generate_next_transaction(end):
-                t.recalculate_closing_balances()
+                generated_transactions.append(t)
+                # t.recalculate_closing_balances()
 
         t = Transaction(
             date=date,
             size=size,
             description=description,
             user=user,
-            index=index
         )
 
-        t.recalculate_closing_balances()
+        generated_transactions.append(t)
+
+        generated_transactions = sorted(generated_transactions, key=lambda t: t.date)
+        
+        t_first = generated_transactions[0]
+        t_first.index = len(Transaction.objects.filter(user=user, date=t_first.date))
+
+        if len(generated_transactions) > 1:
+            for i in range(len(generated_transactions) - 1):
+                t1 = generated_transactions[i]
+                t2 = generated_transactions[i+1]
+                if t1.date == t2.date:
+                    t2.index = t1.index + 1
+                else:
+                    t2.index = len(Transaction.objects.filter(user=user, date=t2.date))
+
+        transactions = list(Transactions.objects.filter(user=user, date__gt=t_first.date))
+        transactions = transactions + generated_transactions
+        transactions = sorted(transactions, key=lambda t: (t.date, t.index))
+        
+        try:
+            last_transaction = Transaction.objects.filter(
+                user=user,
+                date__lte=t_first.date
+            ).latest(
+                'date',
+                'index'
+            )
+            closing_balance = last_transaction.closing_balance
+        except Transaction.DoesNotExist:
+            closing_balance = 0
+
+        for t in transactions:
+            closing_balance += t.size
+            t.closing_balance = closing_balance
+            t.save()
+
+        # #######
+        
+        #     index = len(Transaction.objects.filter(user=request.user, date=date))
+        #     t = Transaction(
+        #         date=date,
+        #         size=size,
+        #         description=description,
+        #         user=user,
+        #         index=index
+        #     )
+
+        #     t.recalculate_closing_balances()
         
     else:
         ends_how = request.POST.get('ends_how', 'never_ends')
