@@ -470,59 +470,83 @@ def delete_transaction(request):
         t.delete()
 
     elif delete_how == 'delete_this_transaction_and_future_transactions':
+
         t = Transaction.objects.get(user=user, id=transaction_id)
-        ts = Transaction.objects.filter(user=user,
-                                        repeat_transaction_id=int(repeat_transaction_id),
-                                        date__gte=date)
-        ts.delete()
-
-        ts = Transaction.objects.filter(user=user,
-                                        repeat_transaction_id=int(repeat_transaction_id)
-        )
-        
-        transactions_to_update = Transaction.objects.filter(Q(date__gt=t.date) |
-                                                            Q(date=t.date, index__gt=t.index),
-                                                            user=user)
-
-        for t_ in transactions_to_update:
-            try:
-                last_transaction = Transaction.objects.filter(
-                    Q(date__lt=t_.date) |
-                    Q(date__lte=t_.date, index__lt=t_.index),
-                    user=user).latest('date', 'index')
-                closing_balance = last_transaction.closing_balance + t_.size
-            except Transaction.DoesNotExist:
-                closing_balance = self.size
-            t_.closing_balance = closing_balance
-            t_.save()
-
         rt = t.repeat_transaction
-        rt.end_date = t.date
-        rt.save()
+        date = t.date
+        index = t.index
 
-        if(len(ts) == 0):
-            RepeatTransaction.objects.get(id=int(repeat_transaction_id)).delete()
+        transactions = Transaction.objects.filter(
+            repeat_transaction=rt,
+            date__gte=date
+        )
+
+        for t in transactions:
+            t.delete()
+
+        if len(Transaction.objects.filter(repeat_transaction=rt)) == 0:
+            rt.delete()
+        else:
+            rt.end_date = date
+            rt.save()
+        
+        transactions_to_update = Transaction.objects.filter(
+            Q(date__gt=date) |
+            Q(date=date, index__gt=index),
+            user=user
+        ).order_by('date', 'index')
+
+        try:
+            last_transaction = Transaction.objects.filter(
+                Q(date__lt=date) |
+                Q(date=date, index__lt=index),
+                user=user
+            ).latest('date', 'index')
+            closing_balance = last_transaction.closing_balance
+        except Transaction.DoesNotExist:
+            closing_balane = 0
+
+        for t in transactions_to_update:
+            closing_balance = closing_balance + t.size
+            t.closing_balance = closing_balance
+            t.save()
 
     elif delete_how == 'all_transactions_of_this_type':
         t = Transaction.objects.get(user=user, id=transaction_id)
+        date = t.date
+        index = t.index
         rt = t.repeat_transaction
+
+        transactions = Transaction.objects.filter(
+            repeat_transaction=rt
+        ).order_by('date', 'index')
+
+        for t in transactions:
+            t.delete()
         rt.delete()
-
+            
+        first_transaction = transactions.first()
+        
         transactions_to_update = Transaction.objects.filter(
-            date__gte=rt.start_date,
-            user=user)
+            Q(date__gt=first_transaction.date) |
+            Q(date=first_transaction.date, index__gt=first_transaction.index),
+            user=user
+        ).order_by('date', 'index')
 
-        for t_ in transactions_to_update:
-            try:
-                last_transaction = Transaction.objects.filter(
-                    Q(date__lt=t_.date) |
-                    Q(date__lte=t_.date, index__lt=t_.index),
-                    user=user).latest('date', 'index')
-                closing_balance = last_transaction.closing_balance + t_.size
-            except Transaction.DoesNotExist:
-                closing_balance = t_.size
-            t_.closing_balance = closing_balance
-            t_.save()
+        try:
+            last_transaction = Transaction.objects.filter(
+                Q(date__lt=first_transaction.date) |
+                Q(date=first_transaction.date, index__lt=first_transaction.index),
+                user=user
+            ).latest('date', 'index')
+            closing_balance = last_transaction.closing_balance
+        except Transaction.DoesNotExist:
+            closing_balane = 0
+
+        for t in transactions_to_update:
+            closing_balance = closing_balance + t.size
+            t.closing_balance = closing_balance
+            t.save()
         
     return redirect('/home?start={}&end={}'.format(start, end))
 

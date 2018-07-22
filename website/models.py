@@ -182,6 +182,13 @@ class Transaction(models.Model):
             )
         )
 
+    def delete(self, *args, **kwargs):
+        ts = Transaction.objects.filter(date=self.date, user=self.user, index__gt=self.index)
+        for t in ts:
+            t.index -= 1
+            t.save()
+        super().delete(*args, **kwargs)
+
 def get_transactions(user, start, end):
     return Transaction.objects.filter(user=user,
                                       date__gte=start,
