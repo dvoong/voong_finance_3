@@ -209,7 +209,7 @@ def create_transaction(request):
                 else:
                     t2.index = len(Transaction.objects.filter(user=user, date=t2.date))
 
-        transactions = list(Transactions.objects.filter(user=user, date__gt=t_first.date))
+        transactions = list(Transaction.objects.filter(user=user, date__gt=t_first.date))
         transactions = transactions + generated_transactions
         transactions = sorted(transactions, key=lambda t: (t.date, t.index))
         
