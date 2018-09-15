@@ -2,6 +2,7 @@
 * [Running the development server](#1-running-the-test-django-server)
 * [How to connect to the digitalocean droplet](#how-to-connect-to-the-digitalocean-droplet)
 * [Interacting with the production database](#interacting-with-the-production-database)
+* [Deploying to production](#deploying-to-production)
 
 ## Installation
 
@@ -107,3 +108,14 @@ Use the following command to run all tests.
 4. `psql -U postgres` to open the postgres shell
 5. `\dt` to list the tables
 6. `\q` to quit the shell
+
+## Deploying to production
+deployment uses
+* `docker`: builds docker containers
+* `docker-compose`: orchestrates multiple docker containers
+* `docker-machine`: orchestrates machine provisioning
+
+1. `docker-machine ls`: list the provisioned machines
+2. `eval $(docker-machine env <machine config name>)`: sets up the development environment
+3. `docker-compose -f <production docker-compose file> build`
+4. `docker-compose -f <production docker-compose file> up -d`
