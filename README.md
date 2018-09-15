@@ -1,5 +1,5 @@
-[Installation](##Installation)
-[Running the development server](####1.-Running-the-test-django-server)
+* [Installation](#installation)
+* [Running the development server](#1-running-the-test-django-server)
 
 ## Installation
 
