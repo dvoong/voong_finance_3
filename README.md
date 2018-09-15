@@ -1,3 +1,6 @@
+[Installation](## Installation)
+
+
 ## Installation
 
 Create a conda environment
