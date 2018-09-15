@@ -1,5 +1,6 @@
 * [Installation](#installation)
 * [Running the development server](#1-running-the-test-django-server)
+* [How to connect to the digitalocean droplet](#how-to-connect-to-the-digitalocean-droplet)
 
 ## Installation
 
@@ -93,4 +94,7 @@ Use the following command to run all tests.
 
 ## Deployment
 
-TODO
+## How to connect to the digitalocean droplet
+1. login to the web interface, https://cloud.digitalocean.com/login
+2. Find the IP address
+3. `ssh root@<ip address`
