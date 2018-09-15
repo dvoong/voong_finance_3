@@ -1,6 +1,7 @@
 * [Installation](#installation)
 * [Running the development server](#1-running-the-test-django-server)
 * [How to connect to the digitalocean droplet](#how-to-connect-to-the-digitalocean-droplet)
+* [Interacting with the production database](#interacting-with-the-production-database)
 
 ## Installation
 
@@ -95,6 +96,14 @@ Use the following command to run all tests.
 ## Deployment
 
 ## How to connect to the digitalocean droplet
-1. login to the web interface, https://cloud.digitalocean.com/login
+1. Login to the web interface, https://cloud.digitalocean.com/login
 2. Find the IP address
 3. `ssh root@<ip address`
+
+## Interacting with the production database
+1. `ssh` into the digitalocean droplet
+2. List the docker containers, `docker ps`
+3. Connect to the container running the database, `docker exec -it <container id> /bin/bash`
+4. `psql -U postgres` to open the postgres shell
+5. `\dt` to list the tables
+6. `\q` to quit the shell
