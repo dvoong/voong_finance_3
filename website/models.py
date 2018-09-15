@@ -67,7 +67,7 @@ class RepeatTransaction(models.Model):
                             size=self.size,
                             description=self.description,
                             user=self.user,
-                            # index=len(Transaction.objects.filter(user=self.user, date=date)),
+                            index=len(Transaction.objects.filter(user=self.user, date=date)),
                             repeat_transaction=self)
 
     def generate_transactions(self, start, end):

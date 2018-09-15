@@ -541,7 +541,7 @@ def delete_transaction(request):
             ).latest('date', 'index')
             closing_balance = last_transaction.closing_balance
         except Transaction.DoesNotExist:
-            closing_balane = 0
+            closing_balance = 0
 
         for t in transactions_to_update:
             closing_balance = closing_balance + t.size
