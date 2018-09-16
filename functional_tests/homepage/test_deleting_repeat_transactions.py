@@ -107,6 +107,7 @@ class TestRepeatTransactionDeletion(TestCase):
                                      description='a',
                                      repeats='weekly',
                                      ends={'how': 'never_ends'})
+
         home_page.create_transaction(date=dt.date(2018, 1, 9),
                                      size=5,
                                      description='b')
@@ -400,8 +401,6 @@ class TestRepeatTransactionUpdate(TestCase):
 
         self.assertEqual(len(transactions), 5)
 
-        import time
-        time.sleep(10)
         t = transactions[4]
         self.assertEqual(t.date, dt.date(2018, 1, 22))
         self.assertEqual('c', t.description)

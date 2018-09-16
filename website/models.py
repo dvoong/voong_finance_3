@@ -4,8 +4,61 @@ import numpy as np
 from django.db import models
 from django.contrib.auth.models import User
 from django.db.models import Q
-
 import datetime as dt
+
+def add_1day(date):
+    return date + datetime.timedelta(days=1)
+
+def add_7days(date):
+    return date + datetime.timedelta(days=7)
+
+def next_month(date):
+    day = date.day
+    if date.month == 12:
+        year = date.year + 1
+        month = 1
+    else:
+        year = date.year
+        month = date.month + 1
+
+    try:
+        next_month = datetime.date(year, month, day)
+    except ValueError:
+        # day is not valid for the next month, fallback to last day of that month
+        if month == 12:
+            year += 1
+            month = 1
+        else:
+            month += 1
+        next_month = datetime.date(year, month, 1) - datetime.timedelta(days=1)
+    return next_month
+        
+def next_year(date):
+    day = date.day
+    month = date.month
+    year = date.year + 1
+    
+    try:
+        next_year = datetime.date(year, month, day)
+    except ValueError:
+        if month == 12:
+            year += 1
+            month = 1
+        else:
+            month += 1
+        next_year = datetime.date(year, month, 1) - datetime.timedelta(days=1)
+
+    return next_year
+
+frequency_string_to_next_date_function = {
+    'daily': add_1day,
+    'weekly': add_7days,
+    'monthly': next_month,
+    'annually': next_year
+}
+
+def get_next_transaction_date(date, frequency):
+    return frequency_string_to_next_date_function[frequency](date)
 
 class RepeatTransaction(models.Model):
 
@@ -14,6 +67,7 @@ class RepeatTransaction(models.Model):
         ('weekly', 'weekly'),
         ('monthly', 'monthly'),
     )
+    MAX_GENERATIONS = 1000
 
     start_date = models.DateField()
     previous_transaction_date = models.DateField(null=True)
@@ -24,94 +78,40 @@ class RepeatTransaction(models.Model):
     frequency = models.CharField(max_length=7, null=True)
     end_date = models.DateField(null=True)
 
-    def generate_next_transaction(self, end):
+    def create_transaction(self, date):
+        return  Transaction(
+            date=date,
+            size=self.size,
+            description=self.description,
+            user=self.user,
+            index=len(Transaction.objects.filter(
+                user=self.user,
+                date=date)),
+            repeat_transaction=self
+        )
 
-        if self.start_date > end:
-            return
-        
+    def get_next_transaction_date(self):
         if self.previous_transaction_date is None:
-            self.previous_transaction_date = self.start_date
-            self.save()
-            yield Transaction(date=self.start_date,
-                              size=self.size,
-                              description=self.description,
-                              user=self.user,
-                              index=len(Transaction.objects.filter(
-                                  user=self.user,
-                                  date=self.start_date)),
-                              repeat_transaction=self)
-
-        f = {
-            'daily': add_1day,
-            'weekly': add_7days,
-            'monthly': next_month,
-            'annually': next_year
-        }[self.frequency]
-
-        date = f(self.previous_transaction_date)
-        t = Transaction(date=date,
-                        size=self.size,
-                        description=self.description,
-                        user=self.user,
-                        index=len(Transaction.objects.filter(
-                            user=self.user,
-                            date=date)),
-                        repeat_transaction=self)
-
-        while t.date <= end and (self.end_date is None or t.date <= self.end_date):
-            self.previous_transaction_date = t.date
-            self.save()
-            yield t
-            date = f(self.previous_transaction_date)
-            t = Transaction(date=date,
-                            size=self.size,
-                            description=self.description,
-                            user=self.user,
-                            index=len(Transaction.objects.filter(user=self.user, date=date)),
-                            repeat_transaction=self)
-
-    def generate_transactions(self, start, end):
-
-        try:
-            last_transaction = Transaction.objects.filter(
-                user=self.user,
-                date__lte=start
-            ).latest('date', 'index')
-            closing_balance = last_transaction.closing_balance
-        except Transaction.DoesNotExist:
-            closing_balance = 0
-
-        date = start
-
-        while date <= end:
-            t = Transaction.objects.create(
-                date=date,
-                size=self.size,
-                user=self.user,
-                index=len(Transaction.objects.filter(user=self.user, date=date)),
-                description=self.description,
-                repeat_transaction=self
-            )
-            if date == start:
-                t.closing_balance = closing_balance + self.size
-                closing_balance += self.size
-            t.save()
-            date = self.next_date(date)
-
-        for t in Transaction.objects.filter(date__gt=start).order_by('date', 'index'):
-            closing_balance = closing_balance + t.size
-            t.closing_balance = closing_balance
-            t.save()
-            
-    def next_date(self, date):
-        f = {
-            'daily': add_1day,
-            'weekly': add_7days,
-            'monthly': next_month,
-            'annually': next_year
-        }[self.frequency]
-        date = f(date)
+            return self.start_date
+        date = get_next_transaction_date(self.previous_transaction_date, self.frequency)
+        if self.end_date is not None and date > self.end_date:
+            return None
         return date
+
+    def generate_next_transaction(self, end):
+        counter = 0
+        while True:
+            date = self.get_next_transaction_date()
+            if date is None or date > end:
+                return
+
+            self.previous_transaction_date = date
+            self.save()
+            yield self.create_transaction(date)
+            counter += 1
+            if counter >= self.MAX_GENERATIONS:
+                # todo raise exception when too many transactions are generated
+                return
             
 # Create your models here.
 class Transaction(models.Model):
@@ -271,48 +271,5 @@ def get_balances(user, start, end):
         
 
     return balances, transactions_df
-
-def add_1day(date):
-    return date + datetime.timedelta(days=1)
-
-def add_7days(date):
-    return date + datetime.timedelta(days=7)
-
-def next_month(date):
-    day = date.day
-    if date.month == 12:
-        year = date.year + 1
-        month = 1
-    else:
-        year = date.year
-        month = date.month + 1
-
-    try:
-        next_month = datetime.date(year, month, day)
-    except ValueError:
-        if month == 12:
-            year += 1
-            month = 1
-        else:
-            month += 1
-        next_month = datetime.date(year, month, 1) - datetime.timedelta(days=1)
-    return next_month
-        
-def next_year(date):
-    day = date.day
-    month = date.month
-    year = date.year + 1
-    
-    try:
-        next_year = datetime.date(year, month, day)
-    except ValueError:
-        if month == 12:
-            year += 1
-            month = 1
-        else:
-            month += 1
-        next_year = datetime.date(year, month, 1) - datetime.timedelta(days=1)
-
-    return next_year
     
     

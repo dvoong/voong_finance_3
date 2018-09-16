@@ -99,7 +99,7 @@ Use the following command to run all tests.
 ## How to connect to the digitalocean droplet
 1. Login to the web interface, https://cloud.digitalocean.com/login
 2. Find the IP address
-3. `ssh root@<ip address`
+3. `ssh root@<ip address>`
 
 ## Interacting with the production database
 1. `ssh` into the digitalocean droplet
@@ -116,6 +116,6 @@ deployment uses
 * `docker-machine`: orchestrates machine provisioning
 
 1. `docker-machine ls`: list the provisioned machines
-2. `eval $(docker-machine env <machine config name>)`: sets up the development environment
+2. `eval $(docker-machine env <container host>)`: sets up the deployment environment
 3. `docker-compose -f <production docker-compose file> build`
 4. `docker-compose -f <production docker-compose file> up -d`
