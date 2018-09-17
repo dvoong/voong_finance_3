@@ -19,8 +19,9 @@ from voong_finance.utils.argparse import ArgParser
 from voong_finance.utils import TokenGenerator
 from website import forms
 from django.contrib.auth import views as auth_views
-from django.contrib.auth.decorators import login_required
-from django.utils.decorators import method_decorator
+from website.views.create_transaction import CreateTransactionView
+from website.views.home import HomeView
+from website.views.register import RegisterView
 
 strptime = datetime.datetime.strptime
 
@@ -28,156 +29,18 @@ strptime = datetime.datetime.strptime
 def is_authenticated(user):
     return user.is_authenticated
 
+create_transaction = login_required(CreateTransactionView.as_view())
+home = login_required(HomeView.as_view())
+
 def index(request):
     if is_authenticated(request.user) == True:
         return redirect('home')
     else:
         return redirect('welcome')
-
-@method_decorator(login_required, name='dispatch')
-class HomeView(View):
-
-    DEFAULT_DATE_RANGE = datetime.timedelta(days=84) # quarterly
-
-    def get_start_and_end_dates(self, request, today):
-        if 'start' not in request.GET and 'end' not in request.GET:
-            days = self.DEFAULT_DATE_RANGE.total_seconds() / (3600 * 24)
-            days_before = math.ceil(days / 2) - 1
-            start = today - datetime.timedelta(days=days_before)
-            end = start + self.DEFAULT_DATE_RANGE - datetime.timedelta(days=1)
-        elif 'start' in request.GET and 'end' not in request.GET:
-            start = iso_to_date(request.GET['start'])
-            end = start + self.DEFAULT_DATE_RANGE - datetime.timedelta(days=1)
-        elif 'end' in request.GET and 'start' not in request.GET:
-            end = iso_to_date(request.GET['end'])
-            start = end - self.DEFAULT_DATE_RANGE + datetime.timedelta(days=1)
-        else:
-            start = iso_to_date(request.GET['start'])
-            end = iso_to_date(request.GET['end'])
-            
-        return start, end
-
-    def parse_args(self, request):
-        args = {}
-        today = datetime.date.today()
-        start, end = self.get_start_and_end_dates(request, today)
-        args['start'] = start
-        args['end'] = end
-        args['user'] = request.user
-        args['today'] = today
-        args['days'] = (end - start).days
-        args['center_on_today_start'] = today - datetime.timedelta(days=args['days']//2)
-        args['center_on_today_end'] = today + datetime.timedelta(days=args['days'] - args['days']//2)
-        return args
-
-    def get(self, request):
-
-        args = self.parse_args(request)
-        balances, transactions = models.get_balances(args['user'], args['start'], args['end'])
-        balances['date'] = balances['date'].dt.strftime('%Y-%m-%d')
-        transactions['date'] = transactions['date'].dt.strftime('%Y-%m-%d')
-        repeat_transactions = RepeatTransaction.objects.filter(user=args['user'])
-
-        template_kwargs = {
-            'transactions': transactions.to_json(orient='records'),
-            'balances': balances.to_dict('records'),
-            'start': args['start'],
-            'end': args['end'],
-            'today': args['today'],
-            'start_plus_7': args['start'] + datetime.timedelta(days=7),
-            'end_plus_7': args['end'] + datetime.timedelta(days=7),
-            'start_minus_7': args['start'] - datetime.timedelta(days=7),
-            'end_minus_7': args['end'] - datetime.timedelta(days=7),
-            'center_on_today_start': args['center_on_today_start'],
-            'center_on_today_end': args['center_on_today_end'],
-            'repeat_transactions': repeat_transactions,
-            'authenticated': args['user'].is_authenticated,
-            'new_transaction_form': forms.NewTransactionForm(auto_id="%s")
-        }
-        return render(request, 'website/home.html', template_kwargs)
-
-    
-@login_required    
-def home(request):
-    
-    user = request.user
-    today = datetime.date.today()
-
-    argparser = ArgParser()
-    argparser.add('start', iso_to_date, today - datetime.timedelta(days=14))
-    argparser.add('end', iso_to_date, today + datetime.timedelta(days=14))
-    args = argparser.parse_args(request, 'GET')
-
-    start = args['start']
-    end = args['end']
-    
-    days = (end - start).days
-    center_on_today_start = today - datetime.timedelta(days=days//2)
-    center_on_today_end = today + datetime.timedelta(days=days - days//2)
-
-    balances, transactions = models.get_balances(user, start, end)
-
-    balances['date'] = balances['date'].dt.strftime('%Y-%m-%d')
-    if len(transactions):
-        transactions['date'] = transactions['date'].dt.strftime('%Y-%m-%d')
-
-    repeat_transactions = RepeatTransaction.objects.filter(user=user)
-    
-    template_kwargs = {
-        'transactions': transactions.to_json(orient='records'),
-        'balances': balances.to_dict('records'),
-        'start': start,
-        'end': end,
-        'today': today,
-        'start_plus_7': start + datetime.timedelta(days=7),
-        'end_plus_7': end + datetime.timedelta(days=7),
-        'start_minus_7': start - datetime.timedelta(days=7),
-        'end_minus_7': end - datetime.timedelta(days=7),
-        'center_on_today_start': center_on_today_start,
-        'center_on_today_end': center_on_today_end,
-        'repeat_transactions': repeat_transactions,
-        'authenticated': request.user.is_authenticated,
-        'new_transaction_form': forms.NewTransactionForm(auto_id="%s")
-    }
-    return render(request, 'website/home.html', template_kwargs)
+register = RegisterView.as_view()
 
 def welcome(request):
     return render(request, 'website/welcome.html')
-
-class RegisterView(View):
-
-    @staticmethod
-    def send_email_verification_email(request, email, user):
-        subject = 'Verify your email'
-        current_site = get_current_site(request)
-        domain = current_site.domain
-        
-        account_activation_token = TokenGenerator()
-        body = 'This is a test message sent to {}.\nhttp://{}/activate/{}/{}'.format(
-            email,
-            domain,
-            force_text(urlsafe_base64_encode(force_bytes(user.pk))),
-            account_activation_token.make_token(user)
-        )
-        send_mail(subject, body, 'registration@voong-finance.co.uk', [email, ])
-
-    def post(self, request):
-
-        argparser = ArgParser()
-        argparser.add('email', required=True)
-        argparser.add('password', required=True)
-        args = argparser.parse_args(request, 'POST')
-    
-        email = args['email']
-        password = args['password']
-    
-        user = User.objects.create_user(username=email, email=email, password=password)
-        user.is_active = False
-
-        self.send_email_verification_email(request, email, user)
-
-        user.save()
-        return redirect('verify_email')
 
 def activate(request, uidb64, token):
 
@@ -208,169 +71,169 @@ def login_view(request):
         return redirect('home')
     else:
         return redirect('welcome')
+    
+# def create_transaction(request):
+#     date = strptime(request.POST['date'], '%Y-%m-%d').date()
+#     user = request.user
+#     size = float(request.POST['transaction_size'])
+#     description = request.POST['description']
+#     repeat_status = request.POST.get('repeats', 'does_not_repeat')
+#     frequency = request.POST.get('frequency', None)
+#     today = datetime.date.today()
+#     if 'start' in request.POST:
+#         start = strptime(request.POST['start'], '%Y-%m-%d').date()
+#     else:
+#         start = today - datetime.timedelta(days=14)
+#     if  'end' in request.POST:
+#         end = strptime(request.POST['end'], '%Y-%m-%d').date()
+#     else:
+#         end = today + datetime.timedelta(days=14)
 
-def create_transaction(request):
-    date = strptime(request.POST['date'], '%Y-%m-%d').date()
-    user = request.user
-    size = float(request.POST['transaction_size'])
-    description = request.POST['description']
-    repeat_status = request.POST.get('repeats', 'does_not_repeat')
-    frequency = request.POST.get('frequency', None)
-    today = datetime.date.today()
-    if 'start' in request.POST:
-        start = strptime(request.POST['start'], '%Y-%m-%d').date()
-    else:
-        start = today - datetime.timedelta(days=14)
-    if  'end' in request.POST:
-        end = strptime(request.POST['end'], '%Y-%m-%d').date()
-    else:
-        end = today + datetime.timedelta(days=14)
+#     if repeat_status == 'does_not_repeat':
 
-    if repeat_status == 'does_not_repeat':
-
-        # generate repeat transactions
-        # repeat_transactions = RepeatTransaction.objects.filter(
-        #     user=user,
-        #     start_date__lte=end)
+#         # generate repeat transactions
+#         # repeat_transactions = RepeatTransaction.objects.filter(
+#         #     user=user,
+#         #     start_date__lte=end)
         
-        # for rt in repeat_transactions:
-        #     for t in rt.generate_next_transaction(end):
-        #         t.recalculate_closing_balances()
+#         # for rt in repeat_transactions:
+#         #     for t in rt.generate_next_transaction(end):
+#         #         t.recalculate_closing_balances()
 
-        #######
+#         #######
 
-        repeat_transactions = RepeatTransaction.objects.filter(
-            user=user,
-            start_date__lte=end
-        )
+#         repeat_transactions = RepeatTransaction.objects.filter(
+#             user=user,
+#             start_date__lte=end
+#         )
 
-        generated_transactions = []
+#         generated_transactions = []
         
-        for rt in repeat_transactions:
-            for t in rt.generate_next_transaction(end):
-                generated_transactions.append(t)
-                # t.recalculate_closing_balances()
+#         for rt in repeat_transactions:
+#             for t in rt.generate_next_transaction(end):
+#                 generated_transactions.append(t)
+#                 # t.recalculate_closing_balances()
 
-        t = Transaction(
-            date=date,
-            size=size,
-            description=description,
-            user=user,
-        )
+#         t = Transaction(
+#             date=date,
+#             size=size,
+#             description=description,
+#             user=user,
+#         )
 
-        generated_transactions.append(t)
+#         generated_transactions.append(t)
 
-        generated_transactions = sorted(generated_transactions, key=lambda t: t.date)
+#         generated_transactions = sorted(generated_transactions, key=lambda t: t.date)
         
-        t_first = generated_transactions[0]
-        t_first.index = len(Transaction.objects.filter(user=user, date=t_first.date))
+#         t_first = generated_transactions[0]
+#         t_first.index = len(Transaction.objects.filter(user=user, date=t_first.date))
 
-        if len(generated_transactions) > 1:
-            for i in range(len(generated_transactions) - 1):
-                t1 = generated_transactions[i]
-                t2 = generated_transactions[i+1]
-                if t1.date == t2.date:
-                    t2.index = t1.index + 1
-                else:
-                    t2.index = len(Transaction.objects.filter(user=user, date=t2.date))
+#         if len(generated_transactions) > 1:
+#             for i in range(len(generated_transactions) - 1):
+#                 t1 = generated_transactions[i]
+#                 t2 = generated_transactions[i+1]
+#                 if t1.date == t2.date:
+#                     t2.index = t1.index + 1
+#                 else:
+#                     t2.index = len(Transaction.objects.filter(user=user, date=t2.date))
 
-        transactions = list(Transaction.objects.filter(user=user, date__gt=t_first.date))
-        transactions = transactions + generated_transactions
-        transactions = sorted(transactions, key=lambda t: (t.date, t.index))
+#         transactions = list(Transaction.objects.filter(user=user, date__gt=t_first.date))
+#         transactions = transactions + generated_transactions
+#         transactions = sorted(transactions, key=lambda t: (t.date, t.index))
         
-        try:
-            last_transaction = Transaction.objects.filter(
-                user=user,
-                date__lte=t_first.date
-            ).latest(
-                'date',
-                'index'
-            )
-            closing_balance = last_transaction.closing_balance
-        except Transaction.DoesNotExist:
-            closing_balance = 0
+#         try:
+#             last_transaction = Transaction.objects.filter(
+#                 user=user,
+#                 date__lte=t_first.date
+#             ).latest(
+#                 'date',
+#                 'index'
+#             )
+#             closing_balance = last_transaction.closing_balance
+#         except Transaction.DoesNotExist:
+#             closing_balance = 0
 
-        for t in transactions:
-            closing_balance += t.size
-            t.closing_balance = closing_balance
-            t.save()
+#         for t in transactions:
+#             closing_balance += t.size
+#             t.closing_balance = closing_balance
+#             t.save()
 
-        for rt in repeat_transactions:
-            rt.save()
+#         for rt in repeat_transactions:
+#             rt.save()
 
-        # #######
+#         # #######
         
-        #     index = len(Transaction.objects.filter(user=request.user, date=date))
-        #     t = Transaction(
-        #         date=date,
-        #         size=size,
-        #         description=description,
-        #         user=user,
-        #         index=index
-        #     )
+#         #     index = len(Transaction.objects.filter(user=request.user, date=date))
+#         #     t = Transaction(
+#         #         date=date,
+#         #         size=size,
+#         #         description=description,
+#         #         user=user,
+#         #         index=index
+#         #     )
 
-        #     t.recalculate_closing_balances()
+#         #     t.recalculate_closing_balances()
         
-    else:
-        ends_how = request.POST.get('ends_how', 'never_ends')
-        if ends_how  == 'never_ends':
-            RepeatTransaction.objects.create(
-                start_date=date,
-                size=size,
-                description=description,
-                user=request.user,
-                index=0,
-                frequency=frequency
-            )
-        elif ends_how == 'n_transactions':
+#     else:
+#         ends_how = request.POST.get('ends_how', 'never_ends')
+#         if ends_how  == 'never_ends':
+#             RepeatTransaction.objects.create(
+#                 start_date=date,
+#                 size=size,
+#                 description=description,
+#                 user=request.user,
+#                 index=0,
+#                 frequency=frequency
+#             )
+#         elif ends_how == 'n_transactions':
             
-            def get_end_date(start, frequency, n_transactions):
-                if frequency == 'daily':
-                    return start + datetime.timedelta(days=n_transactions - 1)
-                elif frequency == 'weekly':
-                    return start + datetime.timedelta(days=7*(n_transactions - 1))
-                elif frequency == 'monthly':
+#             def get_end_date(start, frequency, n_transactions):
+#                 if frequency == 'daily':
+#                     return start + datetime.timedelta(days=n_transactions - 1)
+#                 elif frequency == 'weekly':
+#                     return start + datetime.timedelta(days=7*(n_transactions - 1))
+#                 elif frequency == 'monthly':
 
-                    end = start
-                    year_end = start.year + (start.month - 1 + n_transactions) // 12
-                    month_end = (start.month - 1 + n_transactions) % 12
-                    month_end = 12 if month_end == 0 else month_end
-                    try:
-                        return datetime.date(year_end, month_end, start.day)
-                    except ValueError:
-                        x = datetime.date(year_end, month_end, 1)
-                        return x - datetime.timedelta(days=1)
+#                     end = start
+#                     year_end = start.year + (start.month - 1 + n_transactions) // 12
+#                     month_end = (start.month - 1 + n_transactions) % 12
+#                     month_end = 12 if month_end == 0 else month_end
+#                     try:
+#                         return datetime.date(year_end, month_end, start.day)
+#                     except ValueError:
+#                         x = datetime.date(year_end, month_end, 1)
+#                         return x - datetime.timedelta(days=1)
 
-            n_transactions = int(request.POST['n_transactions'])
+#             n_transactions = int(request.POST['n_transactions'])
             
-            end_date = get_end_date(date,
-                                    n_transactions=n_transactions,
-                                    frequency=frequency)
+#             end_date = get_end_date(date,
+#                                     n_transactions=n_transactions,
+#                                     frequency=frequency)
 
-            RepeatTransaction.objects.create(
-                start_date=date,
-                size=size,
-                description=description,
-                user=request.user,
-                index=0,
-                frequency=frequency,
-                end_date=end_date
-            )
+#             RepeatTransaction.objects.create(
+#                 start_date=date,
+#                 size=size,
+#                 description=description,
+#                 user=request.user,
+#                 index=0,
+#                 frequency=frequency,
+#                 end_date=end_date
+#             )
 
-        elif ends_how == 'ends_on_date':
+#         elif ends_how == 'ends_on_date':
 
-            RepeatTransaction.objects.create(
-                start_date=date,
-                size=size,
-                description=description,
-                user=request.user,
-                index=0,
-                frequency=frequency,
-                end_date=request.POST['end_date']
-            )
+#             RepeatTransaction.objects.create(
+#                 start_date=date,
+#                 size=size,
+#                 description=description,
+#                 user=request.user,
+#                 index=0,
+#                 frequency=frequency,
+#                 end_date=request.POST['end_date']
+#             )
             
             
-    return redirect('/home?start={}&end={}'.format(start, end))
+#     return redirect('/home?start={}&end={}'.format(start, end))
 
 def update_transaction(request):
     

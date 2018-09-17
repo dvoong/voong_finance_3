@@ -134,7 +134,7 @@ class TestRepeatTransactionDeletion(TestCase):
         home_page = HomePage(self.driver)
         t_list = home_page.transaction_list
         transactions = t_list.get_transactions()
-
+        
         self.assertEqual(len(transactions), 2)
 
         t = transactions[0]

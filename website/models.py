@@ -106,7 +106,6 @@ class RepeatTransaction(models.Model):
                 return
 
             self.previous_transaction_date = date
-            self.save()
             yield self.create_transaction(date)
             counter += 1
             if counter >= self.MAX_GENERATIONS:
@@ -126,51 +125,6 @@ class Transaction(models.Model):
                                            null=True,
                                            on_delete=models.CASCADE)
 
-    def recalculate_closing_balances(self):
-
-        Transaction = self.__class__
-        
-        try:
-            last_transaction = Transaction.objects.filter(
-                user=self.user,
-                date__lte=self.date
-            ).latest('date', 'index')
-            closing_balance = last_transaction.closing_balance + self.size
-        except Transaction.DoesNotExist:
-            closing_balance = self.size
-
-        self.closing_balance = closing_balance
-        self.save()
-            
-        # update future transactions
-        transactions = Transaction.objects.filter(
-            date__gt=self.date,
-            user=self.user
-        ).order_by('date', 'index')
-        for t in transactions:
-            # t.closing_balance += self.size
-            t.closing_balance = closing_balance + t.size
-            closing_balance += t.size
-            t.save()
-
-    def get_previous_transaction(self):
-
-        try:
-            last_transaction = Transaction.objects.filter(
-                Q(date__lt=self.date) | Q(date=self.date, index__lt=self.index),
-                user=self.user
-            ).latest('date', 'index')
-            return last_transaction
-        except Transaction.DoesNotExist:
-            return None
-
-    def get_later_transactions(self):
-
-        return Transaction.objects.filter(
-            Q(date__gt=self.date) | Q(date=self.date, index__gt=self.index),
-            user=self.user
-        )
-
     def __str__(self):
         return str(
             (
@@ -189,10 +143,55 @@ class Transaction(models.Model):
             t.save()
         super().delete(*args, **kwargs)
 
-def get_transactions(user, start, end):
-    return Transaction.objects.filter(user=user,
-                                      date__gte=start,
-                                      date__lte=end).order_by('date', 'index')
+    def get_following_transactions(self):
+        return Transaction.objects.filter(
+            Q(date__gt=self.date) | Q(date=self.date, index__gt=self.index),
+            user=self.user
+        ).order_by('date', 'index')
+
+    def get_previous_transaction(self):
+        return get_previous_transaction(self.user, self.date, self.index)
+        
+    def recalculate_closing_balances(self):
+
+        transactions = self.get_following_transactions()
+
+        closing_balance = self.closing_balance
+        for t in transactions:
+            closing_balance += t.size
+            t.closing_balance = closing_balance
+            t.save()
+    
+def get_balance(user, date):
+
+    previous_transaction = get_previous_transaction(user, date)
+    if previous_transaction is not None:
+        closing_balance = previous_transaction.closing_balance
+    else :
+        closing_balance = 0.
+
+    repeat_transactions = RepeatTransaction.objects.filter(user=user)
+    transactions = []
+    for rt in repeat_transactions:
+        for t in rt.generate_next_transaction(date):
+            transactions.append(t)
+
+    transactions = sorted(transactions, key=lambda t: (t.date, t.repeat_transaction.id))
+
+    date = None
+    for t in transactions:
+        if t.date != date:
+            index = 0
+        else:
+            index += 1
+        closing_balance += t.size
+        t.index = index
+        t.closing_balance = closing_balance
+        t.save()
+        t.repeat_transaction.previous_transaction_date = t.date
+        t.repeat_transaction.save()
+
+    return closing_balance
                                
 def get_balances(user, start, end):
 
@@ -243,6 +242,8 @@ def get_balances(user, start, end):
             closing_balance += t.size
             t.closing_balance = closing_balance
             t.save()
+            t.repeat_transaction.previous_transaction_date = t.date
+            t.repeat_transaction.save()
 
     dates = pd.DataFrame(pd.date_range(start, end), columns=['date'])
     balances = dates
@@ -271,5 +272,27 @@ def get_balances(user, start, end):
         
 
     return balances, transactions_df
-    
-    
+
+def get_previous_transaction(user, date, index=None):
+    try:
+        if index is not None:
+            previous_transaction = Transaction.objects.filter(
+                Q(date__lt=date) | Q(date=date, index__lt=index),
+                user=user
+            ).latest('date', 'index')
+        else:
+            previous_transaction = Transaction.objects.filter(
+                date__lte=date,
+                user=user
+            ).latest('date', 'index')
+            
+    except Transaction.DoesNotExist:
+        previous_transaction = None
+    return previous_transaction
+
+def get_transactions(user, start, end):
+    return Transaction.objects.filter(
+        user=user,
+        date__gte=start,
+        date__lte=end
+    ).order_by('date', 'index')
