@@ -51,13 +51,13 @@ class HomePage:
 
     def show_repeat_transactions_view(self):
         self.repeat_transactions_tab.click()
-        WebDriverWait(self.driver, 5).until(
+        WebDriverWait(self.driver, 10).until(
             EC.visibility_of_element_located((By.ID, 'repeat-transactions'))
         )
 
     def show_transactions_view(self):
         self.transactions_tab.click()
-        WebDriverWait(self.driver, 5).until(
+        WebDriverWait(self.driver, 10).until(
             EC.visibility_of_element_located((By.ID, 'transactions'))
         )
 
@@ -142,7 +142,7 @@ class TransactionForm:
         self.description_input.send_keys(description)
 
     def submit(self):
-        WebDriverWait(self.driver, 5).until(
+        WebDriverWait(self.driver, 10).until(
             EC.invisibility_of_element_located((By.ID, 'repeat-options-div'))
         )
         self.submit_button.click()
@@ -183,7 +183,7 @@ class BalanceChart:
         self.x_axis = self.canvas.find_element_by_id('x-axis')
         self.y_axis = self.canvas.find_element_by_id('y-axis')
         self.plot_area = self.canvas.find_element_by_id('plot-area')
-        WebDriverWait(self.element, 5).until(
+        WebDriverWait(self.element, 10).until(
             EC.presence_of_element_located((By.CSS_SELECTOR, '.bar'))
         )
         self.bars = [BalanceBar(element) for element in self.plot_area.find_elements_by_css_selector('.bar')]
@@ -241,7 +241,7 @@ class Transaction:
         return self.balance_element.text
 
     def save(self):
-        # WebDriverWait(self.element, 5).until(
+        # WebDriverWait(self.element, 10).until(
         #     lambda x: self.save_button.is_displayed
         # )
         self.save_button.click()
@@ -295,16 +295,16 @@ class RepeatOptions:
         self.frequency_input = Select(self.element.find_element_by_id('frequency-input'))
 
     def submit(self):
-        WebDriverWait(self.driver, 5).until(
+        WebDriverWait(self.driver, 10).until(
             EC.visibility_of_element_located((By.ID, "repeat-options-submit-button"))
         )
         self.submit_button.click()
-        WebDriverWait(self.driver, 5).until(
+        WebDriverWait(self.driver, 10).until(
             EC.invisibility_of_element_located((By.ID, "repeat-options-submit -button"))
         )
 
     def select(self, option):
-        WebDriverWait(self.driver, 5).until(
+        WebDriverWait(self.driver, 10).until(
             EC.visibility_of_element_located((By.ID, 'ends-after-n-transactions'))
         )
         if option == 'ends_after_#_transactions':

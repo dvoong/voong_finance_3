@@ -45,8 +45,7 @@ class HomeView(View):
         args = self.parse_args(request)
         balances, transactions = models.get_balances(args['user'], args['start'], args['end'])
         balances['date'] = balances['date'].dt.strftime('%Y-%m-%d')
-        if len(transactions):
-            transactions['date'] = transactions['date'].dt.strftime('%Y-%m-%d')
+        transactions['date'] = transactions['date'].dt.strftime('%Y-%m-%d')
         repeat_transactions = models.RepeatTransaction.objects.filter(user=args['user'])
 
         template_kwargs = {

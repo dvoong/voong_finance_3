@@ -56,9 +56,100 @@ frequency_string_to_next_date_function = {
     'monthly': next_month,
     'annually': next_year
 }
+    
+def get_balance(user, date):
+    df_balances, df_transactions = get_balances(user, date, date)
+    return df_balances['balance'].values[0]
+
+def get_balances(user, start, end):
+
+    # generate repeat transactions
+    repeat_transactions = get_repeat_transactions(user)
+    transactions = []
+    for rt in repeat_transactions:
+        transactions.extend(rt.generate_repeat_transactions(end))
+    transactions = sorted(transactions, key=lambda t: (t.date, t.repeat_transaction_id))
+    
+    if len(transactions):
+        # get previous transaction
+        previous_transaction = get_previous_transaction(user, transactions[0].date)
+        if previous_transaction is not None:
+            closing_balance = previous_transaction.closing_balance
+        else:
+            closing_balance = 0.
+        for t in transactions:
+            index = len(Transaction.objects.filter(date=t.date))
+            t.index = index
+            closing_balance = closing_balance + t.size
+            t.closing_balance = closing_balance
+            t.save()
+            t.repeat_transaction.previous_transaction_date = t.date
+            t.repeat_transaction.save()
+
+    previous_transaction = get_previous_transaction(user, start)
+    if previous_transaction is not None:
+        closing_balance = previous_transaction.closing_balance
+    else:
+        closing_balance = 0.
+
+    dates = pd.date_range(start, end)
+    df_balances = pd.DataFrame(dates, columns=['date'])
+    df_balances['balance'] = closing_balance
+    transactions = get_transactions(user, start, end)
+
+    values = []
+    for t in transactions:
+        values.append(
+            (
+                t.date,
+                t.size,
+                t.description,
+                t.closing_balance,
+                t.id,
+                t.repeat_transaction_id
+            )
+        )
+    columns = ['date', 'size', 'description', 'closing_balance', 'id', 'repeat_transaction_id']
+    df_transactions = pd.DataFrame(values, columns=columns)
+    df_transactions['date'] = pd.to_datetime(df_transactions['date'])
+    df_transactions['size'] = df_transactions['size'].astype(float)
+    df_transactions_by_date = df_transactions.groupby('date')[['size']].sum().reset_index()
+    df_balances = pd.merge(df_balances, df_transactions_by_date, on='date', how='left').fillna(0)
+    df_balances['size'] = df_balances['size'].cumsum()
+    df_balances['balance'] = df_balances['balance'] + df_balances['size']
+    df_balances = df_balances[['date', 'balance']]
+
+    return df_balances, df_transactions
 
 def get_next_transaction_date(date, frequency):
     return frequency_string_to_next_date_function[frequency](date)
+
+def get_previous_transaction(user, date, index=None):
+    try:
+        if index is not None:
+            previous_transaction = Transaction.objects.filter(
+                Q(date__lt=date) | Q(date=date, index__lt=index),
+                user=user
+            ).latest('date', 'index')
+        else:
+            previous_transaction = Transaction.objects.filter(
+                date__lt=date,
+                user=user
+            ).latest('date', 'index')
+            
+    except Transaction.DoesNotExist:
+        previous_transaction = None
+    return previous_transaction
+
+def get_repeat_transactions(user):
+    return RepeatTransaction.objects.filter(user=user)
+
+def get_transactions(user, start, end):
+    return Transaction.objects.filter(
+        user=user,
+        date__gte=start,
+        date__lte=end
+    ).order_by('date', 'index')
 
 class RepeatTransaction(models.Model):
 
@@ -111,6 +202,9 @@ class RepeatTransaction(models.Model):
             if counter >= self.MAX_GENERATIONS:
                 # todo raise exception when too many transactions are generated
                 return
+
+    def generate_repeat_transactions(self, end):
+        return [t for t in self.generate_next_transaction(end)]
             
 # Create your models here.
 class Transaction(models.Model):
@@ -161,138 +255,3 @@ class Transaction(models.Model):
             closing_balance += t.size
             t.closing_balance = closing_balance
             t.save()
-    
-def get_balance(user, date):
-
-    previous_transaction = get_previous_transaction(user, date)
-    if previous_transaction is not None:
-        closing_balance = previous_transaction.closing_balance
-    else :
-        closing_balance = 0.
-
-    repeat_transactions = RepeatTransaction.objects.filter(user=user)
-    transactions = []
-    for rt in repeat_transactions:
-        for t in rt.generate_next_transaction(date):
-            transactions.append(t)
-
-    transactions = sorted(transactions, key=lambda t: (t.date, t.repeat_transaction.id))
-
-    date = None
-    for t in transactions:
-        if t.date != date:
-            index = 0
-        else:
-            index += 1
-        closing_balance += t.size
-        t.index = index
-        t.closing_balance = closing_balance
-        t.save()
-        t.repeat_transaction.previous_transaction_date = t.date
-        t.repeat_transaction.save()
-
-    return closing_balance
-                               
-def get_balances(user, start, end):
-
-    repeat_transactions = RepeatTransaction.objects.filter(
-        user=user,
-        start_date__lte=end
-    )
-
-    generated_transactions = []
-        
-    for rt in repeat_transactions:
-        for t in rt.generate_next_transaction(end):
-            generated_transactions.append(t)
-            # t.recalculate_closing_balances()
-
-    generated_transactions = sorted(generated_transactions, key=lambda t: t.date)
-            
-    if len(generated_transactions):
-        t_first = generated_transactions[0]
-        t_first.index = len(Transaction.objects.filter(user=user, date=t_first.date))
-
-        if len(generated_transactions) > 1:
-            for i in range(len(generated_transactions) - 1):
-                t1 = generated_transactions[i]
-                t2 = generated_transactions[i+1]
-                if t1.date == t2.date:
-                    t2.index = t1.index + 1
-                else:
-                    t2.index = len(Transaction.objects.filter(user=user, date=t2.date))
-
-        transactions = list(Transaction.objects.filter(user=user, date__gt=t_first.date))
-        transactions = transactions + generated_transactions
-        transactions = sorted(transactions, key=lambda t: (t.date, t.index))
-        
-        try:
-            last_transaction = Transaction.objects.filter(
-                user=user,
-                date__lte=t_first.date
-            ).latest(
-                'date',
-                'index'
-            )
-            closing_balance = last_transaction.closing_balance
-        except Transaction.DoesNotExist:
-            closing_balance = 0
-
-        for t in transactions:
-            closing_balance += t.size
-            t.closing_balance = closing_balance
-            t.save()
-            t.repeat_transaction.previous_transaction_date = t.date
-            t.repeat_transaction.save()
-
-    dates = pd.DataFrame(pd.date_range(start, end), columns=['date'])
-    balances = dates
-
-    try:
-        last_transaction = Transaction.objects.filter(
-            user=user,
-            date__lt=start).latest(
-                'date',
-                'index')
-        closing_balance = last_transaction.closing_balance
-    except Transaction.DoesNotExist:
-        closing_balance = 0
-    
-    balances['balance'] = closing_balance
-
-    transactions = get_transactions(user, start, end)
-    
-    transactions_df = pd.DataFrame(list(transactions.values()))
-    if len(transactions):
-        transactions_df['date'] = transactions_df['date'].astype('datetime64[ns]')
-        transactions_by_date = transactions_df.groupby('date')['size'].sum().reset_index()
-        transactions_by_date = dates.merge(transactions_by_date, on='date', how='left').fillna(0)
-        transactions_by_date['cumsum']  = transactions_by_date['size'].cumsum()
-        balances['balance'] += transactions_by_date['cumsum']
-        
-
-    return balances, transactions_df
-
-def get_previous_transaction(user, date, index=None):
-    try:
-        if index is not None:
-            previous_transaction = Transaction.objects.filter(
-                Q(date__lt=date) | Q(date=date, index__lt=index),
-                user=user
-            ).latest('date', 'index')
-        else:
-            previous_transaction = Transaction.objects.filter(
-                date__lte=date,
-                user=user
-            ).latest('date', 'index')
-            
-    except Transaction.DoesNotExist:
-        previous_transaction = None
-    return previous_transaction
-
-def get_transactions(user, start, end):
-    return Transaction.objects.filter(
-        user=user,
-        date__gte=start,
-        date__lte=end
-    ).order_by('date', 'index')
