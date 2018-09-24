@@ -140,80 +140,84 @@
 
 	<!-- Modal body -->
 	<div id="repeat-options-div" class="modal-body">
-
-	  <select
-	    id="frequency-input"
-	    class="dropdown"
-	    form="transaction-form"
-	    name="frequency"> todo
-	    <option value="daily">Daily</option>
-	    <option value="weekly" selected>Weekly</option>
-	    <option value="monthly">Monthly</option>
-	    <option value="yearly">Yearly</option>
-	  </select>
+	  <div class="form-group">
+	    <label>Repeats every</label>
+	    <input id="steps-input"
+		   class="form-control"
+		   form="transaction-form"
+		   type="number"
+		   step="1"
+		   value="1">
+	  </div>
 	  
-	  <div class="for-check row" style="padding: 5px 5px 5px 15px">
-	    <div class="col-sm-6">
+	  <div class="form-group">
+	    <select
+	      id="frequency-input"
+	      class="dropdown form-control"
+	      form="transaction-form"
+	      name="frequency"> todo
+	      <option value="daily">Day</option>
+	      <option value="weekly" selected>Week</option>
+	      <option value="monthly">Month</option>
+	      <option value="yearly">Year</option>
+	    </select>
+	  </div>
+
+	  <div class="form-check">
+	    <label class="form-check-label">
 	      <input class="form-check-input"
 		     type="radio"
-		     id="never-ends"
 		     name="ends_how"
+		     id="never-ends"
 		     value="never_ends"
 		     form="transaction-form"
 		     checked>
-	      <label class="form-check-label" for="never-ends">
-		Never ends
-	      </label>
-	    </div>
+	      Never ends
+	    </label>
 	  </div>
 
-	  <div class="for-check row" style="padding: 5px 5px 5px 15px">
-	    <div class="col-sm-6">
+	  <div class="form-check">
+	    <label class="form-check-label">
 	      <input class="form-check-input"
 		     type="radio"
 		     name="ends_how"
-		     value="n_transactions"
 		     id="ends-after-n-transactions"
+		     value="n_transactions"
 		     form="transaction-form">
-	      <label class="form-check-label" for="ends-after-n-transactions">
-		Ends after # transactions
-	      </label>
-	    </div>
-	    <div class="col-sm-6">
-	      <input id="n-transactions-input"
-		     class="form-control"
-		     type="number"
-		     step="1"
-		     value="1"
-		     name="n_transactions"
-		     form="transaction-form"
-		     disabled>
-	    </div>
+	      Ends after # transactions
+	    </label>
 	  </div>
-	  
-	  <div class="for-check row" style="padding: 5px 5px 5px 15px">
-	    <div class="col-sm-6">
+
+	  <div class="form-check">
+	    <label class="form-check-label">
 	      <input class="form-check-input"
 		     type="radio"
-		     id="ends-on-date"
 		     name="ends_how"
+		     id="ends-on-date"
 		     value="ends_on_date"
 		     form="transaction-form">
-	      <label class="form-check-label" for="ends-on-date">
-		Ends on
-	      </label>
-	    </div>
-	    <div class="col-sm-6">
-	      <input id="ends-on-date-input"
-		     class="form-control"
-		     type="date"
-		     value="{{today|date:'Y-m-d'}}"
-		     name="end_date"
-		     form="transaction-form"
-		     disabled>
-	    </div>
+	      Ends on
+	    </label>
 	  </div>
-	  
+
+	  <div id="n-transactions-div" class="form-group" style="display: none; margin-top: 5px">
+	    <input id="n-transactions-input"
+	  	   class="form-control"
+	  	   type="number"
+	  	   step="1"
+	  	   value="1"
+	  	   name="n_transactions"
+	  	   form="transaction-form">
+	  </div>
+
+	  <div id="ends-on-date-div" class="form-group" style="display: none; margin-top: 5px">
+	      <input id="ends-on-date-input"
+	  	     class="form-control"
+	  	     type="date"
+	  	     value="{{today|date:'Y-m-d'}}"
+	  	     name="end_date"
+	  	     form="transaction-form">
+	  </div>
 	</div>
 
 	<!-- Modal footer -->

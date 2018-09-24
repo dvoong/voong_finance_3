@@ -1,4 +1,5 @@
 import datetime
+import pandas as pd
 from selenium.webdriver.support.ui import Select
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -29,6 +30,13 @@ class HomePage:
         self.transaction_form.create_transaction(*args, **kwargs)
         if update == True:
             self.__init__(self.driver)
+
+    def get_balances(self):
+        values = [(b.date, b.balance) for b in self.balance_chart.bars]
+        df_balances = pd.DataFrame(values, columns=['date', 'balance'])
+        df_balances = df_balances.set_index('date')
+        df_balances.index = pd.to_datetime(df_balances.index)
+        return df_balances
             
     def move_date_range_forward(self, days=7):
         if days == 7:
@@ -51,7 +59,7 @@ class HomePage:
 
     def show_repeat_transactions_view(self):
         self.repeat_transactions_tab.click()
-        WebDriverWait(self.driver, 10).until(
+        WebDriverWait(self.driver, 60).until(
             EC.visibility_of_element_located((By.ID, 'repeat-transactions'))
         )
 
@@ -100,7 +108,9 @@ class TransactionForm:
             size,
             description="",
             repeats='does_not_repeat',
-            ends=None):
+            ends=None,
+            steps=None,
+            frequency=None):
         
         self.date = date
         self.transaction_size_input.send_keys(size)
@@ -112,7 +122,7 @@ class TransactionForm:
         else:
             if not self.repeat_checkbox.is_selected():
                 self.repeat_checkbox.click()
-            self.set_repeat_frequency(repeats)
+            self.set_repeat_frequency(repeats, steps)
             self.set_end_criteria(ends)
             self.repeat_options.submit()
 
@@ -147,8 +157,8 @@ class TransactionForm:
         )
         self.submit_button.click()
 
-    def set_repeat_frequency(self, frequency):
-        self.repeat_options.set_frequency(frequency)
+    def set_repeat_frequency(self, frequency, steps=1):
+        self.repeat_options.set_frequency(frequency, steps)
 
     def set_end_criteria(self, ends):
         self.repeat_options.set_end_criteria(ends)
@@ -293,6 +303,7 @@ class RepeatOptions:
         self.end_date_input = self.element.find_element_by_id('ends-on-date-input')
         self.never_ends = self.element.find_element_by_id('never-ends')
         self.frequency_input = Select(self.element.find_element_by_id('frequency-input'))
+        self.steps_input = self.element.find_element_by_id('steps-input')
 
     def submit(self):
         WebDriverWait(self.driver, 10).until(
@@ -315,6 +326,9 @@ class RepeatOptions:
             self.never_ends.click()
 
     def set_n_transactions(self, transactions):
+        WebDriverWait(self.driver, 10).until(
+            EC.visibility_of_element_located((By.ID, self.n_transactions_input.get_attribute('id')))
+        )
         self.n_transactions_input.clear()
         self.n_transactions_input.send_keys(transactions)
         
@@ -322,8 +336,13 @@ class RepeatOptions:
         keys = '{:02d}{:02d}{}'.format(date.day, date.month, date.year)        
         self.end_date_input.send_keys(keys)
 
-    def set_frequency(self, frequency):
+    def set_frequency(self, frequency, steps=None):
         self.frequency_input.select_by_value(frequency)
+        WebDriverWait(self.driver, 60).until(
+            EC.visibility_of_element_located((By.ID, self.steps_input.get_attribute('id')))
+        )
+        if steps is not None:
+            self.steps_input.send_keys(steps)
 
     def set_end_criteria(self, ends):
         self.select(ends['how'])

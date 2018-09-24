@@ -13,6 +13,7 @@ class CreateTransactionView(View):
         date = strptime(request.POST['date'], '%Y-%m-%d').date()
         user = request.user
         size = float(request.POST['transaction_size'])
+        steps = int(request.POST.get('steps', 1))
         description = request.POST['description']
         repeat_status = request.POST.get('repeats', 'does_not_repeat')
         frequency = request.POST.get('frequency', None)
@@ -45,6 +46,7 @@ class CreateTransactionView(View):
             'frequency': frequency,
             'today': today,
             'start': start,
+            'steps': steps,
             'end': end,
             'end_date': end_date,
             'ends_how': ends_how,
@@ -64,18 +66,19 @@ class CreateTransactionView(View):
             user=args['user'],
             index=index,
             frequency=args['frequency'],
+            steps=args['steps']
         )
-        
+
         if args['ends_how'] == 'never_ends':
             end_date = None
         elif args['ends_how'] == 'n_transactions':
             end_date = rt.start_date
             for i in range(args['n_transactions'] - 1):
-                end_date = models.get_next_transaction_date(end_date, rt.frequency)
+                end_date = models.get_next_transaction_date(end_date, rt.frequency, args['steps'])
         elif args['ends_how'] == 'ends_on_date':
             end_date = args['end_date']
         else:
-            raise Exception('unrecognised repeat transaction type')
+            raise Exception('unrecognised repeat transaction type: {}'.format(args['ends_how']))
         
         rt.end_date = end_date
         rt.save()

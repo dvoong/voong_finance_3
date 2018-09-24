@@ -1,5 +1,5 @@
 console.log('home.js');
-console.log('test7');
+console.log('test8');
 
 declare var $;
 declare var d3;
@@ -113,6 +113,23 @@ $(document).ready(function(){
 	} else {
 	    $('#n-transactions-input').prop('disabled', true);
 	    $('#ends-on-date-input').prop('disabled', true);
+	}
+    });
+
+    $('input:radio[name="ends_how"]').change(function(e){
+	console.log('change')
+	if($(this).attr('id') == 'ends-after-n-transactions'){
+	    console.log('n_transactions');
+	    $('#n-transactions-div').slideDown();
+	    $('#ends-on-date-div').slideUp();
+	} else if ($(this).attr('id') == 'ends-on-date'){
+	    console.log('ends on date')
+	    $('#n-transactions-div').slideUp();
+	    $('#ends-on-date-div').slideDown();
+	} else {
+	    console.log('never');
+	    $('#n-transactions-div').slideUp();
+	    $('#ends-on-date-div').slideUp();
 	}
     });
 

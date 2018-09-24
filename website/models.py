@@ -121,7 +121,7 @@ def get_balances(user, start, end):
 
     return df_balances, df_transactions
 
-def get_next_transaction_date(date, frequency):
+def get_next_transaction_date(date, frequency, steps):
     return frequency_string_to_next_date_function[frequency](date)
 
 def get_previous_transaction(user, date, index=None):
@@ -168,6 +168,7 @@ class RepeatTransaction(models.Model):
     index = models.IntegerField()
     frequency = models.CharField(max_length=7, null=True)
     end_date = models.DateField(null=True)
+    steps = models.IntegerField(null=True)
 
     def create_transaction(self, date):
         return  Transaction(
@@ -184,7 +185,7 @@ class RepeatTransaction(models.Model):
     def get_next_transaction_date(self):
         if self.previous_transaction_date is None:
             return self.start_date
-        date = get_next_transaction_date(self.previous_transaction_date, self.frequency)
+        date = get_next_transaction_date(self.previous_transaction_date, self.frequency, self.steps)
         if self.end_date is not None and date > self.end_date:
             return None
         return date

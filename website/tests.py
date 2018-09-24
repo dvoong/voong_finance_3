@@ -195,7 +195,7 @@ class TestHome(TestCase):
         response = self.client.get('/home')
 
         actual = response.context['transactions']
-        expected = '[{"date":"2018-09-23","size":10.0,"description":"description","closing_balance":10.0,"id":1,"repeat_transaction_id":null}]'
+        expected = '[{"date":"' + today.isoformat() + '","size":10.0,"description":"description","closing_balance":10.0,"id":1,"repeat_transaction_id":null}]'
         
         self.assertEqual(actual, expected)
 
