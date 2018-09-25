@@ -58,7 +58,7 @@ class CreateTransactionView(View):
         date = args['date']
         repeat_transactions = RepeatTransaction.objects.filter(user=user, start_date=date)
         index = len(repeat_transactions)
-        
+
         rt = RepeatTransaction(
             start_date=args['date'],
             size=args['size'],

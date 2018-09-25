@@ -38,7 +38,7 @@ class TestFornightlyRepeatTransaction(TestCase):
         transactions = homepage.get_transactions()
 
         dates = pd.date_range(datetime.date(2018, 1, 1), datetime.date(2018, 1, 15))
-        values = [10 for i in range(14)] + [20]
+        values = [10.0 for i in range(14)] + [20.0]
         df_expected = pd.DataFrame({'balance': values, 'date': dates})
         df_expected = df_expected.set_index('date')
         df_expected.index = pd.to_datetime(df_expected.index)

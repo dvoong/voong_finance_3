@@ -121,8 +121,10 @@ def get_balances(user, start, end):
 
     return df_balances, df_transactions
 
-def get_next_transaction_date(date, frequency, steps):
-    return frequency_string_to_next_date_function[frequency](date)
+def get_next_transaction_date(date, frequency, steps=1):
+    for i in range(steps):
+        date = frequency_string_to_next_date_function[frequency](date)
+    return date
 
 def get_previous_transaction(user, date, index=None):
     try:

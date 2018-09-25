@@ -598,12 +598,15 @@ class TestGetBalances(TestCase):
                                                  closing_balance=10,
                                                  index=0)
 
-        rt = RepeatTransaction.objects.create(start_date=datetime.date(2018, 1, 2),
-                                              size=20,
-                                              description='c',
-                                              user=user,
-                                              frequency='weekly',
-                                              index=0)
+        rt = RepeatTransaction.objects.create(
+            start_date=datetime.date(2018, 1, 2),
+            size=20,
+            description='c',
+            user=user,
+            frequency='weekly',
+            index=0,
+            steps=1
+        )
         
         self.client.login(username='voong.david@gmail.com', password='password')
         response = self.client.get('/get-balances', {'start': '2018-01-01', 'end': '2018-01-09'})
@@ -682,7 +685,8 @@ class TestUpdateRepeatTransaction(TestCase):
             user=self.user,
             index=0,
             frequency='weekly',
-            id=0
+            id=0,
+            steps=1
         )
 
         closing_balance = 0
@@ -878,7 +882,8 @@ class TestDeleteTransaction(TestCase):
             user=self.user,
             index=0,
             frequency='weekly',
-            id=0
+            id=0,
+            steps=1
         )
 
         closing_balance = 0

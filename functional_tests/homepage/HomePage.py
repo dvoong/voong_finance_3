@@ -342,6 +342,7 @@ class RepeatOptions:
             EC.visibility_of_element_located((By.ID, self.steps_input.get_attribute('id')))
         )
         if steps is not None:
+            self.steps_input.clear()
             self.steps_input.send_keys(steps)
 
     def set_end_criteria(self, ends):
