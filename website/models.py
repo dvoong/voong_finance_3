@@ -62,17 +62,19 @@ def get_balance(user, date):
     return df_balances['balance'].values[0]
 
 def get_balances(user, start, end):
-
     # generate repeat transactions
     repeat_transactions = get_repeat_transactions(user)
     transactions = []
     for rt in repeat_transactions:
         transactions.extend(rt.generate_repeat_transactions(end))
     transactions = sorted(transactions, key=lambda t: (t.date, t.repeat_transaction_id))
-    
+
     if len(transactions):
         # get previous transaction
-        previous_transaction = get_previous_transaction(user, transactions[0].date)
+        previous_transaction = get_previous_transaction(
+            user,
+            transactions[0].date + datetime.timedelta(days=1)
+        )
         if previous_transaction is not None:
             closing_balance = previous_transaction.closing_balance
         else:

@@ -41,7 +41,6 @@ class HomeView(View):
         return args
 
     def get(self, request):
-
         args = self.parse_args(request)
         balances, transactions = models.get_balances(args['user'], args['start'], args['end'])
         balances['date'] = balances['date'].dt.strftime('%Y-%m-%d')

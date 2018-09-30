@@ -11,9 +11,15 @@ strptime = datetime.datetime.strptime
 
 class HomePage:
 
-    def __init__(self, driver):
+    def __init__(self, driver, server_url=None, start=None, end=None):
 
         self.driver = driver
+        self.server_url = server_url
+
+        if start is not None and end is not None:
+            url = '{}/home?start={}&end={}'.format(self.server_url, start, end)
+            self.driver.get(url)
+        
         self.balance_chart = BalanceChart(driver)
         self.transaction_form = TransactionForm(driver)
         self.menu = Menu(driver)
@@ -59,7 +65,7 @@ class HomePage:
 
     def show_repeat_transactions_view(self):
         self.repeat_transactions_tab.click()
-        WebDriverWait(self.driver, 60).until(
+        WebDriverWait(self.driver, 120).until(
             EC.visibility_of_element_located((By.ID, 'repeat-transactions'))
         )
 
@@ -84,6 +90,7 @@ class HomePage:
 
     def reload(self):
         self.__init__(self.driver)
+        return self
 
 class TransactionForm:
 
