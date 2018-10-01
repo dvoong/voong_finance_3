@@ -71,15 +71,15 @@ def get_balances(user, start, end):
 
     if len(transactions):
         # get previous transaction
-        previous_transaction = get_previous_transaction(
-            user,
-            transactions[0].date + datetime.timedelta(days=1)
-        )
-        if previous_transaction is not None:
-            closing_balance = previous_transaction.closing_balance
-        else:
-            closing_balance = 0.
         for t in transactions:
+            previous_transaction = get_previous_transaction(
+                user,
+                t.date + datetime.timedelta(days=1)
+            )
+            if previous_transaction is not None:
+                closing_balance = previous_transaction.closing_balance
+            else:
+                closing_balance = 0.
             index = len(Transaction.objects.filter(date=t.date))
             t.index = index
             closing_balance = closing_balance + t.size
@@ -251,12 +251,20 @@ class Transaction(models.Model):
     def get_previous_transaction(self):
         return get_previous_transaction(self.user, self.date, self.index)
         
-    def recalculate_closing_balances(self):
+    # def recalculate_closing_balances(self):
 
-        transactions = self.get_following_transactions()
+    #     transactions = self.get_following_transactions()
 
-        closing_balance = self.closing_balance
-        for t in transactions:
-            closing_balance += t.size
-            t.closing_balance = closing_balance
-            t.save()
+    #     closing_balance = self.closing_balance
+    #     for t in transactions:
+    #         closing_balance += t.size
+    #         t.closing_balance = closing_balance
+    #         t.save()
+
+    def save(self, update_downstream=True, *args, **kwargs):
+        if update_downstream is True:
+            downstream_transactions = self.get_following_transactions()
+            for t in downstream_transactions:
+                t.closing_balance += self.size
+                t.save(update_downstream=False)
+        super().save(*args, **kwargs)

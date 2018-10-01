@@ -97,7 +97,6 @@ class CreateTransactionView(View):
         )
         
         t.save()
-        t.recalculate_closing_balances()
         
     def post(self, request):
         args = self.parse_args(request)

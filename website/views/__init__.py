@@ -113,27 +113,28 @@ def update_transaction(request):
                                         repeat_transaction=repeat_transaction)
 
     for t in ts:
+        size_old = t.size
         t.size = size
         t.description = description
-        t.save()
+        t.save(update_downstream=size_old != t.size)
 
-    # transactions_to_recalculate_closing_balance
-    first_t = min(ts, key=lambda t: (t.date, t.index))
-    ts_to_recalculate = Transaction.objects.filter(
-        Q(date__gt=first_t.date) | Q(date=first_t.date, index__gt=first_t.index),
-        user=user).order_by('date', 'index')
+    # # transactions_to_recalculate_closing_balance
+    # first_t = min(ts, key=lambda t: (t.date, t.index))
+    # ts_to_recalculate = Transaction.objects.filter(
+    #     Q(date__gt=first_t.date) | Q(date=first_t.date, index__gt=first_t.index),
+    #     user=user).order_by('date', 'index')
 
-    for t in ts_to_recalculate:
-        try:
-            last_transaction = Transaction.objects.filter(
-                Q(date__lt=t.date) |
-                Q(date__lte=t.date, index__lt=t.index),
-                user=user).latest('date', 'index')
-            closing_balance = last_transaction.closing_balance + t.size
-        except Transaction.DoesNotExist:
-            closing_balance = self.size
-        t.closing_balance = closing_balance
-        t.save()
+    # for t in ts_to_recalculate:
+    #     try:
+    #         last_transaction = Transaction.objects.filter(
+    #             Q(date__lt=t.date) |
+    #             Q(date__lte=t.date, index__lt=t.index),
+    #             user=user).latest('date', 'index')
+    #         closing_balance = last_transaction.closing_balance + t.size
+    #     except Transaction.DoesNotExist:
+    #         closing_balance = self.size
+    #     t.closing_balance = closing_balance
+    #     t.save()
     
     return redirect('/home?start={}&end={}'.format(start, end))
 
@@ -174,7 +175,7 @@ def update_only_this_transaction(user, date, size, description, t, start, end):
         for t_ in transactions_to_update:
             t_.closing_balance += old_size
             t.closing_balance -= t_.size
-            t_.save()
+            t_.save(update_downstream=False)
 
     else: # moved forward in time
         transactions_to_update = Transaction.objects.filter(
@@ -188,7 +189,7 @@ def update_only_this_transaction(user, date, size, description, t, start, end):
         for t_ in transactions_to_update:
             t_.closing_balance -= old_size
             t.closing_balance += t_.size
-            t_.save()
+            t_.save(update_downstream=False)
 
     # if transaction size has changed as well
     if t.size != old_size:
@@ -196,9 +197,9 @@ def update_only_this_transaction(user, date, size, description, t, start, end):
         transactions_to_update = Transaction.objects.filter(user=user, date__gt=t.date)
         for t_ in transactions_to_update:
             t_.closing_balance += t.size - old_size
-            t_.save()
+            t_.save(update_downstream=False)
             
-    t.save()
+    t.save(update_downstream=False)
 
     return redirect('/home?start={}&end={}'.format(start, end))
 
@@ -234,7 +235,7 @@ def delete_transaction(request):
                                                             user=user)
         for t_ in transactions_to_update:
             t_.closing_balance -= t.size
-            t_.save()
+            t_.save(update_downstream=False)
 
         t.delete()
 
@@ -278,7 +279,7 @@ def delete_transaction(request):
         for t in transactions_to_update:
             closing_balance = closing_balance + t.size
             t.closing_balance = closing_balance
-            t.save()
+            t.save(update_downstream=False)
 
     elif delete_how == 'all_transactions_of_this_type':
         t = Transaction.objects.get(user=user, id=transaction_id)
@@ -315,7 +316,7 @@ def delete_transaction(request):
         for t in transactions_to_update:
             closing_balance = closing_balance + t.size
             t.closing_balance = closing_balance
-            t.save()
+            t.save(update_downstream=False)
         
     return redirect('/home?start={}&end={}'.format(start, end))
 
