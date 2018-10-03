@@ -106,26 +106,6 @@
     {{ hidden_field }}
     {% endfor %}
   </form>
-  
-  <!-- <form id="transaction-form" -->
-  <!-- 	class="form" -->
-  <!-- 	action="/create-transaction" -->
-  <!-- 	method="post" -->
-  <!-- 	style="border: none" hidden>{% csrf_token %} -->
-  <!--   <input id="start-input" -->
-  <!-- 	   type="date" -->
-  <!-- 	   name="start" -->
-  <!-- 	   class="form-control" -->
-  <!-- 	   value="{{start|date:'Y-m-d'}}" -->
-  <!-- 	   hidden> -->
-  <!--   <input id="end-input" -->
-  <!-- 	   type="date" -->
-  <!-- 	   name="end" -->
-  <!-- 	   class="form-control" -->
-  <!-- 	   value="{{end|date:'Y-m-d'}}" -->
-  <!-- 	   hidden> -->
-    
-  <!-- </form> -->
 
   <!-- The Modal -->
   <div class="modal fade" id="repeat-options-modal">
@@ -336,34 +316,43 @@
 		method="post">{% csrf_token %}
 	    <input name="id" value="{{ rt.id }}" hidden>
 	    <tr id="{{rt.id}}" class="repeat-transaction">
-	      <td><input name="start_date"
-			 type="date"
-			 value="{{ rt.start_date|date:'Y-m-d' }}"
-			 form="repeat-transaction-update-form-{{ rt.id }}">
+
+	      <td>
+		<input class="form-control"
+		       name="start_date"
+		       type="date"
+		       value="{{ rt.start_date|date:'Y-m-d' }}"
+		       form="repeat-transaction-update-form-{{ rt.id }}">
 	      </td>
 	      {% load humanize %}
 	      <td>
 		<input name="size"
+		       class="form-control"
 		       value="£{{ rt.size|floatformat:2|intcomma }}"
 		       form="repeat-transaction-update-form-{{ rt.id }}">
 	      </td>
 	      <td>
-		<input name="description"
+		<input class="form-control"
+		       name="description"
 		       value="{{ rt.description }}"
 		       form="repeat-transaction-update-form-{{ rt.id }}">
 	      </td>
-	      <td><input name="frequency"
-			 value="{{ rt.frequency }}"
-			 form="repeat-transaction-update-form-{{ rt.id }}">
+	      <td>
+		<input class="form-control"
+		       name="frequency"
+		       value="{{ rt.frequency }}"
+		       form="repeat-transaction-update-form-{{ rt.id }}">
 	      </td>
 	      <td>
-		<input
-		  name="end_date"
-		  type="date"
-		  value="{% if rt.end_date is None %}never{% else %}{{rt.end_date|date:'Y-m-d'}}{% endif %}">
+		<input class="form-control"
+		       name="end_date"
+		       type="date"
+		       value="{% if rt.end_date is None %}never{% else %}{{rt.end_date|date:'Y-m-d'}}{% endif %}">
 	      </td>
 	      <td>
-		<button id="repeat-transaction-save-button-{{ rt.id }}">
+		<button
+		  id="repeat-transaction-save-button-{{ rt.id }}"
+		  class="btn btn-primary">
 		  Save
 		</button>
 	      </td>
