@@ -3,6 +3,7 @@
 * [How to connect to the digitalocean droplet](#how-to-connect-to-the-digitalocean-droplet)
 * [Interacting with the production database](#interacting-with-the-production-database)
 * [Deploying to production](#deploying-to-production)
+* [Building javascript files with gulp](#building-javascript-files)
 
 ## Installation
 
@@ -119,3 +120,6 @@ deployment uses
 2. `eval $(docker-machine env <container host>)`: sets up the deployment environment
 3. `docker-compose -f <production docker-compose file> build`
 4. `docker-compose -f <production docker-compose file> up -d`
+
+## Building javascript files
+run the `gulp` command in the project home

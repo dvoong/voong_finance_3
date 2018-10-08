@@ -1,5 +1,5 @@
 console.log('home.js');
-console.log('test8');
+console.log('test9');
 
 declare var $;
 declare var d3;

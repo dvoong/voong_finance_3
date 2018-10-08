@@ -117,13 +117,27 @@ class TransactionsTable {
 	    .attr('form', function(d){return 'transaction-modify-form-' + d.id});
 
 	var td = enter.append('td');
+
+	var input_group = td.append('div')
+	    .attr('class', 'input-group')
+
+	var prepend = input_group.append('div')
+	    .attr('class', 'input-group-prepend')
+
+	var prepend_2 = prepend.append('span')
+
+	prepend_2.attr('class', 'input-group-text')
+	    .style('background-color', '#F8F8F8');
+
+	prepend_2.html('£');
 	
-	td.append('input')
+	input_group.append('input')
 	    .attr('class', 'transaction-size transaction-size-input form-control')
 	    .attr('type', 'number')
 	    .attr('step', '0.01')
 	    .attr('name', 'size')
-	    .attr('value', function(d){return d.size})
+	    .style('float', 'right')
+	    .attr('value', function(d){return d.size.toFixed(2)})
 	    .attr('form', function(d){return 'transaction-modify-form-' + d.id});
 
 	td.append('input')
